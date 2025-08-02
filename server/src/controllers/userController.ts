@@ -3,7 +3,10 @@ import {
   getAll,
   getByEmail,
   deleteUser as deleteUserService,
+  register,
+  login,
 } from "../services/userService";
+import bcrypt from "bcrypt";
 import formatMongoData from "../utils/formatMongoData";
 
 export const getUsers = async (
@@ -69,5 +72,103 @@ export const deleteUser = async (
     }
   } catch (error) {
     next(error);
+  }
+};
+
+export const registerUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { password, profile, hobbies, ...otherData } = req.body;
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    const profileData: any = {
+      ...profile,
+    };
+
+    // if (req.file) {
+    //   const uploadedImage = await cloudinary.uploader.upload(req.file.path, {
+    //     folder: "user_profiles",
+    //   });
+
+    //   profileData.avatar = uploadedImage.secure_url;
+    //   profileData.public_id = uploadedImage.public_id;
+    // }
+
+    const userData = {
+      ...otherData,
+      password: hashedPassword,
+    };
+
+    const response: any = await register(userData);
+
+    if (!response.success) {
+      throw new Error(response.message);
+    }
+
+    // const token = generateAccessToken(
+    //   {
+    //     id: response.data._id,
+    //     email: req.body.email,
+    //     fullName: `${req.body.profile.firstName} ${req.body.profile.lastName}`,
+    //   },
+    //   "6h"
+    // );
+
+    // const verificationLink = `${process.env.SERVER_URL}/auth/verify-email?token=${token}`;
+    // sendVerificationEmail(
+    //   req.body.email,
+    //   req.body.profile.firstName + " " + req.body.profile.lastName,
+    //   verificationLink
+    // );
+    res.status(201).json({
+      message: "User registered successfully | Verify your email",
+      data: response.data,
+    });
+  } catch (error: unknown) {
+    if (error && typeof error === "object" && "message" in error) {
+      next(error);
+    } else {
+      next(new Error("Internal server error"));
+    }
+  }
+};
+
+export const loginUser = async (req: Request, res: Response) => {
+  try {
+    const credentials = {
+      email: req.body.email,
+      password: req.body.password,
+    };
+    const response = await login(credentials);
+
+    // res.cookie("refreshToken", response.refreshToken, {
+    //   httpOnly: true,
+    //   secure: true,
+    //   sameSite: "strict",
+    //   path: "/auth/refresh",
+    //   maxAge: 7 * 24 * 60 * 60 * 1000,
+    // });
+
+    res.status(200).json({
+      message: "User successfully login",
+      //   token: response.accessToken,
+    });
+  } catch (error: unknown) {
+    let message = "internal server error";
+    let statusCode = 500;
+    if (error && typeof error === "object" && "message" in error) {
+      message = (error as any).message;
+      if ("statusCode" in error) {
+        statusCode = (error as any).statusCode;
+      }
+    }
+    res.json({
+      message,
+      statusCode,
+    });
   }
 };
