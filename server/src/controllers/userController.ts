@@ -8,6 +8,7 @@ import {
 } from "../services/userService.js";
 import bcrypt from "bcrypt";
 import formatMongoData from "../utils/formatMongoData.js";
+import { generateAccessToken } from "../utils/jwt.js";
 
 export const getUsers = async (
   _: Request,
@@ -81,8 +82,6 @@ export const registerUser = async (
   next: NextFunction
 ) => {
   try {
-    console.log("Registration request body:", req.body); // Debug log
-
     const { password, ...otherData } = req.body;
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
@@ -92,22 +91,20 @@ export const registerUser = async (
       password: hashedPassword,
     };
 
-    console.log("User data being sent to service:", userData); // Debug log
-
     const response: any = await register(userData);
 
     if (!response.success) {
       throw new Error(response.message);
     }
 
-    // const token = generateAccessToken(
-    //   {
-    //     id: response.data._id,
-    //     email: req.body.email,
-    //     fullName: `${req.body.profile.firstName} ${req.body.profile.lastName}`,
-    //   },
-    //   "6h"
-    // );
+    const token = generateAccessToken(
+      {
+        id: response.data._id,
+        email: req.body.email,
+        fullName: req.body.fullName,
+      },
+      "6h"
+    );
 
     // const verificationLink = `${process.env.SERVER_URL}/auth/verify-email?token=${token}`;
     // sendVerificationEmail(
@@ -137,17 +134,17 @@ export const loginUser = async (req: Request, res: Response) => {
     };
     const response = await login(credentials);
 
-    // res.cookie("refreshToken", response.refreshToken, {
-    //   httpOnly: true,
-    //   secure: true,
-    //   sameSite: "strict",
-    //   path: "/auth/refresh",
-    //   maxAge: 7 * 24 * 60 * 60 * 1000,
-    // });
+    res.cookie("refreshToken", response.refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      path: "/auth/refresh",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
 
     res.status(200).json({
       message: "User successfully login",
-      //   token: response.accessToken,
+      token: response.accessToken,
     });
   } catch (error: unknown) {
     let message = "internal server error";
