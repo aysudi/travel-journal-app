@@ -5,7 +5,7 @@ const userSchema = new mongoose.Schema({
         required: true,
         trim: true,
         minlength: 3,
-        maxlength: 30
+        maxlength: 30,
     },
     email: {
         type: String,
@@ -13,15 +13,19 @@ const userSchema = new mongoose.Schema({
         unique: true,
         lowercase: true,
         trim: true,
-        match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email']
+        match: [/^\S+@\S+\.\S+$/, "Please enter a valid email"],
     },
     password: {
         type: String,
         required: true,
-        minlength: 6
+        minlength: 6,
     },
     isVerified: { type: Boolean, default: false },
     premium: { type: Boolean, default: false },
     lists: [{ type: mongoose.Schema.Types.ObjectId, ref: "TravelList" }],
-}, { timestamps: true });
+}, { timestamps: true, versionKey: false });
+// Add indexes for better query performance
+userSchema.index({ email: 1 });
+userSchema.index({ username: 1 });
+userSchema.index({ isVerified: 1 });
 export default userSchema;
