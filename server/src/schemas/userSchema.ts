@@ -11,7 +11,6 @@ const userSchema = new mongoose.Schema(
     username: {
       type: String,
       required: true,
-      unique: true,
       minlength: [3, "Username must be at least 3 characters long"],
       maxlength: [30, "Username cannot exceed 30 characters"],
       match: [
@@ -22,7 +21,6 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: [true, "Email is required"],
-      unique: true,
       match: [/^\S+@\S+\.\S+$/, "Please enter a valid email"],
     },
 
@@ -95,8 +93,8 @@ userSchema.virtual("notifications", {
   options: { sort: { createdAt: -1 } },
 });
 
-userSchema.index({ email: 1 });
-userSchema.index({ username: 1 });
+userSchema.index({ email: 1 }, { unique: true });
+userSchema.index({ username: 1 }, { unique: true });
 userSchema.index({ isVerified: 1 });
 
 export default userSchema;
