@@ -1,6 +1,12 @@
 import UserModel from "../models/User.js";
 import bcrypt from "bcrypt";
-import { generateAccessToken, generateRefreshToken } from "../utils/jwt.js";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyAccessToken,
+} from "../utils/jwt.js";
+import config from "../config/config.js";
+import { sendUnlockAccountEmail } from "../utils/sendMail.js";
 
 const MAX_ATTEMPTS = 5;
 const LOCK_TIME = 10 * 60 * 1000;
@@ -135,13 +141,13 @@ export const login = async (credentials: {
         "6h"
       );
 
-      // const unlockAccountLink = `${config.SERVER_URL}/auth/unlock-account?token=${token}`;
-      // sendUnlockAccountEmail(
-      //   user.email,
-      //   user.fullName,
-      //   user.lockUntil,
-      //   unlockAccountLink
-      // );
+      const unlockAccountLink = `${config.SERVER_URL}/auth/unlock-account?token=${token}`;
+      sendUnlockAccountEmail(
+        user.email,
+        user.fullName,
+        user.lockUntil,
+        unlockAccountLink
+      );
 
       throw new Error(
         "Too many login attempts. Account locked for 10 minutes. Check your email"
@@ -177,27 +183,27 @@ export const login = async (credentials: {
   };
 };
 
-// export const verifyEmail = async (token: any) => {
-//   const isValidToken: any = verifyAccessToken(token);
-//   if (isValidToken) {
-//     const { id } = isValidToken;
-//     const user = await User.findById(id);
-//     if (user) {
-//       if (user.emailVerified) {
-//         return {
-//           success: false,
-//           message: "email already has been verified",
-//         };
-//       } else {
-//         user.emailVerified = true;
-//         await user.save();
-//         return {
-//           success: true,
-//           message: "email has been verified successfully!",
-//         };
-//       }
-//     }
-//   } else {
-//     throw new Error("invalid or expired token!");
-//   }
-// };
+export const verifyEmail = async (token: any) => {
+  const isValidToken: any = verifyAccessToken(token);
+  if (isValidToken) {
+    const { id } = isValidToken;
+    const user: any = await UserModel.findById(id);
+    if (user) {
+      if (user.emailVerified) {
+        return {
+          success: false,
+          message: "email already has been verified",
+        };
+      } else {
+        user.emailVerified = true;
+        await user.save();
+        return {
+          success: true,
+          message: "email has been verified successfully!",
+        };
+      }
+    }
+  } else {
+    throw new Error("invalid or expired token!");
+  }
+};
