@@ -4,25 +4,43 @@ const userSchema = new mongoose.Schema(
   {
     fullName: {
       type: String,
-      required: true,
-      maxlength: 100,
+      required: [true, "Full name is required"],
+      minlength: [2, "Full name must be at least 2 characters long"],
+      maxlength: [100, "Full name cannot exceed 100 characters"],
     },
     username: {
       type: String,
       required: true,
-      minlength: 3,
-      maxlength: 30,
+      unique: true,
+      minlength: [3, "Username must be at least 3 characters long"],
+      maxlength: [30, "Username cannot exceed 30 characters"],
+      match: [
+        /^[a-zA-Z0-9_]+$/,
+        "Username can only contain letters, numbers, and underscores",
+      ],
     },
     email: {
       type: String,
-      required: true,
+      required: [true, "Email is required"],
       unique: true,
       match: [/^\S+@\S+\.\S+$/, "Please enter a valid email"],
     },
+
+    profileImage: {
+      type: String,
+      default:
+        "https://static.vecteezy.com/system/resources/previews/019/879/186/non_2x/user-icon-on-transparent-background-free-png.png",
+    },
+
+    public_id: {
+      type: String,
+      default: "",
+    },
+
     password: {
       type: String,
-      required: true,
-      minlength: 6,
+      required: [true, "Password is required"],
+      minlength: [6, "Password must be at least 6 characters long"],
     },
 
     isVerified: {
@@ -63,10 +81,18 @@ const userSchema = new mongoose.Schema(
 
 userSchema.set("toJSON", { virtuals: true });
 userSchema.set("toObject", { virtuals: true });
+
 userSchema.virtual("journalEntries", {
   ref: "JournalEntry",
   localField: "_id",
   foreignField: "author",
+});
+
+userSchema.virtual("notifications", {
+  ref: "Notification",
+  localField: "_id",
+  foreignField: "recipient",
+  options: { sort: { createdAt: -1 } },
 });
 
 userSchema.index({ email: 1 });
