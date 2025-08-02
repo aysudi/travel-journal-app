@@ -4,12 +4,12 @@ const journalEntrySchema = new mongoose.Schema({
         type: String,
         required: true,
         trim: true,
-        maxlength: 200
+        maxlength: 200,
     },
     content: {
         type: String,
         required: true,
-        maxlength: 5000
+        maxlength: 5000,
     },
     photos: [{ type: String }],
     destination: {
@@ -23,5 +23,9 @@ const journalEntrySchema = new mongoose.Schema({
         required: true,
     },
     public: { type: Boolean, default: false },
-}, { timestamps: true });
+}, { timestamps: true, versionKey: false });
+// journalEntrySchema.index({ destination: 1 });
+// journalEntrySchema.index({ author: 1 });
+// journalEntrySchema.index({ public: 1 });
+// journalEntrySchema.index({ createdAt: -1 });
 export default journalEntrySchema;

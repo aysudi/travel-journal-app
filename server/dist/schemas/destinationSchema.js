@@ -4,13 +4,13 @@ const destinationSchema = new mongoose.Schema({
         type: String,
         required: true,
         trim: true,
-        maxlength: 100
+        maxlength: 100,
     },
     country: {
         type: String,
         required: true,
         trim: true,
-        maxlength: 50
+        maxlength: 50,
     },
     datePlanned: { type: Date },
     dateVisited: { type: Date },
@@ -21,7 +21,7 @@ const destinationSchema = new mongoose.Schema({
     },
     notes: {
         type: String,
-        maxlength: 1000
+        maxlength: 1000,
     },
     images: [{ type: String }],
     listId: {
@@ -29,5 +29,10 @@ const destinationSchema = new mongoose.Schema({
         ref: "TravelList",
         required: true,
     },
-}, { timestamps: true });
+}, { timestamps: true, versionKey: false });
+// destinationSchema.index({ listId: 1 });
+// destinationSchema.index({ status: 1 });
+// destinationSchema.index({ country: 1 });
+// destinationSchema.index({ datePlanned: 1 });
+// destinationSchema.index({ dateVisited: 1 });
 export default destinationSchema;
