@@ -1,9 +1,5 @@
 import UserModel from "../models/User.js";
 import bcrypt from "bcrypt";
-// import { generateAccessToken, generateRefreshToken } from "../utils/jwt.js";
-// import config from "../config/index.js";
-// import { sendUnlockAccountEmail } from "../utils/email.js";
-// import { verifyAccessToken } from "../utils/jwt.js";
 
 export const getAll = async () => {
   return await UserModel.find().select("-password");
@@ -179,7 +175,7 @@ export const login = async (credentials: {
 //   const isValidToken: any = verifyAccessToken(token);
 //   if (isValidToken) {
 //     const { id } = isValidToken;
-//     const user = await UserModel.findById(id);
+//     const user = await User.findById(id);
 //     if (user) {
 //       if (user.emailVerified) {
 //         return {
