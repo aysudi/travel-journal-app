@@ -1,5 +1,9 @@
 import UserModel from "../models/User.js";
 import bcrypt from "bcrypt";
+import { generateAccessToken, generateRefreshToken } from "../utils/jwt.js";
+
+const MAX_ATTEMPTS = 5;
+const LOCK_TIME = 10 * 60 * 1000;
 
 export const getAll = async () => {
   return await UserModel.find().select("-password");
@@ -60,8 +64,6 @@ export const updateUser = async (id: string, payload: any) => {
 
 export const register = async (payload: any) => {
   try {
-    console.log("Service received payload:", payload); // Debug log
-
     const { email, username } = payload;
     const dublicateUser = await UserModel.findOne({
       $or: [{ email }, { username }],
@@ -74,7 +76,6 @@ export const register = async (payload: any) => {
     }
 
     const createdUser = await UserModel.create(payload);
-    console.log("Created user:", createdUser); // Debug log
 
     return {
       success: true,
@@ -118,38 +119,38 @@ export const login = async (credentials: {
 
   const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
-  //   if (!isPasswordCorrect) {
-  //     user.loginAttempts = (user.loginAttempts || 0) + 1;
+  if (!isPasswordCorrect) {
+    user.loginAttempts = (user.loginAttempts || 0) + 1;
 
-  //     if (user.loginAttempts >= MAX_ATTEMPTS) {
-  //       user.lockUntil = new Date(Date.now() + LOCK_TIME);
-  //       await user.save();
+    if (user.loginAttempts >= MAX_ATTEMPTS) {
+      user.lockUntil = new Date(Date.now() + LOCK_TIME);
+      await user.save();
 
-  //       const token = generateAccessToken(
-  //         {
-  //           id: user.id,
-  //           email: user.email,
-  //           fullName: user.profile.displayName,
-  //         },
-  //         "6h"
-  //       );
+      const token = generateAccessToken(
+        {
+          id: user.id,
+          email: user.email,
+          fullName: user.fullName,
+        },
+        "6h"
+      );
 
-  //       const unlockAccountLink = `${config.SERVER_URL}/auth/unlock-account?token=${token}`;
-  //       sendUnlockAccountEmail(
-  //         user.email,
-  //         user.profile.displayName,
-  //         user.lockUntil,
-  //         unlockAccountLink
-  //       );
+      // const unlockAccountLink = `${config.SERVER_URL}/auth/unlock-account?token=${token}`;
+      // sendUnlockAccountEmail(
+      //   user.email,
+      //   user.fullName,
+      //   user.lockUntil,
+      //   unlockAccountLink
+      // );
 
-  //       throw new Error(
-  //         "Too many login attempts. Account locked for 10 minutes. Check your email"
-  //       );
-  //     }
+      throw new Error(
+        "Too many login attempts. Account locked for 10 minutes. Check your email"
+      );
+    }
 
-  //     await user.save();
-  //     throw new Error("Invalid credentials");
-  //   }
+    await user.save();
+    throw new Error("Invalid credentials");
+  }
 
   user.loginAttempts = 0;
   user.isBanned = false;
@@ -157,22 +158,22 @@ export const login = async (credentials: {
 
   await user.save();
 
-  //   const accessToken = generateAccessToken({
-  //     email: user.email,
-  //     id: user.id,
-  //     fullName: user.profile.displayName,
-  //   });
+  const accessToken = generateAccessToken({
+    email: user.email,
+    id: user.id,
+    fullName: user.fullName,
+  });
 
-  //   const refreshToken = generateRefreshToken({
-  //     email: user.email,
-  //     id: user.id,
-  //     fullName: user.profile.displayName,
-  //   });
+  const refreshToken = generateRefreshToken({
+    email: user.email,
+    id: user.id,
+    fullName: user.fullName,
+  });
 
   return {
     message: "User login successfully!",
-    // accessToken: accessToken,
-    // refreshToken: refreshToken,
+    accessToken: accessToken,
+    refreshToken: refreshToken,
   };
 };
 
