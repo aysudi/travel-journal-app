@@ -5,10 +5,13 @@ import {
   deleteUser as deleteUserService,
   register,
   login,
+  verifyEmail,
 } from "../services/userService.js";
 import bcrypt from "bcrypt";
 import formatMongoData from "../utils/formatMongoData.js";
 import { generateAccessToken } from "../utils/jwt.js";
+import { sendVerificationEmail } from "../utils/sendMail.js";
+import config from "../config/config.js";
 
 export const getUsers = async (
   _: Request,
@@ -106,12 +109,8 @@ export const registerUser = async (
       "6h"
     );
 
-    // const verificationLink = `${process.env.SERVER_URL}/auth/verify-email?token=${token}`;
-    // sendVerificationEmail(
-    //   req.body.email,
-    //   req.body.profile.firstName + " " + req.body.profile.lastName,
-    //   verificationLink
-    // );
+    const verificationLink = `${config.SERVER_URL}/auth/verify-email?token=${token}`;
+    sendVerificationEmail(req.body.email, req.body.fullName, verificationLink);
 
     res.status(201).json({
       message: "User registered successfully | Verify your email",
@@ -159,5 +158,23 @@ export const loginUser = async (req: Request, res: Response) => {
       message,
       statusCode,
     });
+  }
+};
+
+export const verifyUserEmail = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { token } = req.query;
+
+    const response = await verifyEmail(token);
+
+    res.redirect(
+      `${config.CLIENT_URL}/auth/email-verified?message=${response?.message}`
+    );
+  } catch (error) {
+    next(error);
   }
 };
