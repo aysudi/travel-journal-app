@@ -35,6 +35,14 @@ const destinationSchema = new mongoose.Schema(
   { timestamps: true, versionKey: false }
 );
 
+destinationSchema.set("toJSON", { virtuals: true });
+destinationSchema.set("toObject", { virtuals: true });
+destinationSchema.virtual("journalEntries", {
+  ref: "JournalEntry",
+  localField: "_id",
+  foreignField: "destination",
+});
+
 destinationSchema.index({ listId: 1 });
 destinationSchema.index({ status: 1 });
 destinationSchema.index({ country: 1 });
