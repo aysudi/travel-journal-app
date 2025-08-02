@@ -2,10 +2,14 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
+    fullName: {
+      type: String,
+      required: true,
+      maxlength: 100,
+    },
     username: {
       type: String,
       required: true,
-      trim: true,
       minlength: 3,
       maxlength: 30,
     },
@@ -13,8 +17,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-      lowercase: true,
-      trim: true,
       match: [/^\S+@\S+\.\S+$/, "Please enter a valid email"],
     },
     password: {
@@ -22,12 +24,50 @@ const userSchema = new mongoose.Schema(
       required: true,
       minlength: 6,
     },
-    isVerified: { type: Boolean, default: false },
+
+    isVerified: {
+      type: Boolean,
+      default: function (this: any) {
+        return this.provider !== "local";
+      },
+    },
+
+    provider: {
+      type: String,
+      enum: ["local", "google", "github"],
+      default: "local",
+    },
+
+    providerId: {
+      type: String,
+      default: null,
+    },
+
+    socketId: { type: String, default: null },
+
+    lastLogin: { type: Date, default: null },
+    loginAttempts: { type: Number, default: 0 },
+    lockUntil: { type: Date, default: null },
+
     premium: { type: Boolean, default: false },
     lists: [{ type: mongoose.Schema.Types.ObjectId, ref: "TravelList" }],
+
+    profileVisibility: {
+      type: String,
+      enum: ["public", "private"],
+      default: "public",
+    },
   },
   { timestamps: true, versionKey: false }
 );
+
+userSchema.set("toJSON", { virtuals: true });
+userSchema.set("toObject", { virtuals: true });
+userSchema.virtual("journalEntries", {
+  ref: "JournalEntry",
+  localField: "_id",
+  foreignField: "author",
+});
 
 userSchema.index({ email: 1 });
 userSchema.index({ username: 1 });

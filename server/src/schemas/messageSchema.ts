@@ -22,7 +22,7 @@ const messageSchema = new mongoose.Schema(
   { timestamps: true, versionKey: false }
 );
 
-messageSchema.index({ list: 1, timestamp: -1 });
+messageSchema.index({ list: 1, createdAt: -1 });
 messageSchema.index({ sender: 1 });
 
 export default messageSchema;
