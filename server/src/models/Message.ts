@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import messageSchema from "../schemas/messageSchema.js";
 
-const Message = mongoose.model("Message", messageSchema);
+const MessageModel = mongoose.model("Message", messageSchema);
 
-export default Message;
+export default MessageModel;
