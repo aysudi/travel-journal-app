@@ -5,9 +5,9 @@ import {
   deleteUser as deleteUserService,
   register,
   login,
-} from "../services/userService";
+} from "../services/userService.js";
 import bcrypt from "bcrypt";
-import formatMongoData from "../utils/formatMongoData";
+import formatMongoData from "../utils/formatMongoData.js";
 
 export const getUsers = async (
   _: Request,
