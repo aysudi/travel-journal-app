@@ -6,13 +6,14 @@ import {
   loginUser,
   registerUser,
 } from "../controllers/userController.js";
+import userValidate from "../middlewares/userValidate.js";
 
 const userRouter = express.Router();
 
 userRouter.get("/", getUsers);
 userRouter.get("/:email", getUserByEmail);
 userRouter.delete("/:id", deleteUser);
-userRouter.post("/register", registerUser);
+userRouter.post("/register", userValidate, registerUser);
 userRouter.post("/login", loginUser);
 
 export default userRouter;

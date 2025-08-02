@@ -60,6 +60,8 @@ export const updateUser = async (id: string, payload: any) => {
 
 export const register = async (payload: any) => {
   try {
+    console.log("Service received payload:", payload); // Debug log
+
     const { email, username } = payload;
     const dublicateUser = await UserModel.findOne({
       $or: [{ email }, { username }],
@@ -71,9 +73,12 @@ export const register = async (payload: any) => {
       };
     }
 
+    const createdUser = await UserModel.create(payload);
+    console.log("Created user:", createdUser); // Debug log
+
     return {
       success: true,
-      data: await UserModel.create(payload),
+      data: createdUser,
     };
   } catch (error: unknown) {
     let message = "Internal server error";
