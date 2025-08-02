@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(cors());
 
 // Using routes
-app.use("/users", userRouter);
+app.use("/auth", userRouter);
 app.use("/travel-lists", travelListRouter);
 app.use("/destinations", destinationRouter);
 app.use("/journal-entries", journalEntryRouter);
