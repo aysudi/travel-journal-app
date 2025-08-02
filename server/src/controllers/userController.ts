@@ -81,27 +81,18 @@ export const registerUser = async (
   next: NextFunction
 ) => {
   try {
-    const { password, profile, hobbies, ...otherData } = req.body;
+    console.log("Registration request body:", req.body); // Debug log
+
+    const { password, ...otherData } = req.body;
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-    const profileData: any = {
-      ...profile,
-    };
-
-    // if (req.file) {
-    //   const uploadedImage = await cloudinary.uploader.upload(req.file.path, {
-    //     folder: "user_profiles",
-    //   });
-
-    //   profileData.avatar = uploadedImage.secure_url;
-    //   profileData.public_id = uploadedImage.public_id;
-    // }
 
     const userData = {
       ...otherData,
       password: hashedPassword,
     };
+
+    console.log("User data being sent to service:", userData); // Debug log
 
     const response: any = await register(userData);
 
@@ -124,9 +115,10 @@ export const registerUser = async (
     //   req.body.profile.firstName + " " + req.body.profile.lastName,
     //   verificationLink
     // );
+
     res.status(201).json({
       message: "User registered successfully | Verify your email",
-      data: response.data,
+      data: formatMongoData(response.data),
     });
   } catch (error: unknown) {
     if (error && typeof error === "object" && "message" in error) {
