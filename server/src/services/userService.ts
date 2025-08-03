@@ -185,9 +185,11 @@ export const login = async (credentials: {
 
 export const verifyEmail = async (token: any) => {
   const isValidToken: any = verifyAccessToken(token);
+
   if (isValidToken) {
     const { id } = isValidToken;
     const user: any = await UserModel.findById(id);
+
     if (user) {
       if (user.emailVerified) {
         return {

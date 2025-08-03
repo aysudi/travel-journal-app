@@ -1,5 +1,5 @@
-import config from "../config/config.js";
 import nodemailer from "nodemailer";
+import config from "../config/config.js";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -17,25 +17,25 @@ const generateUnlockAccountHTML = (
   lockUntil: string
 ): string => {
   return `
-    <div style="font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; margin: 0;">
-      <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-        <div style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); color: white; text-align: center; padding: 40px 20px;">
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 40px; margin: 0;">
+      <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+        <div style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; text-align: center; padding: 40px 20px;">
           <h1 style="margin: 0; font-size: 28px; font-weight: 600;">🔐 Account Locked</h1>
           <p style="margin: 10px 0 0 0; opacity: 0.9;">Security Alert for Your VoyageVault Account</p>
         </div>
-        <div style="padding: 40px 30px; line-height: 1.7; color: #2c3e50;">
+        <div style="padding: 40px 30px; line-height: 1.7; color: #1e293b;">
           <p style="margin: 0 0 20px 0; font-size: 16px;">Hi <strong>${name}</strong>,</p>
-          <p style="margin: 0 0 20px 0;">Your account has been temporarily locked due to multiple unsuccessful login attempts. It will remain locked until <strong style="color: #e74c3c;">${lockUntil}</strong>.</p>
-          <div style="background: #fff5f5; border-left: 4px solid #ff6b6b; padding: 20px; margin: 25px 0; border-radius: 8px;">
+          <p style="margin: 0 0 20px 0;">Your account has been temporarily locked due to multiple unsuccessful login attempts. It will remain locked until <strong style="color: #dc2626;">${lockUntil}</strong>.</p>
+          <div style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-left: 4px solid #dc2626; padding: 20px; margin: 25px 0; border-radius: 8px;">
             <strong>🛡️ Security Tip:</strong> If this wasn't you, contact support immediately.
           </div>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${unlockAccountLink}" style="display: inline-block; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 50px; font-weight: 600; box-shadow: 0 8px 20px rgba(255, 107, 107, 0.3);">🔓 Unlock Account Now</a>
+            <a href="${unlockAccountLink}" style="display: inline-block; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 50px; font-weight: 600; box-shadow: 0 8px 20px rgba(220, 38, 38, 0.3);">🔓 Unlock Account Now</a>
           </div>
-          <p style="margin: 20px 0 0 0; color: #7f8c8d; font-size: 14px; text-align: center;">Safe travels! ✈️ The VoyageVault Team</p>
+          <p style="margin: 20px 0 0 0; color: #64748b; font-size: 14px; text-align: center;">Safe travels! ✈️ The VoyageVault Team</p>
         </div>
-        <div style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: #ecf0f1; text-align: center; padding: 25px;">
-          <div style="font-size: 18px; font-weight: 600; color: #ff6b6b; margin-bottom: 10px;">✈️ VoyageVault</div>
+        <div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: #f1f5f9; text-align: center; padding: 25px;">
+          <div style="font-size: 18px; font-weight: 600; color: #94a3b8; margin-bottom: 10px;">✈️ VoyageVault</div>
           <p style="margin: 0; font-size: 12px; opacity: 0.8;">&copy; ${new Date().getFullYear()} VoyageVault. Protecting your memories.</p>
         </div>
       </div>
@@ -76,24 +76,24 @@ export const sendVerificationEmail = async (
 ): Promise<void> => {
   try {
     await transporter.sendMail({
-      from: `"VoyageVault" <${process.env.GMAIL_USER}>`,
+      from: `"VoyageVault" <${config.GMAIL_USER}>`,
       to: toEmail,
       subject: "✈️ Welcome to VoyageVault - Verify Your Email",
       html: `
-        <div style="font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; margin: 0;">
-          <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-            <div style="background: linear-gradient(135deg, #6bcf7f 0%, #42d392 100%); color: white; text-align: center; padding: 50px 20px;">
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 40px; margin: 0;">
+          <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+            <div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: white; text-align: center; padding: 50px 20px;">
               <h1 style="margin: 0; font-size: 32px; font-weight: 700;">Welcome to VoyageVault!</h1>
               <p style="margin: 10px 0 0 0; font-size: 18px; opacity: 0.9;">Your Journey Starts Here</p>
             </div>
-            <div style="padding: 40px 30px; line-height: 1.8; color: #2c3e50;">
-              <div style="background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%); border-radius: 12px; padding: 25px; margin: 0 0 30px 0; text-align: center; border-left: 5px solid #6bcf7f;">
-                <h3 style="margin: 0 0 15px 0; color: #2e7d32; font-size: 20px;">🎉 Welcome ${userFullName}!</h3>
-                <p style="margin: 0; color: #388e3c;">You've joined thousands of travelers who trust VoyageVault!</p>
+            <div style="padding: 40px 30px; line-height: 1.8; color: #1e293b;">
+              <div style="background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); border-radius: 12px; padding: 25px; margin: 0 0 30px 0; text-align: center; border-left: 5px solid #64748b;">
+                <h3 style="margin: 0 0 15px 0; color: #334155; font-size: 20px;">🎉 Welcome ${userFullName}!</h3>
+                <p style="margin: 0; color: #475569;">You've joined thousands of travelers who trust VoyageVault!</p>
               </div>
-              <p style="margin: 0 0 25px 0; font-size: 16px;">We're thrilled to have you! VoyageVault is your digital companion for documenting memories and planning adventures.</p>
-              <div style="display: flex; gap: 15px; margin: 25px 0; flex-wrap: wrap; justify-content: center;">
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; min-width: 120px;">
+              <p style="margin: 0 auto; text-align: center; font-size: 16px;">We're thrilled to have you! VoyageVault is your digital companion for documenting memories and planning adventures.</p>
+              <div style="display: flex; gap: 15px; margin: 25px auto; flex-wrap: wrap; justify-content: center; align-items: center;">
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center;  min-width: 120px;">
                   <div style="font-size: 24px; margin-bottom: 8px;">📝</div>
                   <div style="font-weight: 600; color: #495057; font-size: 14px;">Travel Journals</div>
                 </div>
@@ -106,14 +106,14 @@ export const sendVerificationEmail = async (
                   <div style="font-weight: 600; color: #495057; font-size: 14px;">Memory Vault</div>
                 </div>
               </div>
-              <p style="margin: 25px 0; font-size: 16px;">To start exploring, please verify your email address:</p>
+              <p style="margin: 25px auto; text-align: center; font-size: 16px;">To start exploring, please verify your email address:</p>
               <div style="text-align: center; margin: 35px 0;">
-                <a href="${verificationLink}" style="display: inline-block; background: linear-gradient(135deg, #6bcf7f 0%, #42d392 100%); color: white; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 18px; box-shadow: 0 8px 20px rgba(107, 207, 127, 0.3);">✨ Verify Email Address</a>
+                <a href="${verificationLink}" style="display: inline-block; background: linear-gradient(135deg, #334155 0%, #475569 100%); color: white; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 18px; box-shadow: 0 8px 20px rgba(51, 65, 85, 0.3);">✨ Verify Email Address</a>
               </div>
-              <p style="font-size: 14px; color: #6c757d; text-align: center; margin: 25px 0 0 0;">If you didn't create this account, you can safely ignore this email.</p>
+              <p style="font-size: 14px; color: #64748b; text-align: center; margin: 25px 0 0 0;">If you didn't create this account, you can safely ignore this email.</p>
             </div>
-            <div style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: #ecf0f1; text-align: center; padding: 30px;">
-              <div style="font-size: 20px; font-weight: 600; color: #6bcf7f; margin-bottom: 10px;">✈️ VoyageVault</div>
+            <div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: #f1f5f9; text-align: center; padding: 30px;">
+              <div style="font-size: 20px; font-weight: 600; color: #94a3b8; margin-bottom: 10px;">✈️ VoyageVault</div>
               <p style="margin: 0 0 15px 0;">Capturing memories, one journey at a time</p>
               <p style="margin: 0; font-size: 12px; opacity: 0.8;">&copy; ${new Date().getFullYear()} VoyageVault. All rights reserved.</p>
             </div>
@@ -132,7 +132,7 @@ export const sendForgotPasswordEmail = async (
 ): Promise<void> => {
   try {
     await transporter.sendMail({
-      from: `"VoyageVault" <${process.env.GMAIL_USER}>`,
+      from: `"VoyageVault" <${config.GMAIL_USER}>`,
       to: toEmail,
       subject: "🔐 Reset Your VoyageVault Password",
       html: `
