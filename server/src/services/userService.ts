@@ -87,12 +87,9 @@ export const register = async (payload: any) => {
       success: true,
       data: createdUser,
     };
-  } catch (error: unknown) {
-    let message = "Internal server error";
-    if (error && typeof error === "object" && "message" in error) {
-      message = (error as any).message;
-    }
-    return message;
+  } catch (error: any) {
+    console.log(error.message);
+    return error.message || "Internal server error";
   }
 };
 

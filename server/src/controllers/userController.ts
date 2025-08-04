@@ -97,7 +97,10 @@ export const registerUser = async (
     const response: any = await register(userData);
 
     if (!response.success) {
-      throw new Error(response.message);
+      return res.status(400).json({
+        message: response.message,
+        data: null,
+      });
     }
 
     const token = generateAccessToken(
@@ -116,12 +119,12 @@ export const registerUser = async (
       message: "User registered successfully | Verify your email",
       data: formatMongoData(response.data),
     });
-  } catch (error: unknown) {
-    if (error && typeof error === "object" && "message" in error) {
-      next(error);
-    } else {
-      next(new Error("Internal server error"));
-    }
+  } catch (error: any) {
+    console.error("Registration error:", error);
+    res.status(500).json({
+      message: "Internal server error",
+      data: null,
+    });
   }
 };
 
