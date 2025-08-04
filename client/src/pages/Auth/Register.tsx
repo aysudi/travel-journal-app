@@ -44,17 +44,27 @@ const Register = () => {
 
         navigate("/auth/login");
       } catch (error: any) {
-        console.log(error);
-        enqueueSnackbar(error.response.data.message, {
-          autoHideDuration: 2000,
+        let errorMessage = "Registration failed. Please try again.";
+
+        if (error?.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error?.message) {
+          errorMessage = error.message;
+        }
+
+        enqueueSnackbar(errorMessage, {
+          autoHideDuration: 3000,
           anchorOrigin: {
             vertical: "bottom",
             horizontal: "right",
           },
           variant: "error",
         });
-        values.email = "";
-        values.username = "";
+
+        if (errorMessage.includes("Username or email already exist")) {
+          registerFormik.setFieldValue("email", "");
+          registerFormik.setFieldValue("username", "");
+        }
       }
     },
     validationSchema: registerValidation,
