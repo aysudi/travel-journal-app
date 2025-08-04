@@ -31,18 +31,21 @@ const Register = () => {
       try {
         await controller.post(`${endpoints.users}/register`, newUser);
 
-        enqueueSnackbar("User registered successfully!", {
-          autoHideDuration: 2000,
-          anchorOrigin: {
-            vertical: "bottom",
-            horizontal: "right",
-          },
-          variant: "success",
-        });
+        enqueueSnackbar(
+          "User registered successfully! Please check your email to verify your account.",
+          {
+            autoHideDuration: 2000,
+            anchorOrigin: {
+              vertical: "bottom",
+              horizontal: "right",
+            },
+            variant: "success",
+          }
+        );
 
         action.resetForm();
 
-        navigate("/auth/login");
+        navigate(`/auth/check-email?email=${values.email}`);
       } catch (error: any) {
         let errorMessage = "Registration failed. Please try again.";
 
