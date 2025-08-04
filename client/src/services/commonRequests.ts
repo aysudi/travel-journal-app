@@ -45,9 +45,9 @@ async function update(endpoint: string, id: string, data: any) {
 }
 
 // Create a new data
-async function post(endpoint: string, data: any, headers?: object) {
+async function post(endpoint: string, data: any) {
   try {
-    const response = await instance.post(endpoint, data, headers);
+    const response = await instance.post(endpoint, data);
     return response.data;
   } catch (error) {
     console.error("Error creating data", error);
