@@ -1,67 +1,77 @@
 //auth
+import AuthLayout from "../layout/AuthLayout";
 import ForgotPassword from "../pages/Auth/ForgotPassword";
 import Login from "../pages/Auth/Login";
 import Register from "../pages/Auth/Register";
 import ResetPassword from "../pages/Auth/ResetPassword";
 
 //client
+import ClientLayout from "../layout/ClientLayout";
 import Dashboard from "../pages/Client/Dashboard";
 import Explore from "../pages/Client/Explore";
 import Journal from "../pages/Client/Journal";
 import ListDetails from "../pages/Client/ListDetails";
 import Lists from "../pages/Client/Lists";
 import Profile from "../pages/Client/Profile";
+import { Navigate } from "react-router";
 
 const ROUTES = [
+  // Root redirect to login
+  {
+    path: "/",
+    element: <Navigate to="/auth/login" replace />,
+  },
   //client routes
   {
     path: "/",
+    element: <ClientLayout />,
     children: [
       {
         path: "dashboard",
-        component: <Dashboard />,
+        element: <Dashboard />,
       },
       {
         path: "profile",
-        component: <Profile />,
+        element: <Profile />,
       },
       {
         path: "explore",
-        component: <Explore />,
+        element: <Explore />,
       },
       {
         path: "lists",
-        component: <Lists />,
+        element: <Lists />,
       },
       {
         path: "lists/:listId",
-        component: <ListDetails />,
+        element: <ListDetails />,
       },
       {
         path: "journal",
-        component: <Journal />,
+        element: <Journal />,
       },
     ],
   },
   //auth routes
   {
     path: "/auth",
+    element: <AuthLayout />,
     children: [
       {
-        path: "/login",
-        component: <Login />,
+        path: "login",
+        element: <Login />,
       },
       {
-        path: "/register",
-        component: <Register />,
+        path: "register",
+        element: <Register />,
       },
       {
-        path: "/reset-password",
-        component: <ResetPassword />,
+        path: "reset-password",
+        element: <ResetPassword />,
       },
       {
-        path: "/forgot-password",
-        component: <ForgotPassword />,
+        path: "forgot-password",
+        element: <ForgotPassword />,
       },
     ],
   },
