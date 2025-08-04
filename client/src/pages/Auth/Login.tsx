@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
+import { useFormik } from "formik";
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -7,6 +8,14 @@ const Login = () => {
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
+
+  const loginFormik = useFormik({
+    initialValues: formData,
+    onSubmit: (values) => {
+      console.log("Form submitted:", values);
+    },
+    // validationSchema:
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -58,10 +67,11 @@ const Login = () => {
               <div className="relative">
                 <input
                   id="email"
-                  name="email"
                   type="email"
-                  value={formData.email}
-                  onChange={handleChange}
+                  name="email"
+                  value={loginFormik.values.email}
+                  onChange={loginFormik.handleChange}
+                  onBlur={loginFormik.handleBlur}
                   required
                   className="w-full pl-4 pr-9 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-slate-700 placeholder-slate-400"
                   placeholder="Enter your email"

@@ -1,32 +1,56 @@
 import { useState } from "react";
+import { useFormik } from "formik";
 import { Link } from "react-router";
+import registerValidation from "../../validations/registerValidation";
 
 const Register = () => {
-  const [formData, setFormData] = useState({
-    fullName: "",
-    username: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+  const registerFormik = useFormik({
+    initialValues: {
+      fullName: "",
+      username: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
+    onSubmit: (values) => {
+      console.log("Form submitted:", values);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match!");
-      return;
-    }
-    console.log("Registration attempt:", formData);
-  };
+      // try {
+      //   await controller.post(`${endpoints.users}/register`, formData, {
+      //     headers: { "Content-Type": "multipart/form-data" },
+      //   });
+
+      //   enqueueSnackbar("User registered successfully!", {
+      //     autoHideDuration: 2000,
+      //     anchorOrigin: {
+      //       vertical: "bottom",
+      //       horizontal: "right",
+      //     },
+      //     variant: "success",
+      //   });
+
+      //   action.resetForm();
+      //   setImagePreview("");
+
+      //   navigate("/auth/login");
+      // } catch (error: any) {
+      //   enqueueSnackbar(error.response.data.message, {
+      //     autoHideDuration: 2000,
+      //     anchorOrigin: {
+      //       vertical: "bottom",
+      //       horizontal: "right",
+      //     },
+      //     variant: "error",
+      //   });
+      //   values.email = "";
+      //   values.username = "";
+      // }
+    },
+    validationSchema: registerValidation,
+  });
 
   const handleGoogleRegister = () => {
     console.log("Google registration");
@@ -35,9 +59,6 @@ const Register = () => {
   const handleGithubRegister = () => {
     console.log("GitHub registration");
   };
-
-  const passwordsMatch = formData.password === formData.confirmPassword;
-  const showPasswordError = formData.confirmPassword && !passwordsMatch;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -57,10 +78,9 @@ const Register = () => {
 
         {/* Registration Form */}
         <div className="bg-white rounded-3xl shadow-xl p-8 border border-slate-200/50">
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={registerFormik.handleSubmit} className="space-y-5">
             {/* Full Name and Username Row */}
             <div className="grid grid-cols-2 gap-4">
-              {/* Full Name Input */}
               <div className="space-y-2">
                 <label
                   htmlFor="fullName"
@@ -73,8 +93,9 @@ const Register = () => {
                     id="fullName"
                     name="fullName"
                     type="text"
-                    value={formData.fullName}
-                    onChange={handleChange}
+                    value={registerFormik.values.fullName}
+                    onChange={registerFormik.handleChange}
+                    onBlur={registerFormik.handleBlur}
                     required
                     className="w-full pl-4 pr-9 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-slate-700 placeholder-slate-400"
                     placeholder="Full name"
@@ -97,7 +118,6 @@ const Register = () => {
                 </div>
               </div>
 
-              {/* Username Input */}
               <div className="space-y-2">
                 <label
                   htmlFor="username"
@@ -110,8 +130,9 @@ const Register = () => {
                     id="username"
                     name="username"
                     type="text"
-                    value={formData.username}
-                    onChange={handleChange}
+                    value={registerFormik.values.username}
+                    onChange={registerFormik.handleChange}
+                    onBlur={registerFormik.handleBlur}
                     required
                     className="w-full pl-4 pr-9 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-slate-700 placeholder-slate-400"
                     placeholder="Username"
@@ -135,7 +156,6 @@ const Register = () => {
               </div>
             </div>
 
-            {/* Email Input */}
             <div className="space-y-2">
               <label
                 htmlFor="email"
@@ -146,10 +166,11 @@ const Register = () => {
               <div className="relative">
                 <input
                   id="email"
-                  name="email"
                   type="email"
-                  value={formData.email}
-                  onChange={handleChange}
+                  name="email"
+                  value={registerFormik.values.email}
+                  onChange={registerFormik.handleChange}
+                  onBlur={registerFormik.handleBlur}
                   required
                   className="w-full pl-4 pr-9 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-slate-700 placeholder-slate-400"
                   placeholder="Enter your email"
@@ -174,7 +195,6 @@ const Register = () => {
 
             {/* Password and Confirm Password Row */}
             <div className="grid grid-cols-2 gap-4">
-              {/* Password Input */}
               <div className="space-y-2">
                 <label
                   htmlFor="password"
@@ -187,8 +207,9 @@ const Register = () => {
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
-                    value={formData.password}
-                    onChange={handleChange}
+                    value={registerFormik.values.password}
+                    onChange={registerFormik.handleChange}
+                    onBlur={registerFormik.handleBlur}
                     required
                     className="w-full pl-4 pr-9 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-slate-700 placeholder-slate-400"
                     placeholder="Password"
@@ -237,7 +258,6 @@ const Register = () => {
                 </div>
               </div>
 
-              {/* Confirm Password Input */}
               <div className="space-y-2">
                 <label
                   htmlFor="confirmPassword"
@@ -250,14 +270,11 @@ const Register = () => {
                     id="confirmPassword"
                     name="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
+                    value={registerFormik.values.confirmPassword}
+                    onChange={registerFormik.handleChange}
+                    onBlur={registerFormik.handleBlur}
                     required
-                    className={`w-full pl-4 pr-9 py-3 bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 text-slate-700 placeholder-slate-400 ${
-                      showPasswordError
-                        ? "border-red-300 focus:ring-red-500"
-                        : "border-slate-200 focus:ring-blue-500"
-                    }`}
+                    className={`w-full pl-4 pr-9 py-3 bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 text-slate-700 placeholder-slate-400`}
                     placeholder="Confirm"
                   />
                   <button
@@ -304,26 +321,6 @@ const Register = () => {
                 </div>
               </div>
             </div>
-
-            {/* Password Error Message */}
-            {showPasswordError && (
-              <div className="text-center">
-                <p className="text-sm text-red-600 flex items-center justify-center">
-                  <svg
-                    className="w-4 h-4 mr-1"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Passwords do not match
-                </p>
-              </div>
-            )}
 
             {/* Create Account Button */}
             <button
