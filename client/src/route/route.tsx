@@ -4,6 +4,9 @@ import ForgotPassword from "../pages/Auth/ForgotPassword";
 import Login from "../pages/Auth/Login";
 import Register from "../pages/Auth/Register";
 import ResetPassword from "../pages/Auth/ResetPassword";
+import FailedVerification from "../pages/Auth/FailedVerification";
+import EmailVerified from "../pages/Auth/EmailVerified";
+import CheckEmail from "../pages/Auth/CheckEmail";
 
 //client
 import ClientLayout from "../layout/ClientLayout";
@@ -64,6 +67,18 @@ const ROUTES = [
       {
         path: "register",
         element: <Register />,
+      },
+      {
+        path: "check-email",
+        element: <CheckEmail />,
+      },
+      {
+        path: "verify-email",
+        element: <FailedVerification />,
+      },
+      {
+        path: "email-verified",
+        element: <EmailVerified />,
       },
       {
         path: "reset-password",
