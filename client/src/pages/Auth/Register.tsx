@@ -1,11 +1,16 @@
 import { useState } from "react";
 import { useFormik } from "formik";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import registerValidation from "../../validations/registerValidation";
+import { enqueueSnackbar } from "notistack";
+import controller from "../../services/commonRequests";
+import endpoints from "../../services/api";
+import User from "../../classes/User";
 
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const navigate = useNavigate();
 
   const registerFormik = useFormik({
     initialValues: {
@@ -15,39 +20,42 @@ const Register = () => {
       password: "",
       confirmPassword: "",
     },
-    onSubmit: (values) => {
-      console.log("Form submitted:", values);
+    onSubmit: async (values, action) => {
+      const newUser = new User(
+        values.fullName,
+        values.username,
+        values.email,
+        values.password
+      );
 
-      // try {
-      //   await controller.post(`${endpoints.users}/register`, formData, {
-      //     headers: { "Content-Type": "multipart/form-data" },
-      //   });
+      try {
+        await controller.post(`${endpoints.users}/register`, newUser);
 
-      //   enqueueSnackbar("User registered successfully!", {
-      //     autoHideDuration: 2000,
-      //     anchorOrigin: {
-      //       vertical: "bottom",
-      //       horizontal: "right",
-      //     },
-      //     variant: "success",
-      //   });
+        enqueueSnackbar("User registered successfully!", {
+          autoHideDuration: 2000,
+          anchorOrigin: {
+            vertical: "bottom",
+            horizontal: "right",
+          },
+          variant: "success",
+        });
 
-      //   action.resetForm();
-      //   setImagePreview("");
+        action.resetForm();
 
-      //   navigate("/auth/login");
-      // } catch (error: any) {
-      //   enqueueSnackbar(error.response.data.message, {
-      //     autoHideDuration: 2000,
-      //     anchorOrigin: {
-      //       vertical: "bottom",
-      //       horizontal: "right",
-      //     },
-      //     variant: "error",
-      //   });
-      //   values.email = "";
-      //   values.username = "";
-      // }
+        navigate("/auth/login");
+      } catch (error: any) {
+        console.log(error);
+        enqueueSnackbar(error.response.data.message, {
+          autoHideDuration: 2000,
+          anchorOrigin: {
+            vertical: "bottom",
+            horizontal: "right",
+          },
+          variant: "error",
+        });
+        values.email = "";
+        values.username = "";
+      }
     },
     validationSchema: registerValidation,
   });
@@ -116,6 +124,12 @@ const Register = () => {
                     </svg>
                   </div>
                 </div>
+                {registerFormik.errors.fullName &&
+                  registerFormik.touched.fullName && (
+                    <span className="text-red-500 text-sm block">
+                      {registerFormik.errors.fullName}
+                    </span>
+                  )}
               </div>
 
               <div className="space-y-2">
@@ -153,6 +167,12 @@ const Register = () => {
                     </svg>
                   </div>
                 </div>
+                {registerFormik.errors.username &&
+                  registerFormik.touched.username && (
+                    <span className="text-red-500 text-sm mt-1 block">
+                      {registerFormik.errors.username}
+                    </span>
+                  )}
               </div>
             </div>
 
@@ -191,6 +211,11 @@ const Register = () => {
                   </svg>
                 </div>
               </div>
+              {registerFormik.errors.email && registerFormik.touched.email && (
+                <span className="text-red-500 text-sm mt-1 block">
+                  {registerFormik.errors.email}
+                </span>
+              )}
             </div>
 
             {/* Password and Confirm Password Row */}
@@ -256,6 +281,12 @@ const Register = () => {
                     )}
                   </button>
                 </div>
+                {registerFormik.errors.password &&
+                  registerFormik.touched.password && (
+                    <span className="text-red-500 text-sm mt-1 block">
+                      {registerFormik.errors.password}
+                    </span>
+                  )}
               </div>
 
               <div className="space-y-2">
@@ -319,13 +350,24 @@ const Register = () => {
                     )}
                   </button>
                 </div>
+                {registerFormik.errors.confirmPassword &&
+                  registerFormik.touched.confirmPassword && (
+                    <span className="text-red-500 text-sm block">
+                      {registerFormik.errors.confirmPassword}
+                    </span>
+                  )}
               </div>
             </div>
 
             {/* Create Account Button */}
             <button
+              disabled={
+                registerFormik.isSubmitting ||
+                !registerFormik.dirty ||
+                Object.entries(registerFormik.errors).length > 0
+              }
               type="submit"
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-xl font-medium hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 mt-2 cursor-pointer"
+              className="w-full bg-gradient-to-r disabled:cursor-not-allowed disabled:from-blue-400 disabled:to-indigo-400 from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-xl font-medium hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 mt-2 cursor-pointer "
             >
               Create Account
             </button>
