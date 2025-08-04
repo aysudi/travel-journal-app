@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx src/server.ts",
+    "dev": "nodemon --exec tsx src/server.ts",
+    "dev:direct": "tsx src/server.ts",
     "build": "tsc",
     "start": "node dist/src/server.js"
   },

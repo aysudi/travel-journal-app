@@ -167,14 +167,12 @@ export const verifyUserEmail = async (
   next: NextFunction
 ) => {
   console.log("hello");
+  console.log("req.query: ", req.query);
+  console.log("req.params: ", req.params);
   try {
     const { token } = req.query;
 
-    console.log("Verification token:", token);
-
     const response = await verifyEmail(token);
-
-    console.log("response: ", response);
 
     res.redirect(
       `${config.CLIENT_URL}/auth/email-verified?message=${response?.message}`

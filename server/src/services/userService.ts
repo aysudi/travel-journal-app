@@ -106,7 +106,7 @@ export const login = async (credentials: {
 
   if (!user) throw new Error("Invalid credentials");
 
-  if (!user.emailVerified) throw new Error("User should be verified first");
+  if (!user.isVerified) throw new Error("User should be verified first");
 
   if (user.lockUntil && user.lockUntil > new Date()) {
     const unlockTime = new Date(user.lockUntil).toLocaleString();
@@ -185,19 +185,20 @@ export const login = async (credentials: {
 
 export const verifyEmail = async (token: any) => {
   const isValidToken: any = verifyAccessToken(token);
+  console.log(isValidToken);
 
   if (isValidToken) {
     const { id } = isValidToken;
     const user: any = await UserModel.findById(id);
 
     if (user) {
-      if (user.emailVerified) {
+      if (user.isVerified) {
         return {
           success: false,
           message: "email already has been verified",
         };
       } else {
-        user.emailVerified = true;
+        user.isVerified = true;
         await user.save();
         return {
           success: true,
