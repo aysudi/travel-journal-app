@@ -184,3 +184,51 @@ export const verifyUserEmail = async (
     next(error);
   }
 };
+
+export const resendVerificationEmail = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        message: "Email is required",
+        data: null,
+      });
+    }
+
+    const users = await getByEmail(email);
+
+    if (!users || users.length === 0) {
+      return res.status(404).json({
+        message: "User not found",
+        data: null,
+      });
+    }
+
+    const user = users[0];
+
+    if (user.isVerified) {
+      return res.status(400).json({
+        message: "Email is already verified",
+        data: null,
+      });
+    }
+
+    // Generate new verification token
+    const token = generateAccessToken({ email: user.email });
+    const verificationLink = `${config.SERVER_URL}/auth/verify-email?token=${token}`;
+
+    await sendVerificationEmail(user.email, user.fullName, verificationLink);
+
+    res.status(200).json({
+      message: "Verification email sent successfully",
+      data: null,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
