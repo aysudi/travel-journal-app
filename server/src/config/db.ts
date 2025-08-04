@@ -13,8 +13,6 @@ const connectToDB = (app: any) => {
   }
 
   console.log("🔄 Attempting to connect to MongoDB...");
-  console.log("DB_URL exists:", !!config.DB_URL);
-  console.log("DB_PASSWORD exists:", !!config.DB_PASSWORD);
 
   mongoose
     .connect(config.DB_URL)

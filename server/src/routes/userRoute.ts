@@ -12,11 +12,11 @@ import userValidate from "../middlewares/userValidate.js";
 const userRouter = express.Router();
 
 userRouter.get("/", getUsers);
-userRouter.get("/:email", getUserByEmail);
-userRouter.delete("/:id", deleteUser);
 userRouter.post("/register", userValidate, registerUser);
 userRouter.post("/login", loginUser);
 // userRouter.get("/unlock-account", sendUnlockAccountEmail);
 userRouter.get("/verify-email", verifyUserEmail);
+userRouter.get("/:email", getUserByEmail);
+userRouter.delete("/:id", deleteUser);
 
 export default userRouter;
