@@ -1,33 +1,96 @@
-import { useState } from "react";
-import { Link } from "react-router";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { useFormik } from "formik";
+import loginValidation from "../../validations/loginValidation";
+import { enqueueSnackbar } from "notistack";
+import controller from "../../services/commonRequests";
+import endpoints from "../../services/api";
+import { jwtDecode } from "jwt-decode";
 
 const Login = () => {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
   const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const message = searchParams.get("message");
+
+  const error = searchParams.get("error");
+
+  useEffect(() => {
+    if (error) {
+      enqueueSnackbar(
+        "This account has been created with email, please try to login with email",
+        {
+          autoHideDuration: 2000,
+          anchorOrigin: {
+            vertical: "bottom",
+            horizontal: "right",
+          },
+          variant: "error",
+        }
+      );
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (message) {
+      enqueueSnackbar(message, {
+        autoHideDuration: 2000,
+        anchorOrigin: {
+          vertical: "bottom",
+          horizontal: "right",
+        },
+        variant: "success",
+      });
+    }
+  }, [message]);
 
   const loginFormik = useFormik({
-    initialValues: formData,
-    onSubmit: (values) => {
-      console.log("Form submitted:", values);
+    initialValues: {
+      email: "",
+      password: "",
     },
-    // validationSchema:
+    onSubmit: async (values, actions) => {
+      try {
+        const response = await controller.post(
+          `${endpoints.users}/login`,
+          values
+        );
+
+        if (response.statusCode == 401 || response.statusCode == 500) {
+          actions.resetForm();
+
+          return enqueueSnackbar(response.message, {
+            autoHideDuration: 2000,
+            anchorOrigin: {
+              vertical: "bottom",
+              horizontal: "right",
+            },
+            variant: "error",
+          });
+        } else {
+          enqueueSnackbar("User successfully login", {
+            autoHideDuration: 2000,
+            anchorOrigin: {
+              vertical: "bottom",
+              horizontal: "right",
+            },
+            variant: "success",
+          });
+
+          if (response.token) {
+            jwtDecode(response.token);
+            localStorage.setItem("token", JSON.stringify(response.token));
+
+            navigate("/dashboard");
+          }
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    validationSchema: loginValidation,
   });
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Login attempt:", formData);
-  };
 
   const handleGoogleLogin = () => {
     console.log("Google login");
@@ -55,7 +118,7 @@ const Login = () => {
 
         {/* Login Form */}
         <div className="bg-white rounded-3xl shadow-xl p-8 border border-slate-200/50">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={loginFormik.handleSubmit} className="space-y-5">
             {/* Email Input */}
             <div className="space-y-2">
               <label
@@ -92,6 +155,11 @@ const Login = () => {
                   </svg>
                 </div>
               </div>
+              {loginFormik.errors.email && loginFormik.touched.email && (
+                <span className="text-red-500 text-sm block">
+                  {loginFormik.errors.email}
+                </span>
+              )}
             </div>
 
             {/* Password Input */}
@@ -107,8 +175,9 @@ const Login = () => {
                   id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
-                  value={formData.password}
-                  onChange={handleChange}
+                  value={loginFormik.values.password}
+                  onChange={loginFormik.handleChange}
+                  onBlur={loginFormik.handleBlur}
                   required
                   className="w-full pl-4 pr-9 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-slate-700 placeholder-slate-400"
                   placeholder="Enter your password"
@@ -155,6 +224,11 @@ const Login = () => {
                   )}
                 </button>
               </div>
+              {loginFormik.errors.password && loginFormik.touched.password && (
+                <span className="text-red-500 text-sm block">
+                  {loginFormik.errors.password}
+                </span>
+              )}
             </div>
 
             {/* Forgot Password Link */}
@@ -169,8 +243,13 @@ const Login = () => {
 
             {/* Sign In Button */}
             <button
+              disabled={
+                loginFormik.isSubmitting ||
+                !loginFormik.dirty ||
+                Object.entries(loginFormik.errors).length > 0
+              }
               type="submit"
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-xl font-medium hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 cursor-pointer"
+              className="w-full bg-gradient-to-r disabled:cursor-not-allowed disabled:from-blue-400 disabled:to-indigo-400 from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-xl font-medium hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 cursor-pointer"
             >
               Sign In
             </button>
