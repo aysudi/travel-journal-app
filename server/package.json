@@ -4,7 +4,6 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon --exec tsx src/server.ts",
-    "dev:direct": "tsx src/server.ts",
     "build": "tsc",
     "start": "node dist/src/server.js"
   },
