@@ -1,6 +1,6 @@
 import cors from "cors";
 import express from "express";
-// Importing routes
+import passport from "passport";
 import userRouter from "./routes/userRoute.js";
 import travelListRouter from "./routes/travelListRoute.js";
 import destinationRouter from "./routes/destinationRoute.js";
@@ -13,6 +13,7 @@ const app = express();
 
 app.use(express.json());
 app.use(cors());
+app.use(passport.initialize());
 
 // Using routes
 app.use("/auth", googleRouter);
