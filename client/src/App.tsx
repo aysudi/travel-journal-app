@@ -1,6 +1,6 @@
 import { createBrowserRouter, RouterProvider } from "react-router";
-import ROUTES from "./route/route";
 import { SnackbarProvider } from "notistack";
+import ROUTES from "./route/route";
 
 const router = createBrowserRouter(ROUTES);
 
