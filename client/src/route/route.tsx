@@ -82,7 +82,7 @@ const ROUTES = [
         element: <EmailVerified />,
       },
       {
-        path: "reset-password",
+        path: "reset-password/:token",
         element: <ResetPassword />,
       },
       {
