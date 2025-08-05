@@ -6,6 +6,8 @@ import travelListRouter from "./routes/travelListRoute.js";
 import destinationRouter from "./routes/destinationRoute.js";
 import journalEntryRouter from "./routes/journalEntryRoute.js";
 import messageRouter from "./routes/messageRoute.js";
+import googleRouter from "./routes/googleRoute.js";
+import githubRouter from "./routes/githubRoute.js";
 
 const app = express();
 
@@ -13,6 +15,8 @@ app.use(express.json());
 app.use(cors());
 
 // Using routes
+app.use("/auth", googleRouter);
+app.use("/auth", githubRouter);
 app.use("/auth", userRouter);
 app.use("/travel-lists", travelListRouter);
 app.use("/destinations", destinationRouter);
