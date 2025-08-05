@@ -74,11 +74,11 @@ const Register = () => {
   });
 
   const handleGoogleRegister = () => {
-    console.log("Google registration");
+    window.location.href = "http://localhost:5050/auth/google";
   };
 
   const handleGithubRegister = () => {
-    console.log("GitHub registration");
+    window.location.href = "http://localhost:5050/auth/github";
   };
 
   return (

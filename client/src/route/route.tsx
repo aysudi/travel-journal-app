@@ -17,6 +17,7 @@ import Profile from "../pages/Client/Profile";
 import RedirectRoot from "./RedirectRoot";
 import PrivateRoute from "./PrivateRoute";
 import PublicRoute from "./PublicRoute";
+import AuthCallback from "../pages/Auth/AuthCallback";
 
 const ROUTES = [
   // Root redirect to login
@@ -87,6 +88,10 @@ const ROUTES = [
       {
         path: "forgot-password",
         element: <ForgotPassword />,
+      },
+      {
+        path: "success/:token",
+        element: <AuthCallback />,
       },
     ],
   },
