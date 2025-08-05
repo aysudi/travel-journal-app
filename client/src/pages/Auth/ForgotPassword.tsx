@@ -3,8 +3,8 @@ import { Link } from "react-router";
 import { enqueueSnackbar } from "notistack";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import instance from "../../services/axiosInstance";
 import endpoints from "../../services/api";
+import controller from "../../services/commonRequests";
 
 const ForgotPassword = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -21,7 +21,7 @@ const ForgotPassword = () => {
     { setSubmitting }: any
   ) => {
     try {
-      await instance.post(`${endpoints.users}/forgot-password`, values);
+      await controller.post(`${endpoints.users}/forgot-password`, values);
 
       setSubmittedEmail(values.email);
       setIsSubmitted(true);
