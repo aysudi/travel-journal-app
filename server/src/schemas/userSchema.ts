@@ -57,6 +57,12 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
+    status: {
+      type: String,
+      enum: ["Viewer", "Editor", "Owner"],
+      default: "Viewer",
+    },
+
     socketId: { type: String, default: null },
 
     lastLogin: { type: Date, default: null },
@@ -64,7 +70,11 @@ const userSchema = new mongoose.Schema(
     lockUntil: { type: Date, default: null },
 
     premium: { type: Boolean, default: false },
-    lists: [{ type: mongoose.Schema.Types.ObjectId, ref: "TravelList" }],
+
+    ownedLists: [{ type: mongoose.Schema.Types.ObjectId, ref: "TravelList" }],
+    collaboratingLists: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "TravelList" },
+    ],
 
     profileVisibility: {
       type: String,
@@ -89,6 +99,10 @@ userSchema.virtual("notifications", {
   localField: "_id",
   foreignField: "recipient",
   options: { sort: { createdAt: -1 } },
+});
+
+userSchema.virtual("allLists").get(function (this: any) {
+  return [...this.ownedLists, ...this.collaboratingLists];
 });
 
 userSchema.index({ email: 1 }, { unique: true });
