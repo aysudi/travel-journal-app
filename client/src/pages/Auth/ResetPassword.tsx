@@ -5,6 +5,7 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import endpoints from "../../services/api";
 import controller from "../../services/commonRequests";
+import { jwtDecode } from "jwt-decode";
 
 const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -42,9 +43,11 @@ const ResetPassword = () => {
     }
 
     try {
+      const decode: any = jwtDecode(token);
+
       await controller.post(`${endpoints.users}/reset-password`, {
-        token,
-        password: values.password,
+        newPassword: values.password,
+        email: decode.email,
       });
 
       setIsSuccess(true);
