@@ -93,11 +93,15 @@ const Login = () => {
   });
 
   const handleGoogleLogin = () => {
-    console.log("Google login");
+    window.location.href = `${
+      import.meta.env.VITE_SERVER_URL
+    }/auth/google?mode=login`;
   };
 
   const handleGithubLogin = () => {
-    console.log("GitHub login");
+    window.location.href = `${
+      import.meta.env.VITE_SERVER_URL
+    }/auth/github?mode=login`;
   };
 
   return (
