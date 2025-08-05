@@ -5,14 +5,11 @@ const destinationSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
-      trim: true,
       maxlength: 100,
     },
-    country: {
+    location: {
       type: String,
       required: true,
-      trim: true,
-      maxlength: 50,
     },
     datePlanned: { type: Date },
     dateVisited: { type: Date },
