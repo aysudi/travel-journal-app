@@ -36,7 +36,6 @@ interface UserProfile {
 }
 
 const Profile = () => {
-  // Mock user data - replace with actual user data from your auth context
   const [user, setUser] = useState<UserProfile>({
     _id: "1",
     fullName: "Sarah Johnson",
