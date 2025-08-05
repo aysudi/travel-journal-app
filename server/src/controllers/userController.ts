@@ -6,6 +6,7 @@ import {
   register,
   login,
   verifyEmail,
+  unlockAcc,
 } from "../services/userService.js";
 import bcrypt from "bcrypt";
 import formatMongoData from "../utils/formatMongoData.js";
@@ -228,6 +229,22 @@ export const resendVerificationEmail = async (
       message: "Verification email sent successfully",
       data: null,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const unlockAccount = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { token } = req.query;
+
+    const response = await unlockAcc(token);
+
+    res.redirect(`${config.CLIENT_URL}/auth/login?message=${response.message}`);
   } catch (error) {
     next(error);
   }
