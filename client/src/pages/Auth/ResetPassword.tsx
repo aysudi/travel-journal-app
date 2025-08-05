@@ -1,19 +1,17 @@
 import { useState } from "react";
-import { Link, useSearchParams, useNavigate } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { enqueueSnackbar } from "notistack";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import instance from "../../services/axiosInstance";
 import endpoints from "../../services/api";
+import controller from "../../services/commonRequests";
 
 const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-
-  const token = searchParams.get("token");
+  const { token } = useParams();
 
   const validationSchema = Yup.object({
     password: Yup.string()
@@ -44,7 +42,7 @@ const ResetPassword = () => {
     }
 
     try {
-      await instance.post(`${endpoints.users}/reset-password`, {
+      await controller.post(`${endpoints.users}/reset-password`, {
         token,
         password: values.password,
       });
