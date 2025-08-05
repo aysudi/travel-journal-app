@@ -1,5 +1,4 @@
 //auth
-import AuthLayout from "../layout/AuthLayout";
 import ForgotPassword from "../pages/Auth/ForgotPassword";
 import Login from "../pages/Auth/Login";
 import Register from "../pages/Auth/Register";
@@ -9,25 +8,26 @@ import EmailVerified from "../pages/Auth/EmailVerified";
 import CheckEmail from "../pages/Auth/CheckEmail";
 
 //client
-import ClientLayout from "../layout/ClientLayout";
 import Dashboard from "../pages/Client/Dashboard";
 import Explore from "../pages/Client/Explore";
 import Journal from "../pages/Client/Journal";
 import ListDetails from "../pages/Client/ListDetails";
 import Lists from "../pages/Client/Lists";
 import Profile from "../pages/Client/Profile";
-import { Navigate } from "react-router";
+import RedirectRoot from "./RedirectRoot";
+import PrivateRoute from "./PrivateRoute";
+import PublicRoute from "./PublicRoute";
 
 const ROUTES = [
   // Root redirect to login
   {
     path: "/",
-    element: <Navigate to="/auth/login" replace />,
+    element: <RedirectRoot />,
   },
   //client routes
   {
     path: "/",
-    element: <ClientLayout />,
+    element: <PrivateRoute />,
     children: [
       {
         path: "dashboard",
@@ -58,7 +58,7 @@ const ROUTES = [
   //auth routes
   {
     path: "/auth",
-    element: <AuthLayout />,
+    element: <PublicRoute />,
     children: [
       {
         path: "login",
