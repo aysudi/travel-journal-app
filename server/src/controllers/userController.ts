@@ -8,6 +8,7 @@ import {
   verifyEmail,
   unlockAcc,
   forgotPassword as forgotPasswordService,
+  resetPass,
 } from "../services/userService.js";
 import bcrypt from "bcrypt";
 import formatMongoData from "../utils/formatMongoData.js";
@@ -268,5 +269,21 @@ export const forgotPassword = async (
     } else {
       next(new Error("Internal server error"));
     }
+  }
+};
+
+export const resetPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { newPassword, email } = req.body;
+    await resetPass(newPassword, email);
+    res.status(200).json({
+      message: "password reset successfully!",
+    });
+  } catch (error) {
+    next(error);
   }
 };

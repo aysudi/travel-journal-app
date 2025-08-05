@@ -252,3 +252,14 @@ export const forgotPassword = async (email: string) => {
     sendForgotPasswordEmail(email, user.fullName, resetPasswordLink);
   }
 };
+
+export const resetPass = async (newPassword: string, email: string) => {
+  const user = await UserModel.findOne({ email: email });
+  if (!user) throw new Error("user not found!");
+
+  const saltRounds = 10;
+  const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+  user.password = hashedPassword;
+  await user.save();
+  return user;
+};
