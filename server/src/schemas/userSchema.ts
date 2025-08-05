@@ -13,10 +13,6 @@ const userSchema = new mongoose.Schema(
       required: true,
       minlength: [3, "Username must be at least 3 characters long"],
       maxlength: [30, "Username cannot exceed 30 characters"],
-      match: [
-        /^[a-zA-Z0-9_]+$/,
-        "Username can only contain letters, numbers, and underscores",
-      ],
     },
     email: {
       type: String,
@@ -37,7 +33,9 @@ const userSchema = new mongoose.Schema(
 
     password: {
       type: String,
-      required: [true, "Password is required"],
+      required: function (this: any) {
+        return this.provider === "local";
+      },
       minlength: [6, "Password must be at least 6 characters long"],
     },
 
