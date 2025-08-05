@@ -8,6 +8,7 @@ import {
   verifyUserEmail,
   resendVerificationEmail,
   unlockAccount,
+  forgotPassword,
 } from "../controllers/userController.js";
 import userValidate from "../middlewares/userValidate.js";
 
@@ -19,6 +20,7 @@ userRouter.post("/login", loginUser);
 userRouter.post("/resend-verification", resendVerificationEmail);
 userRouter.get("/unlock-account", unlockAccount);
 userRouter.get("/verify-email", verifyUserEmail);
+userRouter.post("/forgot-password", forgotPassword);
 userRouter.get("/:email", getUserByEmail);
 userRouter.delete("/:id", deleteUser);
 

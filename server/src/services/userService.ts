@@ -6,7 +6,10 @@ import {
   verifyAccessToken,
 } from "../utils/jwt.js";
 import config from "../config/config.js";
-import { sendUnlockAccountEmail } from "../utils/sendMail.js";
+import {
+  sendForgotPasswordEmail,
+  sendUnlockAccountEmail,
+} from "../utils/sendMail.js";
 
 const MAX_ATTEMPTS = 3;
 const LOCK_TIME = 10 * 60 * 1000;
@@ -230,5 +233,22 @@ export const unlockAcc = async (token: any) => {
     }
   } else {
     throw new Error("Invalid or expired token");
+  }
+};
+
+export const forgotPassword = async (email: string) => {
+  const user = await UserModel.findOne({ email });
+  if (!user) {
+    throw new Error("email does not exist!");
+  } else {
+    const token = generateAccessToken(
+      {
+        id: user.id,
+        email: user.email,
+      },
+      "30m"
+    );
+    const resetPasswordLink = `${config.CLIENT_URL}/auth/reset-password/${token}`;
+    sendForgotPasswordEmail(email, user.fullName, resetPasswordLink);
   }
 };
