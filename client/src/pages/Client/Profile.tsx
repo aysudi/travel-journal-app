@@ -1,41 +1,33 @@
 import React, { useState, useRef } from "react";
 import {
-  User,
-  Mail,
   Camera,
   Edit3,
   Save,
   X,
-  Shield,
   Calendar,
   Crown,
   MapPin,
   Users,
   BookOpen,
-  Settings,
-  Globe,
-  Lock,
 } from "lucide-react";
-import {
-  useUserProfile,
-  useUpdateProfile,
-  useChangePassword,
-} from "../../hooks/useAuth";
-import type { UserProfile } from "../../types/api";
+import { useUserProfile, useUpdateProfile } from "../../hooks/useAuth";
+import ChangePassword from "../../components/Client/Profile/ChangePassword";
+import UserInfo from "../../components/Client/Profile/UserInfo";
+import formatDate from "../../utils/formatDate";
 
 const Profile = () => {
   const { data: user, isLoading, isError, error } = useUserProfile();
   const updateProfileMutation = useUpdateProfile();
-  const changePasswordMutation = useChangePassword();
 
   const [isEditing, setIsEditing] = useState(false);
-  const [editedUser, setEditedUser] = useState<Partial<UserProfile>>({});
   const [showChangePassword, setShowChangePassword] = useState(false);
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
+  const [editData, setEditData] = useState({
+    fullName: "",
+    username: "",
+    profileVisibility: "public" as "public" | "private",
+    profileImage: "",
   });
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (isLoading) {
@@ -75,77 +67,42 @@ const Profile = () => {
 
   const handleEdit = () => {
     setIsEditing(true);
-    setEditedUser({ ...user });
+    setEditData({
+      fullName: user.fullName,
+      username: user.username,
+      profileVisibility: user.profileVisibility,
+      profileImage: user.profileImage,
+    });
   };
 
   const handleSave = async () => {
     try {
-      await updateProfileMutation.mutateAsync(editedUser);
+      await updateProfileMutation.mutateAsync(editData);
       setIsEditing(false);
-      setEditedUser({});
     } catch (error) {
       console.error("Failed to update profile:", error);
     }
   };
 
   const handleCancel = () => {
-    setEditedUser({});
     setIsEditing(false);
+    setEditData({
+      fullName: user.fullName,
+      username: user.username,
+      profileVisibility: user.profileVisibility,
+      profileImage: user.profileImage,
+    });
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (file && isEditing) {
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
-        if (isEditing) {
-          setEditedUser({ ...editedUser, profileImage: result });
-        }
+        setEditData((prev) => ({ ...prev, profileImage: result }));
       };
       reader.readAsDataURL(file);
-    }
-  };
-
-  const handlePasswordChange = async () => {
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert("New passwords do not match");
-      return;
-    }
-
-    try {
-      await changePasswordMutation.mutateAsync(passwordData);
-
-      setShowChangePassword(false);
-      setPasswordData({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
-
-      alert("Password changed successfully!");
-    } catch (error) {
-      console.error("Failed to change password:", error);
-      alert("Failed to change password. Please try again.");
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
-  const getProviderIcon = (provider: string) => {
-    switch (provider) {
-      case "google":
-        return "🔍";
-      case "github":
-        return "🐙";
-      default:
-        return "🔒";
     }
   };
 
@@ -182,8 +139,8 @@ const Profile = () => {
               <div className="relative">
                 <img
                   src={
-                    isEditing && editedUser.profileImage
-                      ? editedUser.profileImage
+                    isEditing && editData.profileImage
+                      ? editData.profileImage
                       : user.profileImage
                   }
                   alt="Profile"
@@ -241,11 +198,22 @@ const Profile = () => {
                   ) : (
                     <>
                       <button
+                        type="submit"
                         onClick={handleSave}
-                        className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition-colors font-medium"
+                        disabled={updateProfileMutation.isPending}
+                        className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 disabled:bg-green-300 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg transition-colors font-medium"
                       >
-                        <Save size={18} />
-                        Save Changes
+                        {updateProfileMutation.isPending ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <Save size={18} />
+                            Save Changes
+                          </>
+                        )}
                       </button>
                       <button
                         onClick={handleCancel}
@@ -261,222 +229,13 @@ const Profile = () => {
             </div>
 
             {/* User Info */}
-            <div className="pt-6">
-              {/* Edit Mode Indicator */}
-              {isEditing && (
-                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-center gap-2 text-blue-800">
-                    <Edit3 size={20} />
-                    <span className="font-medium">Edit Mode</span>
-                  </div>
-                  <p className="text-blue-600 text-sm mt-1">
-                    Make your changes and click "Save Changes" when done.
-                  </p>
-                </div>
-              )}
-
-              <div className="grid md:grid-cols-2 gap-8">
-                {/* Basic Information */}
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                    <User size={24} />
-                    Basic Information
-                  </h2>
-
-                  {/* Full Name */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-2">
-                      Full Name
-                    </label>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editedUser.fullName || user.fullName}
-                        onChange={(e) =>
-                          setEditedUser({
-                            ...editedUser,
-                            fullName: e.target.value,
-                          })
-                        }
-                        className="w-full px-4 py-3 border-2 border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-blue-50"
-                        placeholder="Enter your full name"
-                      />
-                    ) : (
-                      <p className="text-lg text-gray-800 bg-gray-50 px-4 py-3 rounded-lg">
-                        {user.fullName}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Username */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-2">
-                      Username
-                    </label>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editedUser.username || user.username}
-                        onChange={(e) =>
-                          setEditedUser({
-                            ...editedUser,
-                            username: e.target.value,
-                          })
-                        }
-                        className="w-full px-4 py-3 border-2 border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-blue-50"
-                        placeholder="Enter your username"
-                      />
-                    ) : (
-                      <p className="text-lg text-gray-800 bg-gray-50 px-4 py-3 rounded-lg">
-                        @{user.username}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Email */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-2">
-                      Email Address
-                      {isEditing && (
-                        <span className="text-xs text-gray-500 ml-2">
-                          (Cannot be changed)
-                        </span>
-                      )}
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <Mail size={20} className="text-gray-400" />
-                      <p
-                        className={`text-lg text-gray-800 px-4 py-3 rounded-lg flex-1 ${
-                          isEditing
-                            ? "bg-gray-100 border border-gray-200"
-                            : "bg-gray-50"
-                        }`}
-                      >
-                        {user.email}
-                      </p>
-                      {user.isVerified && (
-                        <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                          Verified
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Profile Visibility */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-2">
-                      Profile Visibility
-                    </label>
-                    {isEditing ? (
-                      <select
-                        value={
-                          editedUser.profileVisibility || user.profileVisibility
-                        }
-                        onChange={(e) =>
-                          setEditedUser({
-                            ...editedUser,
-                            profileVisibility: e.target.value as
-                              | "public"
-                              | "private",
-                          })
-                        }
-                        className="w-full px-4 py-3 border-2 border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-blue-50"
-                      >
-                        <option value="public">
-                          🌍 Public - Anyone can see your profile
-                        </option>
-                        <option value="private">
-                          🔒 Private - Only you can see your profile
-                        </option>
-                      </select>
-                    ) : (
-                      <div className="flex items-center gap-2 bg-gray-50 px-4 py-3 rounded-lg">
-                        {user.profileVisibility === "public" ? (
-                          <Globe size={20} className="text-green-500" />
-                        ) : (
-                          <Lock size={20} className="text-gray-500" />
-                        )}
-                        <span className="text-lg text-gray-800 capitalize">
-                          {user.profileVisibility}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Account Information */}
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                    <Settings size={24} />
-                    Account Details
-                  </h2>
-
-                  {/* Account Provider */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-2">
-                      Account Provider
-                    </label>
-                    <div className="flex items-center gap-2 bg-gray-50 px-4 py-3 rounded-lg">
-                      <span className="text-2xl">
-                        {getProviderIcon(user.provider)}
-                      </span>
-                      <span className="text-lg text-gray-800 capitalize">
-                        {user.provider}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Status */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-2">
-                      Status
-                    </label>
-                    <div className="flex items-center gap-2 bg-gray-50 px-4 py-3 rounded-lg">
-                      <Shield size={20} className="text-blue-500" />
-                      <span className="text-lg text-gray-800">
-                        {user.status}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Member Since */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-2">
-                      Member Since
-                    </label>
-                    <div className="flex items-center gap-2 bg-gray-50 px-4 py-3 rounded-lg">
-                      <Calendar size={20} className="text-gray-400" />
-                      <span className="text-lg text-gray-800">
-                        {formatDate(user.createdAt)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Last Login */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-2">
-                      Last Login
-                    </label>
-                    <div className="flex items-center gap-2 bg-gray-50 px-4 py-3 rounded-lg">
-                      <Calendar size={20} className="text-gray-400" />
-                      <span className="text-lg text-gray-800">
-                        {formatDate(user.lastLogin)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Change Password Button (only for local accounts) */}
-                  {user.provider === "local" && !isEditing && (
-                    <button
-                      onClick={() => setShowChangePassword(true)}
-                      className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg transition-colors font-medium"
-                    >
-                      Change Password
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
+            <UserInfo
+              user={user}
+              isEditing={isEditing}
+              editData={editData}
+              setEditData={setEditData}
+              setShowChangePassword={setShowChangePassword}
+            />
           </div>
         </div>
 
@@ -513,81 +272,7 @@ const Profile = () => {
 
         {/* Change Password Modal */}
         {showChangePassword && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-                Change Password
-              </h2>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-2">
-                    Current Password
-                  </label>
-                  <input
-                    type="password"
-                    value={passwordData.currentPassword}
-                    onChange={(e) =>
-                      setPasswordData({
-                        ...passwordData,
-                        currentPassword: e.target.value,
-                      })
-                    }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-2">
-                    New Password
-                  </label>
-                  <input
-                    type="password"
-                    value={passwordData.newPassword}
-                    onChange={(e) =>
-                      setPasswordData({
-                        ...passwordData,
-                        newPassword: e.target.value,
-                      })
-                    }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-2">
-                    Confirm New Password
-                  </label>
-                  <input
-                    type="password"
-                    value={passwordData.confirmPassword}
-                    onChange={(e) =>
-                      setPasswordData({
-                        ...passwordData,
-                        confirmPassword: e.target.value,
-                      })
-                    }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-4 mt-8">
-                <button
-                  onClick={handlePasswordChange}
-                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg transition-colors font-medium"
-                >
-                  Update Password
-                </button>
-                <button
-                  onClick={() => setShowChangePassword(false)}
-                  className="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-3 rounded-lg transition-colors font-medium"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
+          <ChangePassword setShowChangePassword={setShowChangePassword} />
         )}
       </div>
     </div>
