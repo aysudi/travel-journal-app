@@ -46,10 +46,15 @@ export class ApiConfig {
     return this.baseURL;
   }
 
-  public getHeaders(includeAuth: boolean = true): HeadersInit {
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
-    };
+  public getHeaders(
+    includeAuth: boolean = true,
+    skipContentType: boolean = false
+  ): HeadersInit {
+    const headers: HeadersInit = {};
+
+    if (!skipContentType) {
+      headers["Content-Type"] = "application/json";
+    }
 
     if (includeAuth) {
       const token = this.getToken();
@@ -101,7 +106,10 @@ export class ApiConfig {
     includeAuth: boolean = true
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
-    const headers = this.getHeaders(includeAuth);
+
+    // Check if Content-Type should be skipped (for FormData)
+    const skipContentType = options.body instanceof FormData;
+    const headers = this.getHeaders(includeAuth, skipContentType);
 
     const config: RequestInit = {
       ...options,
