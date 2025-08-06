@@ -151,7 +151,7 @@ export interface RegisterData {
 }
 
 export interface AuthResponse {
-  user: UserProfile;
+  message: string;
   token: string;
 }
 

@@ -4,15 +4,15 @@ import { useFormik } from "formik";
 import loginValidation from "../../validations/loginValidation";
 import { enqueueSnackbar } from "notistack";
 import { jwtDecode } from "jwt-decode";
-import { authService } from "../../services";
+import { useLogin } from "../../hooks/useAuth";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const loginMutation = useLogin();
 
   const message = searchParams.get("message");
-
   const error = searchParams.get("error");
 
   useEffect(() => {
@@ -49,23 +49,10 @@ const Login = () => {
       email: "",
       password: "",
     },
-    onSubmit: async (values, actions) => {
-      try {
-        const response: any = await authService.login(values);
-
-        if (response.statusCode == 401 || response.statusCode == 500) {
-          actions.resetForm();
-
-          return enqueueSnackbar(response.message, {
-            autoHideDuration: 2000,
-            anchorOrigin: {
-              vertical: "bottom",
-              horizontal: "right",
-            },
-            variant: "error",
-          });
-        } else {
-          enqueueSnackbar("User successfully login", {
+    onSubmit: (values, actions) => {
+      loginMutation.mutate(values, {
+        onSuccess: (response) => {
+          enqueueSnackbar("User successfully logged in", {
             autoHideDuration: 2000,
             anchorOrigin: {
               vertical: "bottom",
@@ -77,13 +64,29 @@ const Login = () => {
           if (response.token) {
             jwtDecode(response.token);
             localStorage.setItem("token", JSON.stringify(response.token));
-
             navigate("/dashboard");
           }
-        }
-      } catch (error) {
-        console.log(error);
-      }
+        },
+        onError: (error: any) => {
+          actions.resetForm();
+
+          let errorMessage = "Login failed. Please try again.";
+          if (error?.response?.data?.message) {
+            errorMessage = error.response.data.message;
+          } else if (error?.message) {
+            errorMessage = error.message;
+          }
+
+          enqueueSnackbar(errorMessage, {
+            autoHideDuration: 2000,
+            anchorOrigin: {
+              vertical: "bottom",
+              horizontal: "right",
+            },
+            variant: "error",
+          });
+        },
+      });
     },
     validationSchema: loginValidation,
   });
@@ -246,12 +249,39 @@ const Login = () => {
               disabled={
                 loginFormik.isSubmitting ||
                 !loginFormik.dirty ||
-                Object.entries(loginFormik.errors).length > 0
+                Object.entries(loginFormik.errors).length > 0 ||
+                loginMutation.isPending
               }
               type="submit"
               className="w-full bg-gradient-to-r disabled:cursor-not-allowed disabled:from-blue-400 disabled:to-indigo-400 from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-xl font-medium hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 cursor-pointer"
             >
-              Sign In
+              {loginMutation.isPending ? (
+                <div className="flex items-center justify-center">
+                  <svg
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Signing In...
+                </div>
+              ) : (
+                "Sign In"
+              )}
             </button>
           </form>
 

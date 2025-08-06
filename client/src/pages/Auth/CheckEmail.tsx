@@ -1,16 +1,17 @@
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { enqueueSnackbar } from "notistack";
-import { authService } from "../../services";
+import { useResendVerification } from "../../hooks/useAuth";
 
 const CheckEmail = () => {
   const [searchParams] = useSearchParams();
   const [isResending, setIsResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const resendVerificationMutation = useResendVerification();
 
   const email = searchParams.get("email");
 
-  const handleResendVerification = async () => {
+  const handleResendVerification = () => {
     if (!email) {
       enqueueSnackbar("Cannot resend verification. Email address not found.", {
         variant: "error",
@@ -19,51 +20,52 @@ const CheckEmail = () => {
       return;
     }
 
-    try {
-      setIsResending(true);
+    setIsResending(true);
 
-      await authService.resendVerification(email);
-
-      enqueueSnackbar("Verification email sent! Please check your inbox.", {
-        autoHideDuration: 3000,
-        anchorOrigin: {
-          vertical: "bottom",
-          horizontal: "right",
-        },
-        variant: "success",
-      });
-
-      setResendCooldown(60);
-      const timer = setInterval(() => {
-        setResendCooldown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
+    resendVerificationMutation.mutate(email, {
+      onSuccess: () => {
+        enqueueSnackbar("Verification email sent! Please check your inbox.", {
+          autoHideDuration: 3000,
+          anchorOrigin: {
+            vertical: "bottom",
+            horizontal: "right",
+          },
+          variant: "success",
         });
-      }, 1000);
-    } catch (error: any) {
-      console.error("Resend verification error:", error);
 
-      let errorMessage =
-        "Failed to resend verification email. Please try again.";
+        setResendCooldown(60);
+        const timer = setInterval(() => {
+          setResendCooldown((prev) => {
+            if (prev <= 1) {
+              clearInterval(timer);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+        setIsResending(false);
+      },
+      onError: (error: any) => {
+        console.error("Resend verification error:", error);
 
-      if (error?.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      }
+        let errorMessage =
+          "Failed to resend verification email. Please try again.";
 
-      enqueueSnackbar(errorMessage, {
-        autoHideDuration: 3000,
-        anchorOrigin: {
-          vertical: "bottom",
-          horizontal: "right",
-        },
-        variant: "error",
-      });
-    } finally {
-      setIsResending(false);
-    }
+        if (error?.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+
+        enqueueSnackbar(errorMessage, {
+          autoHideDuration: 3000,
+          anchorOrigin: {
+            vertical: "bottom",
+            horizontal: "right",
+          },
+          variant: "error",
+        });
+        setIsResending(false);
+      },
+    });
   };
 
   return (
@@ -144,10 +146,14 @@ const CheckEmail = () => {
           <div className="space-y-3">
             <button
               onClick={handleResendVerification}
-              disabled={isResending || resendCooldown > 0}
+              disabled={
+                isResending ||
+                resendCooldown > 0 ||
+                resendVerificationMutation.isPending
+              }
               className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-xl font-medium hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              {isResending ? (
+              {isResending || resendVerificationMutation.isPending ? (
                 <span className="flex items-center justify-center">
                   <svg
                     className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
