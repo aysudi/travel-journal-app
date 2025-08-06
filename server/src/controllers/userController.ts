@@ -11,6 +11,7 @@ import {
   resetPass,
   getUserById,
   updateUser,
+  changeUserPassword,
 } from "../services/userService.js";
 import bcrypt from "bcrypt";
 import formatMongoData from "../utils/formatMongoData.js";
@@ -361,6 +362,24 @@ export const resetPassword = async (
     await resetPass(newPassword, email);
     res.status(200).json({
       message: "password reset successfully!",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const changePassword = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user.id;
+    const { currentPassword, newPassword } = req.body;
+
+    await changeUserPassword(userId, currentPassword, newPassword);
+    res.status(200).json({
+      message: "Password changed successfully!",
     });
   } catch (error) {
     next(error);
