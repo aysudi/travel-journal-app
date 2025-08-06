@@ -33,7 +33,6 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: (credentials: LoginData) => authService.login(credentials),
     onSuccess: () => {
-      // Invalidate and refetch user profile after login
       queryClient.invalidateQueries({ queryKey: authKeys.profile() });
     },
     onError: (error) => {
@@ -59,7 +58,6 @@ export const useUpdateProfile = () => {
   return useMutation({
     mutationFn: (data: UpdateProfileData) => userService.updateProfile(data),
     onSuccess: (updatedUser: UserProfile) => {
-      // Update the cached profile data without invalidating
       queryClient.setQueryData(authKeys.profile(), updatedUser);
     },
     onError: (error) => {
@@ -85,12 +83,10 @@ export const useLogout = () => {
   return useMutation({
     mutationFn: () => authService.logout(),
     onSuccess: () => {
-      // Clear all queries when logging out
       queryClient.clear();
     },
     onError: (error) => {
       console.error("Logout failed:", error);
-      // Even if logout fails on server, clear local data
       queryClient.clear();
     },
   });
