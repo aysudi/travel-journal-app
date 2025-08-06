@@ -97,7 +97,6 @@ export const updateProfile = async (
     const userId = req.user.id;
     const updateData = req.body;
 
-    // Remove sensitive fields that shouldn't be updated via profile
     const allowedFields = [
       "fullName",
       "username",
