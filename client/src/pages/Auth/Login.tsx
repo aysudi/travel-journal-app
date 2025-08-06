@@ -3,9 +3,8 @@ import { Link, useNavigate, useSearchParams } from "react-router";
 import { useFormik } from "formik";
 import loginValidation from "../../validations/loginValidation";
 import { enqueueSnackbar } from "notistack";
-import controller from "../../services/commonRequests";
-import endpoints from "../../services/api";
 import { jwtDecode } from "jwt-decode";
+import { authService } from "../../services";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -52,10 +51,7 @@ const Login = () => {
     },
     onSubmit: async (values, actions) => {
       try {
-        const response = await controller.post(
-          `${endpoints.users}/login`,
-          values
-        );
+        const response: any = await authService.login(values);
 
         if (response.statusCode == 401 || response.statusCode == 500) {
           actions.resetForm();

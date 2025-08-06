@@ -1,4 +1,4 @@
-import type { ApiResponse, ApiError } from "../types/api";
+import type { ApiError } from "../types/api";
 
 export class ApiConfig {
   private static instance: ApiConfig;
@@ -6,7 +6,7 @@ export class ApiConfig {
   private token: string | null = null;
 
   private constructor() {
-    this.baseURL = import.meta.env.VITE_API_URL || "http://localhost:5050";
+    this.baseURL = import.meta.env.VITE_SERVER_URL || "http://localhost:5050";
   }
 
   public static getInstance(): ApiConfig {
@@ -18,19 +18,19 @@ export class ApiConfig {
 
   public setToken(token: string): void {
     this.token = token;
-    localStorage.setItem("auth_token", token);
+    localStorage.setItem("token", token);
   }
 
   public getToken(): string | null {
     if (!this.token) {
-      this.token = localStorage.getItem("auth_token");
+      this.token = localStorage.getItem("token");
     }
     return this.token;
   }
 
   public clearToken(): void {
     this.token = null;
-    localStorage.removeItem("auth_token");
+    localStorage.removeItem("token");
   }
 
   public getBaseURL(): string {
@@ -70,8 +70,8 @@ export class ApiConfig {
     }
 
     try {
-      const data: ApiResponse<T> = await response.json();
-      return data.data;
+      const data = await response.json();
+      return data as T;
     } catch (error) {
       throw new Error("Failed to parse response");
     }
@@ -95,7 +95,7 @@ export class ApiConfig {
 
     try {
       const response = await fetch(url, config);
-      return this.handleResponse<T>(response);
+      return await this.handleResponse<T>(response);
     } catch (error) {
       if (error instanceof Error) {
         throw error;
