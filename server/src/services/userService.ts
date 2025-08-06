@@ -70,11 +70,18 @@ export const updateUser = async (id: string, payload: any) => {
       };
     }
 
-    await user.save();
+    // Update user fields
+    Object.keys(payload).forEach((key) => {
+      if (payload[key] !== undefined && user.schema.paths[key]) {
+        (user as any)[key] = payload[key];
+      }
+    });
+
+    const updatedUser = await user.save();
 
     return {
       success: true,
-      data: user,
+      data: updatedUser,
     };
   } catch (error: unknown) {
     let message = "Internal server error";
