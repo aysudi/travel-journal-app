@@ -2,26 +2,19 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { enqueueSnackbar } from "notistack";
 import { Formik, Form, Field, ErrorMessage } from "formik";
-import * as Yup from "yup";
-import endpoints from "../../services/api";
-import controller from "../../services/commonRequests";
+import { authService } from "../../services";
+import forgotPasswordValidationSchema from "../../validations/forgotPasswordValidation";
 
 const ForgotPassword = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState("");
-
-  const validationSchema = Yup.object({
-    email: Yup.string()
-      .email("Please enter a valid email address")
-      .required("Email is required"),
-  });
 
   const handleSubmit = async (
     values: { email: string },
     { setSubmitting }: any
   ) => {
     try {
-      await controller.post(`${endpoints.users}/forgot-password`, values);
+      await authService.forgotPassword(values);
 
       setSubmittedEmail(values.email);
       setIsSubmitted(true);
@@ -206,7 +199,7 @@ const ForgotPassword = () => {
         <div className="bg-white rounded-3xl shadow-xl p-8 border border-slate-200/50">
           <Formik
             initialValues={{ email: "" }}
-            validationSchema={validationSchema}
+            validationSchema={forgotPasswordValidationSchema}
             onSubmit={handleSubmit}
           >
             {({ isSubmitting, touched, errors }) => (

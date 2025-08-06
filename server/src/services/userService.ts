@@ -185,7 +185,6 @@ export const login = async (credentials: {
 
 export const verifyEmail = async (token: any) => {
   const isValidToken: any = verifyAccessToken(token);
-  console.log(isValidToken);
 
   if (isValidToken) {
     const { id } = isValidToken;

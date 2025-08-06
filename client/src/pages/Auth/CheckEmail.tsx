@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { enqueueSnackbar } from "notistack";
-import instance from "../../services/axiosInstance";
-import endpoints from "../../services/api";
+import { authService } from "../../services";
 
 const CheckEmail = () => {
   const [searchParams] = useSearchParams();
@@ -23,7 +22,7 @@ const CheckEmail = () => {
     try {
       setIsResending(true);
 
-      await instance.post(`${endpoints.users}/resend-verification`, { email });
+      await authService.resendVerification(email);
 
       enqueueSnackbar("Verification email sent! Please check your inbox.", {
         autoHideDuration: 3000,
@@ -34,7 +33,6 @@ const CheckEmail = () => {
         variant: "success",
       });
 
-      // Start cooldown timer
       setResendCooldown(60);
       const timer = setInterval(() => {
         setResendCooldown((prev) => {
