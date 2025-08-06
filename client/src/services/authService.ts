@@ -12,7 +12,7 @@ export class AuthService {
   private readonly endpoint = "/auth";
 
   async login(credentials: LoginData): Promise<AuthResponse> {
-    const response = await apiConfig.request<AuthResponse>(
+    const response: any = await apiConfig.request<AuthResponse>(
       `${this.endpoint}/login`,
       {
         method: "POST",
@@ -21,7 +21,7 @@ export class AuthService {
       false
     );
 
-    apiConfig.setToken(response.token);
+    if (response.statusCode == 500) throw new Error(response.message);
 
     return response;
   }
