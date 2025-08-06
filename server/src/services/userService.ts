@@ -10,12 +10,29 @@ import {
   sendForgotPasswordEmail,
   sendUnlockAccountEmail,
 } from "../utils/sendMail.js";
+import "../models/TravelList.js";
+import "../models/Destination.js";
 
 const MAX_ATTEMPTS = 3;
 const LOCK_TIME = 10 * 60 * 1000;
 
 export const getAll = async () => {
-  return await UserModel.find().select("-password");
+  return await UserModel.find()
+    .select("-password")
+    .populate("ownedLists")
+    .populate("collaboratingLists");
+};
+
+export const getUserById = async (id: string) => {
+  try {
+    const user = await UserModel.findById(id)
+      .select("-password")
+      .populate("ownedLists")
+      .populate("collaboratingLists");
+    return user;
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const getByEmail = async (email: string) =>

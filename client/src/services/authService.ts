@@ -117,7 +117,7 @@ export class AuthService {
 }
 
 export class UserService {
-  private readonly endpoint = "/api/user";
+  private readonly endpoint = "/auth";
 
   async getProfile(): Promise<UserProfile> {
     return apiConfig.request<UserProfile>(`${this.endpoint}/profile`);
