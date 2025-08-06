@@ -21,12 +21,18 @@ const Profile = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
-  const [editData, setEditData] = useState({
+  const [editData, setEditData] = useState<{
+    fullName: string;
+    username: string;
+    profileVisibility: "public" | "private";
+    profileImage: string | File;
+  }>({
     fullName: "",
     username: "",
     profileVisibility: "public" as "public" | "private",
     profileImage: "",
   });
+  const [imagePreview, setImagePreview] = useState<string>("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -77,8 +83,22 @@ const Profile = () => {
 
   const handleSave = async () => {
     try {
-      await updateProfileMutation.mutateAsync(editData);
+      // Create FormData for file upload
+      const formData = new FormData();
+
+      // Add text fields
+      formData.append("fullName", editData.fullName);
+      formData.append("username", editData.username);
+      formData.append("profileVisibility", editData.profileVisibility);
+
+      // Add file if it exists and is a File object
+      if (editData.profileImage instanceof File) {
+        formData.append("profileImage", editData.profileImage);
+      }
+
+      await updateProfileMutation.mutateAsync(formData);
       setIsEditing(false);
+      setImagePreview(""); // Clear preview after successful save
     } catch (error) {
       console.error("Failed to update profile:", error);
     }
@@ -86,6 +106,7 @@ const Profile = () => {
 
   const handleCancel = () => {
     setIsEditing(false);
+    setImagePreview(""); // Clear any image preview
     setEditData({
       fullName: user.fullName,
       username: user.username,
@@ -96,13 +117,9 @@ const Profile = () => {
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && isEditing) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setEditData((prev) => ({ ...prev, profileImage: result }));
-      };
-      reader.readAsDataURL(file);
+    if (e.currentTarget.files && file) {
+      setImagePreview(URL.createObjectURL(file));
+      setEditData((prev: any) => ({ ...prev, profileImage: file }));
     }
   };
 
@@ -138,11 +155,12 @@ const Profile = () => {
             <div className="absolute -top-16 left-8">
               <div className="relative">
                 <img
-                  src={
-                    isEditing && editData.profileImage
-                      ? editData.profileImage
-                      : user.profileImage
-                  }
+                  src={imagePreview || user.profileImage}
+                  // src={
+                  //   isEditing && editData.profileImage
+                  //     ? editData.profileImage
+                  //     : user.profileImage
+                  // }
                   alt="Profile"
                   className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover"
                 />
