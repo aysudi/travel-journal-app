@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import {
   User,
   Mail,
@@ -16,48 +16,20 @@ import {
   Globe,
   Lock,
 } from "lucide-react";
-import { userService } from "../../services";
-
-interface UserProfile {
-  _id: string;
-  fullName: string;
-  username: string;
-  email: string;
-  profileImage: string;
-  provider: "local" | "google" | "github";
-  status: "Viewer" | "Editor" | "Owner";
-  premium: boolean;
-  profileVisibility: "public" | "private";
-  isVerified: boolean;
-  lastLogin: string;
-  createdAt: string;
-  ownedLists: any[];
-  collaboratingLists: any[];
-  journalEntries?: any[];
-}
+import {
+  useUserProfile,
+  useUpdateProfile,
+  useChangePassword,
+} from "../../hooks/useAuth";
+import type { UserProfile } from "../../types/api";
 
 const Profile = () => {
-  const [user, setUser] = useState<UserProfile>({
-    _id: "1",
-    fullName: "Sarah Johnson",
-    username: "sarahj_travels",
-    email: "sarah.johnson@example.com",
-    profileImage:
-      "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
-    provider: "local",
-    status: "Editor",
-    premium: true,
-    profileVisibility: "public",
-    isVerified: true,
-    lastLogin: "2025-08-06T10:30:00Z",
-    createdAt: "2024-01-15T08:00:00Z",
-    ownedLists: Array(5).fill({}),
-    collaboratingLists: Array(3).fill({}),
-    journalEntries: Array(12).fill({}),
-  });
+  const { data: user, isLoading, isError, error } = useUserProfile();
+  const updateProfileMutation = useUpdateProfile();
+  const changePasswordMutation = useChangePassword();
 
   const [isEditing, setIsEditing] = useState(false);
-  const [editedUser, setEditedUser] = useState(user);
+  const [editedUser, setEditedUser] = useState<Partial<UserProfile>>({});
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
@@ -66,29 +38,58 @@ const Profile = () => {
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const userData = await userService.getProfile();
-      setUser(userData);
-      console.log(user);
-    };
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading your profile...</p>
+        </div>
+      </div>
+    );
+  }
 
-    fetchData();
-    console.log("hello");
-  }, []);
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            <p>
+              Error loading profile: {error?.message || "Something went wrong"}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">No user data available</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleEdit = () => {
     setIsEditing(true);
     setEditedUser({ ...user });
   };
 
-  const handleSave = () => {
-    setUser(editedUser);
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      await updateProfileMutation.mutateAsync(editedUser);
+      setIsEditing(false);
+      setEditedUser({});
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+    }
   };
 
   const handleCancel = () => {
-    setEditedUser(user);
+    setEditedUser({});
     setIsEditing(false);
   };
 
@@ -106,14 +107,27 @@ const Profile = () => {
     }
   };
 
-  const handlePasswordChange = () => {
-    // TODO: API call to change password
-    setShowChangePassword(false);
-    setPasswordData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
+  const handlePasswordChange = async () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      alert("New passwords do not match");
+      return;
+    }
+
+    try {
+      await changePasswordMutation.mutateAsync(passwordData);
+
+      setShowChangePassword(false);
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+
+      alert("Password changed successfully!");
+    } catch (error) {
+      console.error("Failed to change password:", error);
+      alert("Failed to change password. Please try again.");
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -167,7 +181,11 @@ const Profile = () => {
             <div className="absolute -top-16 left-8">
               <div className="relative">
                 <img
-                  src={isEditing ? editedUser.profileImage : user.profileImage}
+                  src={
+                    isEditing && editedUser.profileImage
+                      ? editedUser.profileImage
+                      : user.profileImage
+                  }
                   alt="Profile"
                   className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover"
                 />
@@ -273,7 +291,7 @@ const Profile = () => {
                     {isEditing ? (
                       <input
                         type="text"
-                        value={editedUser.fullName}
+                        value={editedUser.fullName || user.fullName}
                         onChange={(e) =>
                           setEditedUser({
                             ...editedUser,
@@ -298,7 +316,7 @@ const Profile = () => {
                     {isEditing ? (
                       <input
                         type="text"
-                        value={editedUser.username}
+                        value={editedUser.username || user.username}
                         onChange={(e) =>
                           setEditedUser({
                             ...editedUser,
@@ -351,7 +369,9 @@ const Profile = () => {
                     </label>
                     {isEditing ? (
                       <select
-                        value={editedUser.profileVisibility}
+                        value={
+                          editedUser.profileVisibility || user.profileVisibility
+                        }
                         onChange={(e) =>
                           setEditedUser({
                             ...editedUser,
@@ -467,7 +487,7 @@ const Profile = () => {
               <MapPin size={32} className="text-blue-600" />
             </div>
             <h3 className="text-2xl font-bold text-gray-800 mb-2">
-              {/* {user.ownedLists.length} */}
+              {user.ownedLists?.length || 0}
             </h3>
             <p className="text-gray-600">Travel Lists Owned</p>
           </div>
@@ -477,7 +497,7 @@ const Profile = () => {
               <Users size={32} className="text-purple-600" />
             </div>
             <h3 className="text-2xl font-bold text-gray-800 mb-2">
-              {/* {user.collaboratingLists.length} */}
+              {user.collaboratingLists?.length || 0}
             </h3>
             <p className="text-gray-600">Collaborating Lists</p>
           </div>
@@ -486,9 +506,7 @@ const Profile = () => {
             <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
               <BookOpen size={32} className="text-green-600" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">
-              {/* {user.journalEntries?.length || 0} */}
-            </h3>
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">0</h3>
             <p className="text-gray-600">Journal Entries</p>
           </div>
         </div>

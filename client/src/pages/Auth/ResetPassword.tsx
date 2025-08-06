@@ -4,7 +4,7 @@ import { enqueueSnackbar } from "notistack";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import { jwtDecode } from "jwt-decode";
 import resetPasswordValidationSchema from "../../validations/resetPasswordValidation";
-import { authService } from "../../services";
+import { useResetPassword } from "../../hooks/useAuth";
 
 const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -12,8 +12,9 @@ const ResetPassword = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const navigate = useNavigate();
   const { token } = useParams();
+  const resetPasswordMutation = useResetPassword();
 
-  const handleSubmit = async (
+  const handleSubmit = (
     values: { password: string; confirmPassword: string },
     { setSubmitting }: any
   ) => {
@@ -25,57 +26,72 @@ const ResetPassword = () => {
           autoHideDuration: 3000,
         }
       );
+      setSubmitting(false);
       return;
     }
 
     try {
       const decode: any = jwtDecode(token);
 
-      await authService.resetPassword({
-        newPassword: values.password,
-        email: decode.email,
-      });
-
-      setIsSuccess(true);
-
-      enqueueSnackbar("Password reset successfully!", {
-        autoHideDuration: 3000,
-        anchorOrigin: {
-          vertical: "bottom",
-          horizontal: "right",
+      resetPasswordMutation.mutate(
+        {
+          newPassword: values.password,
+          email: decode.email,
         },
-        variant: "success",
-      });
+        {
+          onSuccess: () => {
+            setIsSuccess(true);
 
-      // Redirect to login after 3 seconds
-      setTimeout(() => {
-        navigate("/auth/login");
-      }, 3000);
+            enqueueSnackbar("Password reset successfully!", {
+              autoHideDuration: 3000,
+              anchorOrigin: {
+                vertical: "bottom",
+                horizontal: "right",
+              },
+              variant: "success",
+            });
+
+            // Redirect to login after 3 seconds
+            setTimeout(() => {
+              navigate("/auth/login");
+            }, 3000);
+            setSubmitting(false);
+          },
+          onError: (error: any) => {
+            console.error("Reset password error:", error);
+
+            let errorMessage = "Failed to reset password. Please try again.";
+
+            if (error?.response?.data?.message) {
+              errorMessage = error.response.data.message;
+            } else if (error?.message) {
+              errorMessage = error.message;
+            }
+
+            enqueueSnackbar(errorMessage, {
+              autoHideDuration: 3000,
+              anchorOrigin: {
+                vertical: "bottom",
+                horizontal: "right",
+              },
+              variant: "error",
+            });
+            setSubmitting(false);
+          },
+        }
+      );
     } catch (error: any) {
-      console.error("Reset password error:", error);
-
-      let errorMessage = "Failed to reset password. Please try again.";
-
-      if (error?.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error?.message) {
-        errorMessage = error.message;
-      }
-
-      enqueueSnackbar(errorMessage, {
-        autoHideDuration: 3000,
-        anchorOrigin: {
-          vertical: "bottom",
-          horizontal: "right",
-        },
-        variant: "error",
-      });
-    } finally {
+      enqueueSnackbar(
+        "Invalid reset token. Please request a new password reset.",
+        {
+          variant: "error",
+          autoHideDuration: 3000,
+        }
+      );
       setSubmitting(false);
     }
   };
 
-  // Check if token exists
   if (!token) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -136,7 +152,6 @@ const ResetPassword = () => {
     );
   }
 
-  // Success state
   if (isSuccess) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">

@@ -2,53 +2,52 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { enqueueSnackbar } from "notistack";
 import { Formik, Form, Field, ErrorMessage } from "formik";
-import { authService } from "../../services";
+import { useForgotPassword } from "../../hooks/useAuth";
 import forgotPasswordValidationSchema from "../../validations/forgotPasswordValidation";
 
 const ForgotPassword = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState("");
+  const forgotPasswordMutation = useForgotPassword();
 
-  const handleSubmit = async (
-    values: { email: string },
-    { setSubmitting }: any
-  ) => {
-    try {
-      await authService.forgotPassword(values);
+  const handleSubmit = (values: { email: string }, { setSubmitting }: any) => {
+    forgotPasswordMutation.mutate(values, {
+      onSuccess: () => {
+        setSubmittedEmail(values.email);
+        setIsSubmitted(true);
 
-      setSubmittedEmail(values.email);
-      setIsSubmitted(true);
+        enqueueSnackbar("Password reset instructions sent to your email!", {
+          autoHideDuration: 3000,
+          anchorOrigin: {
+            vertical: "bottom",
+            horizontal: "right",
+          },
+          variant: "success",
+        });
+        setSubmitting(false);
+      },
+      onError: (error: any) => {
+        console.error("Forgot password error:", error);
 
-      enqueueSnackbar("Password reset instructions sent to your email!", {
-        autoHideDuration: 3000,
-        anchorOrigin: {
-          vertical: "bottom",
-          horizontal: "right",
-        },
-        variant: "success",
-      });
-    } catch (error: any) {
-      console.error("Forgot password error:", error);
+        let errorMessage = "Failed to send reset email. Please try again.";
 
-      let errorMessage = "Failed to send reset email. Please try again.";
+        if (error?.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error?.message) {
+          errorMessage = error.message;
+        }
 
-      if (error?.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error?.message) {
-        errorMessage = error.message;
-      }
-
-      enqueueSnackbar(errorMessage, {
-        autoHideDuration: 3000,
-        anchorOrigin: {
-          vertical: "bottom",
-          horizontal: "right",
-        },
-        variant: "error",
-      });
-    } finally {
-      setSubmitting(false);
-    }
+        enqueueSnackbar(errorMessage, {
+          autoHideDuration: 3000,
+          anchorOrigin: {
+            vertical: "bottom",
+            horizontal: "right",
+          },
+          variant: "error",
+        });
+        setSubmitting(false);
+      },
+    });
   };
 
   if (isSubmitted) {
