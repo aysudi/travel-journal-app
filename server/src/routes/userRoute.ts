@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Response } from "express";
 import {
   deleteUser,
   getUserByEmail,
@@ -16,12 +16,18 @@ import {
 } from "../controllers/userController.js";
 import userValidate from "../middlewares/userValidate.js";
 import { authenticateToken } from "../middlewares/authMiddleware.js";
+import uploadMiddleware from "../middlewares/uploadMiddleware.js";
 
 const userRouter = express.Router();
 
 userRouter.get("/", getUsers);
 userRouter.get("/profile", authenticateToken, getUserProfile);
-userRouter.put("/profile", authenticateToken, updateProfile);
+userRouter.put(
+  "/profile",
+  authenticateToken,
+  uploadMiddleware("profile-images"),
+  updateProfile
+);
 userRouter.post("/register", userValidate, registerUser);
 userRouter.post("/login", loginUser);
 userRouter.post("/resend-verification", resendVerificationEmail);

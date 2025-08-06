@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { v2 as cloudinary } from "cloudinary";
 import {
   getAll,
   getByEmail,
@@ -97,6 +98,14 @@ export const updateProfile = async (
     const userId = req.user.id;
     const updateData = req.body;
 
+    const currentUser = await getUserById(userId);
+    if (!currentUser) {
+      return res.status(404).json({
+        message: "User not found",
+        data: null,
+      });
+    }
+
     const allowedFields = [
       "fullName",
       "username",
@@ -110,6 +119,23 @@ export const updateProfile = async (
         filteredData[field] = updateData[field];
       }
     });
+
+    if (req.cloudinaryResult) {
+      if (
+        currentUser.public_id &&
+        currentUser.public_id !== "" &&
+        !currentUser.profileImage.includes("static.vecteezy.com")
+      ) {
+        try {
+          await cloudinary.uploader.destroy(currentUser.public_id);
+        } catch (error) {
+          console.error("Error deleting old image from Cloudinary:", error);
+        }
+      }
+
+      filteredData.profileImage = req.cloudinaryResult.secure_url;
+      filteredData.public_id = req.cloudinaryResult.public_id;
+    }
 
     if (Object.keys(filteredData).length === 0) {
       return res.status(400).json({
