@@ -286,3 +286,25 @@ export const resetPass = async (newPassword: string, email: string) => {
   await user.save();
   return user;
 };
+
+export const changeUserPassword = async (
+  userId: string,
+  oldPassword: string,
+  newPassword: string
+) => {
+  const user: any = await UserModel.findById(userId);
+  if (!user) throw new Error("User not found");
+
+  const isOldPasswordCorrect = await bcrypt.compare(oldPassword, user.password);
+  if (!isOldPasswordCorrect) throw new Error("Old password is incorrect");
+
+  const saltRounds = 10;
+  const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
+  user.password = hashedNewPassword;
+
+  await user.save();
+  return {
+    message: "Password changed successfully",
+    user,
+  };
+};
