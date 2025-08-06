@@ -190,7 +190,7 @@ const Profile = () => {
                   {!isEditing ? (
                     <button
                       onClick={handleEdit}
-                      className="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition-colors font-medium"
+                      className="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition-colors font-medium cursor-pointer"
                     >
                       <Edit3 size={18} />
                       Edit Profile

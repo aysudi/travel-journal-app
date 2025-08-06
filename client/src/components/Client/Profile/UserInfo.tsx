@@ -241,7 +241,7 @@ const UserInfo = ({
           {user.provider === "local" && !isEditing && (
             <button
               onClick={() => setShowChangePassword(true)}
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg transition-colors font-medium"
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg transition-colors font-medium cursor-pointer"
             >
               Change Password
             </button>

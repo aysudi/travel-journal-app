@@ -378,6 +378,7 @@ export const changePassword = async (
     const { currentPassword, newPassword } = req.body;
 
     await changeUserPassword(userId, currentPassword, newPassword);
+
     res.status(200).json({
       message: "Password changed successfully!",
     });
