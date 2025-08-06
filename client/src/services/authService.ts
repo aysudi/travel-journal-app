@@ -49,26 +49,31 @@ export class AuthService {
     }
   }
 
-  async forgotPassword(email: string): Promise<{ message: string }> {
-    return apiConfig.request<{ message: string }>(
+  async forgotPassword(values: {
+    email: string;
+  }): Promise<{ message: string }> {
+    return apiConfig.request(
       `${this.endpoint}/forgot-password`,
       {
         method: "POST",
-        body: JSON.stringify({ email }),
+        body: JSON.stringify(values),
       },
       false
     );
   }
 
-  async resetPassword(
-    token: string,
-    newPassword: string
-  ): Promise<{ message: string }> {
+  async resetPassword({
+    newPassword,
+    email,
+  }: {
+    newPassword: string;
+    email: string;
+  }): Promise<{ message: string }> {
     return apiConfig.request<{ message: string }>(
       `${this.endpoint}/reset-password`,
       {
         method: "POST",
-        body: JSON.stringify({ token, newPassword }),
+        body: JSON.stringify({ email, newPassword }),
       },
       false
     );
@@ -82,6 +87,12 @@ export class AuthService {
         body: JSON.stringify({ token }),
       },
       false
+    );
+  }
+
+  async verifyEmailToken(token: string | null): Promise<{ message: string }> {
+    return apiConfig.request<{ message: string }>(
+      `${this.endpoint}/verify-email?token=${token}`
     );
   }
 

@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router";
 import { enqueueSnackbar } from "notistack";
-import instance from "../../services/axiosInstance";
-import endpoints from "../../services/api";
+import { authService } from "../../services";
 
 const FailedVerification = () => {
   const [searchParams] = useSearchParams();
@@ -18,7 +17,6 @@ const FailedVerification = () => {
     if (token) {
       verifyEmailToken();
     } else {
-      // No token means user accessed this page directly - redirect to login
       navigate("/auth/login");
     }
   }, [token, navigate]);
@@ -27,14 +25,11 @@ const FailedVerification = () => {
     try {
       setVerificationStatus("loading");
 
-      const response = await instance.get(
-        `${endpoints.users}/verify-email?token=${token}`
-      );
+      const response: any = await authService.verifyEmailToken(token);
 
       setVerificationStatus("success");
       setMessage(response.data.message || "Email verified successfully!");
 
-      // Show success message
       enqueueSnackbar("Email verified successfully! Redirecting to login...", {
         autoHideDuration: 3000,
         anchorOrigin: {
