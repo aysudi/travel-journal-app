@@ -12,6 +12,7 @@ import {
   resetPassword,
   getUserProfile,
   updateProfile,
+  changePassword,
 } from "../controllers/userController.js";
 import userValidate from "../middlewares/userValidate.js";
 import { authenticateToken } from "../middlewares/authMiddleware.js";
@@ -28,6 +29,7 @@ userRouter.get("/unlock-account", unlockAccount);
 userRouter.get("/verify-email", verifyUserEmail);
 userRouter.post("/forgot-password", forgotPassword);
 userRouter.post("/reset-password", resetPassword);
+userRouter.put("/change-password", authenticateToken, changePassword);
 userRouter.get("/:email", getUserByEmail);
 userRouter.delete("/:id", deleteUser);
 
