@@ -172,9 +172,6 @@ export const verifyUserEmail = async (
   res: Response,
   next: NextFunction
 ) => {
-  console.log("hello");
-  console.log("req.query: ", req.query);
-  console.log("req.params: ", req.params);
   try {
     const { token } = req.query;
 
@@ -221,8 +218,11 @@ export const resendVerificationEmail = async (
       });
     }
 
-    // Generate new verification token
-    const token = generateAccessToken({ email: user.email });
+    const token = generateAccessToken({
+      id: user.id,
+      email: user.email,
+      fullName: user.fullName,
+    });
     const verificationLink = `${config.SERVER_URL}/auth/verify-email?token=${token}`;
 
     await sendVerificationEmail(user.email, user.fullName, verificationLink);

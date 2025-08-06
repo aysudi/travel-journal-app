@@ -2,10 +2,9 @@ import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { enqueueSnackbar } from "notistack";
 import { Formik, Form, Field, ErrorMessage } from "formik";
-import * as Yup from "yup";
-import endpoints from "../../services/api";
-import controller from "../../services/commonRequests";
 import { jwtDecode } from "jwt-decode";
+import resetPasswordValidationSchema from "../../validations/resetPasswordValidation";
+import { authService } from "../../services";
 
 const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -13,19 +12,6 @@ const ResetPassword = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const navigate = useNavigate();
   const { token } = useParams();
-
-  const validationSchema = Yup.object({
-    password: Yup.string()
-      .min(6, "Password must be at least 6 characters")
-      .matches(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-        "Password must contain at least one uppercase letter, one lowercase letter, and one number"
-      )
-      .required("Password is required"),
-    confirmPassword: Yup.string()
-      .oneOf([Yup.ref("password")], "Passwords must match")
-      .required("Please confirm your password"),
-  });
 
   const handleSubmit = async (
     values: { password: string; confirmPassword: string },
@@ -45,7 +31,7 @@ const ResetPassword = () => {
     try {
       const decode: any = jwtDecode(token);
 
-      await controller.post(`${endpoints.users}/reset-password`, {
+      await authService.resetPassword({
         newPassword: values.password,
         email: decode.email,
       });
@@ -246,7 +232,7 @@ const ResetPassword = () => {
         <div className="bg-white rounded-3xl shadow-xl p-8 border border-slate-200/50">
           <Formik
             initialValues={{ password: "", confirmPassword: "" }}
-            validationSchema={validationSchema}
+            validationSchema={resetPasswordValidationSchema}
             onSubmit={handleSubmit}
           >
             {({ isSubmitting, touched, errors }) => (
