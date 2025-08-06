@@ -24,6 +24,15 @@ export class ApiConfig {
   public getToken(): string | null {
     if (!this.token) {
       this.token = localStorage.getItem("token");
+
+      if (
+        this.token &&
+        this.token.startsWith('"') &&
+        this.token.endsWith('"')
+      ) {
+        this.token = this.token.slice(1, -1);
+        localStorage.setItem("token", this.token);
+      }
     }
     return this.token;
   }
@@ -42,8 +51,11 @@ export class ApiConfig {
       "Content-Type": "application/json",
     };
 
-    if (includeAuth && this.token) {
-      headers.Authorization = `Bearer ${this.token}`;
+    if (includeAuth) {
+      const token = this.getToken();
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
     }
 
     return headers;
@@ -62,6 +74,7 @@ export class ApiConfig {
       }
 
       if (response.status === 401) {
+        console.log("401 Unauthorized - clearing token");
         this.clearToken();
         window.dispatchEvent(new CustomEvent("auth:logout"));
       }

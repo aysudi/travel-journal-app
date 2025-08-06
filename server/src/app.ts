@@ -1,6 +1,14 @@
 import cors from "cors";
 import express from "express";
 import passport from "passport";
+
+import "./models/User.js";
+import "./models/TravelList.js";
+import "./models/JournalEntry.js";
+import "./models/Destination.js";
+import "./models/Message.js";
+import "./models/Notification.js";
+
 import userRouter from "./routes/userRoute.js";
 import travelListRouter from "./routes/travelListRoute.js";
 import destinationRouter from "./routes/destinationRoute.js";

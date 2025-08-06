@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   User,
   Mail,
@@ -16,6 +16,7 @@ import {
   Globe,
   Lock,
 } from "lucide-react";
+import { userService } from "../../services";
 
 interface UserProfile {
   _id: string;
@@ -64,6 +65,17 @@ const Profile = () => {
     confirmPassword: "",
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const userData = await userService.getProfile();
+      setUser(userData);
+      console.log(user);
+    };
+
+    fetchData();
+    console.log("hello");
+  }, []);
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -455,7 +467,7 @@ const Profile = () => {
               <MapPin size={32} className="text-blue-600" />
             </div>
             <h3 className="text-2xl font-bold text-gray-800 mb-2">
-              {user.ownedLists.length}
+              {/* {user.ownedLists.length} */}
             </h3>
             <p className="text-gray-600">Travel Lists Owned</p>
           </div>
@@ -465,7 +477,7 @@ const Profile = () => {
               <Users size={32} className="text-purple-600" />
             </div>
             <h3 className="text-2xl font-bold text-gray-800 mb-2">
-              {user.collaboratingLists.length}
+              {/* {user.collaboratingLists.length} */}
             </h3>
             <p className="text-gray-600">Collaborating Lists</p>
           </div>
@@ -475,7 +487,7 @@ const Profile = () => {
               <BookOpen size={32} className="text-green-600" />
             </div>
             <h3 className="text-2xl font-bold text-gray-800 mb-2">
-              {user.journalEntries?.length || 0}
+              {/* {user.journalEntries?.length || 0} */}
             </h3>
             <p className="text-gray-600">Journal Entries</p>
           </div>
