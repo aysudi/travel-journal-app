@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router";
 import { enqueueSnackbar } from "notistack";
-import { authService } from "../../services";
+import { useVerifyEmail } from "../../hooks/useAuth";
 
 const FailedVerification = () => {
   const [searchParams] = useSearchParams();
@@ -10,6 +10,7 @@ const FailedVerification = () => {
     "loading" | "success" | "error" | "expired"
   >("loading");
   const [message, setMessage] = useState("");
+  const verifyEmailMutation = useVerifyEmail();
 
   const token = searchParams.get("token");
 
@@ -21,51 +22,56 @@ const FailedVerification = () => {
     }
   }, [token, navigate]);
 
-  const verifyEmailToken = async () => {
-    try {
-      setVerificationStatus("loading");
+  const verifyEmailToken = () => {
+    if (!token) return;
 
-      const response: any = await authService.verifyEmailToken(token);
+    setVerificationStatus("loading");
 
-      setVerificationStatus("success");
-      setMessage(response.data.message || "Email verified successfully!");
+    verifyEmailMutation.mutate(token, {
+      onSuccess: (response: any) => {
+        setVerificationStatus("success");
+        setMessage(response.data?.message || "Email verified successfully!");
 
-      enqueueSnackbar("Email verified successfully! Redirecting to login...", {
-        autoHideDuration: 3000,
-        anchorOrigin: {
-          vertical: "bottom",
-          horizontal: "right",
-        },
-        variant: "success",
-      });
+        enqueueSnackbar(
+          "Email verified successfully! Redirecting to login...",
+          {
+            autoHideDuration: 3000,
+            anchorOrigin: {
+              vertical: "bottom",
+              horizontal: "right",
+            },
+            variant: "success",
+          }
+        );
 
-      // Redirect to login after 3 seconds
-      setTimeout(() => {
-        navigate("/auth/login");
-      }, 3000);
-    } catch (error: any) {
-      console.error("Email verification error:", error);
+        // Redirect to login after 3 seconds
+        setTimeout(() => {
+          navigate("/auth/login");
+        }, 3000);
+      },
+      onError: (error: any) => {
+        console.error("Email verification error:", error);
 
-      let errorMessage = "Email verification failed. Please try again.";
+        let errorMessage = "Email verification failed. Please try again.";
 
-      if (error?.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error?.message) {
-        errorMessage = error.message;
-      }
+        if (error?.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error?.message) {
+          errorMessage = error.message;
+        }
 
-      // Check if token is expired
-      if (
-        errorMessage.includes("expired") ||
-        errorMessage.includes("invalid")
-      ) {
-        setVerificationStatus("expired");
-      } else {
-        setVerificationStatus("error");
-      }
+        if (
+          errorMessage.includes("expired") ||
+          errorMessage.includes("invalid")
+        ) {
+          setVerificationStatus("expired");
+        } else {
+          setVerificationStatus("error");
+        }
 
-      setMessage(errorMessage);
-    }
+        setMessage(errorMessage);
+      },
+    });
   };
 
   const getStatusIcon = () => {
