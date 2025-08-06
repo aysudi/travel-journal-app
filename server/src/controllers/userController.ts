@@ -10,6 +10,7 @@ import {
   forgotPassword as forgotPasswordService,
   resetPass,
   getUserById,
+  updateUser,
 } from "../services/userService.js";
 import bcrypt from "bcrypt";
 import formatMongoData from "../utils/formatMongoData.js";
@@ -80,6 +81,55 @@ export const getUserProfile = async (
     res.status(200).json({
       message: "User profile retrieved successfully",
       data: formatMongoData(user),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateProfile = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user.id;
+    const updateData = req.body;
+
+    // Remove sensitive fields that shouldn't be updated via profile
+    const allowedFields = [
+      "fullName",
+      "username",
+      "profileImage",
+      "profileVisibility",
+    ];
+    const filteredData: any = {};
+
+    allowedFields.forEach((field) => {
+      if (updateData[field] !== undefined) {
+        filteredData[field] = updateData[field];
+      }
+    });
+
+    if (Object.keys(filteredData).length === 0) {
+      return res.status(400).json({
+        message: "No valid fields to update",
+        data: null,
+      });
+    }
+
+    const result = await updateUser(userId, filteredData);
+
+    if (!result.success) {
+      return res.status(404).json({
+        message: result.message,
+        data: null,
+      });
+    }
+
+    res.status(200).json({
+      message: "Profile updated successfully",
+      data: formatMongoData(result.data),
     });
   } catch (error) {
     next(error);
