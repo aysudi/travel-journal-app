@@ -3,9 +3,8 @@ import { useFormik } from "formik";
 import { Link, useNavigate } from "react-router";
 import registerValidation from "../../validations/registerValidation";
 import { enqueueSnackbar } from "notistack";
-import controller from "../../services/commonRequests";
-import endpoints from "../../services/api";
 import User from "../../classes/User";
+import { authService } from "../../services";
 
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -29,7 +28,7 @@ const Register = () => {
       );
 
       try {
-        await controller.post(`${endpoints.users}/register`, newUser);
+        await authService.register(newUser);
 
         enqueueSnackbar(
           "User registered successfully! Please check your email to verify your account.",

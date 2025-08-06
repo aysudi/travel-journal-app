@@ -36,8 +36,6 @@ export class AuthService {
       false
     );
 
-    apiConfig.setToken(response.token);
-
     return response;
   }
 
