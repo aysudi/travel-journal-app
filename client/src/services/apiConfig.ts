@@ -84,6 +84,11 @@ export class ApiConfig {
 
     try {
       const data = await response.json();
+
+      if (data.data !== undefined) {
+        return data.data as T;
+      }
+
       return data as T;
     } catch (error) {
       throw new Error("Failed to parse response");

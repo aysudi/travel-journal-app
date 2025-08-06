@@ -4,12 +4,13 @@ import { Link, useNavigate } from "react-router";
 import registerValidation from "../../validations/registerValidation";
 import { enqueueSnackbar } from "notistack";
 import User from "../../classes/User";
-import { authService } from "../../services";
+import { useRegister } from "../../hooks/useAuth";
 
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
+  const registerMutation = useRegister();
 
   const registerFormik = useFormik({
     initialValues: {
@@ -19,7 +20,7 @@ const Register = () => {
       password: "",
       confirmPassword: "",
     },
-    onSubmit: async (values, action) => {
+    onSubmit: (values, action) => {
       const newUser = new User(
         values.fullName,
         values.username,
@@ -27,47 +28,47 @@ const Register = () => {
         values.password
       );
 
-      try {
-        await authService.register(newUser);
+      registerMutation.mutate(newUser, {
+        onSuccess: () => {
+          enqueueSnackbar(
+            "User registered successfully! Please check your email to verify your account.",
+            {
+              autoHideDuration: 2000,
+              anchorOrigin: {
+                vertical: "bottom",
+                horizontal: "right",
+              },
+              variant: "success",
+            }
+          );
 
-        enqueueSnackbar(
-          "User registered successfully! Please check your email to verify your account.",
-          {
-            autoHideDuration: 2000,
+          action.resetForm();
+          navigate(`/auth/check-email?email=${values.email}`);
+        },
+        onError: (error: any) => {
+          let errorMessage = "Registration failed. Please try again.";
+
+          if (error?.response?.data?.message) {
+            errorMessage = error.response.data.message;
+          } else if (error?.message) {
+            errorMessage = error.message;
+          }
+
+          enqueueSnackbar(errorMessage, {
+            autoHideDuration: 3000,
             anchorOrigin: {
               vertical: "bottom",
               horizontal: "right",
             },
-            variant: "success",
+            variant: "error",
+          });
+
+          if (errorMessage.includes("Username or email already exist")) {
+            registerFormik.setFieldValue("email", "");
+            registerFormik.setFieldValue("username", "");
           }
-        );
-
-        action.resetForm();
-
-        navigate(`/auth/check-email?email=${values.email}`);
-      } catch (error: any) {
-        let errorMessage = "Registration failed. Please try again.";
-
-        if (error?.response?.data?.message) {
-          errorMessage = error.response.data.message;
-        } else if (error?.message) {
-          errorMessage = error.message;
-        }
-
-        enqueueSnackbar(errorMessage, {
-          autoHideDuration: 3000,
-          anchorOrigin: {
-            vertical: "bottom",
-            horizontal: "right",
-          },
-          variant: "error",
-        });
-
-        if (errorMessage.includes("Username or email already exist")) {
-          registerFormik.setFieldValue("email", "");
-          registerFormik.setFieldValue("username", "");
-        }
-      }
+        },
+      });
     },
     validationSchema: registerValidation,
   });
@@ -376,12 +377,39 @@ const Register = () => {
               disabled={
                 registerFormik.isSubmitting ||
                 !registerFormik.dirty ||
-                Object.entries(registerFormik.errors).length > 0
+                Object.entries(registerFormik.errors).length > 0 ||
+                registerMutation.isPending
               }
               type="submit"
               className="w-full bg-gradient-to-r disabled:cursor-not-allowed disabled:from-blue-400 disabled:to-indigo-400 from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-xl font-medium hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 mt-2 cursor-pointer "
             >
-              Create Account
+              {registerMutation.isPending ? (
+                <div className="flex items-center justify-center">
+                  <svg
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Creating Account...
+                </div>
+              ) : (
+                "Create Account"
+              )}
             </button>
           </form>
 
