@@ -10,12 +10,15 @@ import {
   unlockAccount,
   forgotPassword,
   resetPassword,
+  getUserProfile,
 } from "../controllers/userController.js";
 import userValidate from "../middlewares/userValidate.js";
+import { authenticateToken } from "../middlewares/authMiddleware.js";
 
 const userRouter = express.Router();
 
 userRouter.get("/", getUsers);
+userRouter.get("/profile", authenticateToken, getUserProfile);
 userRouter.post("/register", userValidate, registerUser);
 userRouter.post("/login", loginUser);
 userRouter.post("/resend-verification", resendVerificationEmail);

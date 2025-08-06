@@ -9,12 +9,15 @@ import {
   unlockAcc,
   forgotPassword as forgotPasswordService,
   resetPass,
+  getUserById,
 } from "../services/userService.js";
 import bcrypt from "bcrypt";
 import formatMongoData from "../utils/formatMongoData.js";
 import { generateAccessToken } from "../utils/jwt.js";
 import { sendVerificationEmail } from "../utils/sendMail.js";
 import config from "../config/config.js";
+import "../models/TravelList.js";
+import "../models/Destination.js";
 
 export const getUsers = async (
   _: Request,
@@ -52,6 +55,32 @@ export const getUserByEmail = async (
         data: user,
       });
     }
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getUserProfile = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user.id;
+
+    const user = await getUserById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+        data: null,
+      });
+    }
+
+    res.status(200).json({
+      message: "User profile retrieved successfully",
+      data: formatMongoData(user),
+    });
   } catch (error) {
     next(error);
   }
