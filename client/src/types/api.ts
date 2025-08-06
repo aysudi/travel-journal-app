@@ -34,7 +34,7 @@ export interface UpdateProfileData {
   fullName?: string;
   username?: string;
   profileVisibility?: "public" | "private";
-  profileImage?: string;
+  profileImage?: string | File;
 }
 
 export interface ChangePasswordData {

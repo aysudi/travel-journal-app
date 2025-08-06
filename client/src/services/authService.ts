@@ -123,10 +123,14 @@ export class UserService {
     return apiConfig.request<UserProfile>(`${this.endpoint}/profile`);
   }
 
-  async updateProfile(data: UpdateProfileData): Promise<UserProfile> {
+  async updateProfile(
+    data: UpdateProfileData | FormData
+  ): Promise<UserProfile> {
+    const isFormData = data instanceof FormData;
+
     return apiConfig.request<UserProfile>(`${this.endpoint}/profile`, {
       method: "PUT",
-      body: JSON.stringify(data),
+      body: isFormData ? data : JSON.stringify(data),
     });
   }
 
