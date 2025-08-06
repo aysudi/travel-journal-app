@@ -59,10 +59,8 @@ export const useUpdateProfile = () => {
   return useMutation({
     mutationFn: (data: UpdateProfileData) => userService.updateProfile(data),
     onSuccess: (updatedUser: UserProfile) => {
-      // Update the cached profile data
+      // Update the cached profile data without invalidating
       queryClient.setQueryData(authKeys.profile(), updatedUser);
-      // Optionally invalidate to refetch from server
-      queryClient.invalidateQueries({ queryKey: authKeys.profile() });
     },
     onError: (error) => {
       console.error("Profile update failed:", error);
