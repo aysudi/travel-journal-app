@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import * as travelListService from "../services/travelListService";
 import uploadMiddleware from "../middlewares/uploadMiddleware";
+import formatMongoData from "../utils/formatMongoData";
 
 // Get all travel lists (with pagination and search)
 export const getAllTravelLists = async (req: Request, res: Response) => {
@@ -17,7 +18,7 @@ export const getAllTravelLists = async (req: Request, res: Response) => {
     res.status(200).json({
       success: true,
       message: "Travel lists retrieved successfully",
-      data: result,
+      data: formatMongoData(result.data),
     });
   } catch (error: any) {
     console.error("Get all travel lists error:", error);
@@ -131,7 +132,7 @@ export const getPublicTravelLists = async (req: Request, res: Response) => {
     res.status(200).json({
       success: true,
       message: "Public travel lists retrieved successfully",
-      data: result,
+      data: formatMongoData(result.data),
     });
   } catch (error: any) {
     console.error("Get public travel lists error:", error);

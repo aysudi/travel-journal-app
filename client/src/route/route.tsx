@@ -9,7 +9,6 @@ import CheckEmail from "../pages/Auth/CheckEmail";
 
 //client
 import Dashboard from "../pages/Client/Dashboard";
-import Explore from "../pages/Client/Explore";
 import Journal from "../pages/Client/Journal";
 import ListDetails from "../pages/Client/ListDetails";
 import Lists from "../pages/Client/Lists";
@@ -18,6 +17,7 @@ import RedirectRoot from "./RedirectRoot";
 import PrivateRoute from "./PrivateRoute";
 import PublicRoute from "./PublicRoute";
 import AuthCallback from "../pages/Auth/AuthCallback";
+import MyLists from "../pages/Client/MyLists";
 
 const ROUTES = [
   // Root redirect to login
@@ -39,8 +39,8 @@ const ROUTES = [
         element: <Profile />,
       },
       {
-        path: "explore",
-        element: <Explore />,
+        path: "my-lists",
+        element: <MyLists />,
       },
       {
         path: "lists",
