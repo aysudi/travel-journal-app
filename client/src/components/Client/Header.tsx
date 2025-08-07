@@ -43,10 +43,10 @@ const Header = () => {
   const unreadCount = notifications.filter((n) => n.unread).length;
 
   const navItems = [
-    { name: "Dashboard", path: "/dashboard", icon: "🏠" },
-    { name: "My Lists", path: "/lists", icon: "📋" },
-    { name: "Journal", path: "/journal", icon: "📖" },
-    { name: "Explore", path: "/explore", icon: "🗺️" },
+    { name: "Dashboard", path: "/dashboard" },
+    { name: "My Lists", path: "/my-lists" },
+    { name: "Lists", path: "/lists" },
+    { name: "Journal", path: "/journal" },
   ];
 
   useEffect(() => {
@@ -112,13 +112,12 @@ const Header = () => {
               <Link
                 key={item.name}
                 to={item.path}
-                className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 flex items-center space-x-2 ${
+                className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
                   isActiveLink(item.path)
                     ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg"
                     : "text-slate-600 hover:text-blue-600 hover:bg-blue-50"
                 }`}
               >
-                <span className="text-lg">{item.icon}</span>
                 <span>{item.name}</span>
               </Link>
             ))}
@@ -330,14 +329,13 @@ const Header = () => {
               <Link
                 key={item.name}
                 to={item.path}
-                className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-xl transition-all duration-200 ${
+                className={`px-3 py-2 rounded-xl transition-all duration-200 text-center ${
                   isActiveLink(item.path)
                     ? "text-blue-600 bg-blue-50"
                     : "text-slate-600 hover:text-blue-600"
                 }`}
               >
-                <span className="text-lg">{item.icon}</span>
-                <span className="text-xs font-medium">{item.name}</span>
+                <span className="text-sm font-medium">{item.name}</span>
               </Link>
             ))}
           </nav>

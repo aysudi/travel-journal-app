@@ -8,7 +8,7 @@ import type {
 } from "../types/api";
 
 export class TravelListService {
-  private readonly endpoint = "/api/travel-lists";
+  private readonly endpoint = "/travel-lists";
 
   async getTravelLists(
     params?: PaginationParams
@@ -22,7 +22,7 @@ export class TravelListService {
     if (params?.order) searchParams.append("order", params.order);
 
     const query = searchParams.toString();
-    const url = query ? `${this.endpoint}?${query}` : this.endpoint;
+    const url = query ? `${this.endpoint}?${query}` : `${this.endpoint}`;
 
     return apiConfig.request<PaginatedResponse<TravelList>>(url);
   }

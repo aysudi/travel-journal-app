@@ -188,17 +188,23 @@ export const login = async (credentials: {
 
   await user.save();
 
-  const accessToken = generateAccessToken({
-    email: user.email,
-    id: user.id,
-    fullName: user.fullName,
-  });
+  const accessToken = generateAccessToken(
+    {
+      email: user.email,
+      id: user.id,
+      fullName: user.fullName,
+    },
+    "6h"
+  );
 
-  const refreshToken = generateRefreshToken({
-    email: user.email,
-    id: user.id,
-    fullName: user.fullName,
-  });
+  const refreshToken = generateRefreshToken(
+    {
+      email: user.email,
+      id: user.id,
+      fullName: user.fullName,
+    },
+    "7d"
+  );
 
   return {
     message: "User login successfully!",

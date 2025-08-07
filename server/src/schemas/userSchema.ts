@@ -71,10 +71,14 @@ const userSchema = new mongoose.Schema(
 
     premium: { type: Boolean, default: false },
 
-    ownedLists: [{ type: mongoose.Schema.Types.ObjectId, ref: "TravelList" }],
-    collaboratingLists: [
-      { type: mongoose.Schema.Types.ObjectId, ref: "TravelList" },
-    ],
+    ownedLists: {
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: "TravelList" }],
+      default: [],
+    },
+    collaboratingLists: {
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: "TravelList" }],
+      default: [],
+    },
 
     profileVisibility: {
       type: String,
@@ -102,7 +106,11 @@ userSchema.virtual("notifications", {
 });
 
 userSchema.virtual("allLists").get(function (this: any) {
-  return [...this.ownedLists, ...this.collaboratingLists];
+  const ownedLists = Array.isArray(this.ownedLists) ? this.ownedLists : [];
+  const collaboratingLists = Array.isArray(this.collaboratingLists)
+    ? this.collaboratingLists
+    : [];
+  return [...ownedLists, ...collaboratingLists];
 });
 
 userSchema.index({ email: 1 }, { unique: true });

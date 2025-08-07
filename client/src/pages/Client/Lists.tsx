@@ -5,7 +5,7 @@ const Lists = () => {
 
   if (isLoading) return <div>Loading...</div>;
   if (isError) return <div>Error: {error.message}</div>;
-  // if (!lists || lists.length === 0) return <div>No travel lists found.</div>;
+  if (!lists) return <div>No travel lists found.</div>;
 
   console.log(lists);
 
