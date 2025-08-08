@@ -84,9 +84,7 @@ export class TravelListService {
     return apiConfig.request<TravelList[]>(`${this.endpoint}/collaborating`);
   }
 
-  async getPublicLists(
-    params?: PaginationParams
-  ): Promise<PaginatedResponse<TravelList>> {
+  async getPublicLists(params?: PaginationParams): Promise<TravelList[]> {
     const searchParams = new URLSearchParams();
 
     if (params?.page) searchParams.append("page", params.page.toString());
@@ -100,7 +98,7 @@ export class TravelListService {
       ? `${this.endpoint}/public?${query}`
       : `${this.endpoint}/public`;
 
-    return apiConfig.request<PaginatedResponse<TravelList>>(url);
+    return apiConfig.request<TravelList[]>(url);
   }
 
   async uploadCoverImage(

@@ -59,6 +59,14 @@ export interface TravelList {
   updatedAt: string;
 }
 
+// Populated Travel List (when owner and collaborators are populated)
+export interface PopulatedTravelList
+  extends Omit<TravelList, "owner" | "collaborators" | "destinations"> {
+  owner: UserProfile;
+  collaborators: UserProfile[];
+  destinations: Destination[];
+}
+
 export interface CreateTravelListData {
   title: string;
   description?: string;
