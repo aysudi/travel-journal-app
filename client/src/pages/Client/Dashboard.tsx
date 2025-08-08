@@ -25,7 +25,7 @@ const Dashboard = () => {
   const { data: publicListsData, isLoading: publicLoading } =
     usePublicTravelLists({ limit: 3 });
 
-  const publicLists = publicListsData?.data || [];
+  const publicLists = publicListsData || [];
 
   if (userLoading) {
     return (
@@ -316,10 +316,10 @@ const Dashboard = () => {
                   </div>
                 ) : publicLists.length > 0 ? (
                   <div className="space-y-4">
-                    {publicLists.map((list: any) => (
+                    {publicLists.map((list: any, ind: number) => (
                       <Link
-                        key={list._id}
-                        to={`/lists/${list._id}`}
+                        key={ind}
+                        to={`/lists/${list.id}`}
                         className="block p-4 rounded-xl hover:bg-slate-50 transition-colors group border border-slate-100"
                       >
                         <div className="flex items-start space-x-3">
@@ -337,7 +337,7 @@ const Dashboard = () => {
                             </p>
                             <div className="flex items-center space-x-2 mt-2">
                               <span className="text-xs text-slate-400">
-                                by {list.owner?.fullName}
+                                by {list.owner?.fullName || "Unknown"}
                               </span>
                               <span className="text-xs text-slate-400">•</span>
                               <span className="text-xs text-slate-400">
