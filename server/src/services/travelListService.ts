@@ -1,12 +1,5 @@
 import TravelList from "../models/TravelList";
 
-interface PaginationParams {
-  page?: number;
-  limit?: number;
-  search?: string;
-  sort?: string;
-}
-
 export const getAll = async (params?: PaginationParams) => {
   const {
     page = 1,
