@@ -13,9 +13,11 @@ import userRouter from "./routes/userRoute.js";
 import travelListRouter from "./routes/travelListRoute.js";
 import destinationRouter from "./routes/destinationRoute.js";
 import journalEntryRouter from "./routes/journalEntryRoute.js";
+import collaborationRouter from "./routes/collaborationRoute.js";
 import messageRouter from "./routes/messageRoute.js";
 import googleRouter from "./routes/googleRoute.js";
 import githubRouter from "./routes/githubRoute.js";
+import commentRouter from "./routes/commentRoute.js";
 
 const app = express();
 
@@ -28,9 +30,11 @@ app.use("/auth", googleRouter);
 app.use("/auth", githubRouter);
 app.use("/auth", userRouter);
 app.use("/travel-lists", travelListRouter);
+app.use("/travel-lists", collaborationRouter);
 app.use("/destinations", destinationRouter);
 app.use("/journal-entries", journalEntryRouter);
 app.use("/messages", messageRouter);
+app.use("/comments", commentRouter);
 
 app.get("/", (_, res) => {
   res.send("Server is up and running!");
