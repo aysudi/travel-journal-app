@@ -19,7 +19,6 @@ export interface UserProfile {
   email: string;
   profileImage: string;
   provider: "local" | "google" | "github";
-  status: "Viewer" | "Editor" | "Owner";
   premium: boolean;
   profileVisibility: "public" | "private";
   isVerified: boolean;
