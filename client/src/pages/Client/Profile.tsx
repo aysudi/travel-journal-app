@@ -83,22 +83,19 @@ const Profile = () => {
 
   const handleSave = async () => {
     try {
-      // Create FormData for file upload
       const formData = new FormData();
 
-      // Add text fields
       formData.append("fullName", editData.fullName);
       formData.append("username", editData.username);
       formData.append("profileVisibility", editData.profileVisibility);
 
-      // Add file if it exists and is a File object
       if (editData.profileImage instanceof File) {
         formData.append("profileImage", editData.profileImage);
       }
 
       await updateProfileMutation.mutateAsync(formData);
       setIsEditing(false);
-      setImagePreview(""); // Clear preview after successful save
+      setImagePreview("");
     } catch (error) {
       console.error("Failed to update profile:", error);
     }
@@ -106,7 +103,7 @@ const Profile = () => {
 
   const handleCancel = () => {
     setIsEditing(false);
-    setImagePreview(""); // Clear any image preview
+    setImagePreview("");
     setEditData({
       fullName: user.fullName,
       username: user.username,
@@ -156,11 +153,6 @@ const Profile = () => {
               <div className="relative">
                 <img
                   src={imagePreview || user.profileImage}
-                  // src={
-                  //   isEditing && editData.profileImage
-                  //     ? editData.profileImage
-                  //     : user.profileImage
-                  // }
                   alt="Profile"
                   className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover"
                 />
@@ -219,7 +211,7 @@ const Profile = () => {
                         type="submit"
                         onClick={handleSave}
                         disabled={updateProfileMutation.isPending}
-                        className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 disabled:bg-green-300 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg transition-colors font-medium"
+                        className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 disabled:bg-green-300 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg transition-colors font-medium cursor-pointer"
                       >
                         {updateProfileMutation.isPending ? (
                           <>
@@ -235,7 +227,7 @@ const Profile = () => {
                       </button>
                       <button
                         onClick={handleCancel}
-                        className="flex items-center justify-center gap-2 bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg transition-colors font-medium"
+                        className="flex items-center justify-center gap-2 bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg transition-colors font-medium cursor-pointer"
                       >
                         <X size={18} />
                         Cancel

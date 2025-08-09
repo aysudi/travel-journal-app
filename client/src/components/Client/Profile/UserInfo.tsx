@@ -2,7 +2,6 @@ import {
   User,
   Mail,
   Edit3,
-  Shield,
   Calendar,
   Settings,
   Globe,
@@ -200,17 +199,6 @@ const UserInfo = ({
             </div>
           </div>
 
-          {/* Status */}
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-2">
-              Status
-            </label>
-            <div className="flex items-center gap-2 bg-gray-50 px-4 py-3 rounded-lg">
-              <Shield size={20} className="text-blue-500" />
-              <span className="text-lg text-gray-800">{user.status}</span>
-            </div>
-          </div>
-
           {/* Member Since */}
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-2">
@@ -232,22 +220,40 @@ const UserInfo = ({
             <div className="flex items-center gap-2 bg-gray-50 px-4 py-3 rounded-lg">
               <Calendar size={20} className="text-gray-400" />
               <span className="text-lg text-gray-800">
-                {formatDate(user.lastLogin)}
+                {user.lastLogin ? formatDate(user.lastLogin) : "Never"}
               </span>
             </div>
           </div>
-
-          {/* Change Password Button (only for local accounts) */}
-          {user.provider === "local" && !isEditing && (
-            <button
-              onClick={() => setShowChangePassword(true)}
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg transition-colors font-medium cursor-pointer"
-            >
-              Change Password
-            </button>
-          )}
         </div>
       </div>
+
+      {/* Security Settings Section - Only for local accounts */}
+      {user.provider === "local" && !isEditing && (
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          <div className="flex items-center justify-between p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                <Settings size={24} className="text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Security Settings
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Manage your account security and password
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowChangePassword(true)}
+              className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition-all duration-200 font-medium shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
+            >
+              <Settings size={16} />
+              Change Password
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
