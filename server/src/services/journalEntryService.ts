@@ -14,11 +14,10 @@ export const createJournalEntry = async (
   entryData: JournalEntryData,
   authorId: string
 ): Promise<any> => {
-  // Verify destination exists and user has access to it
   const destination = await DestinationModel.findById(
     entryData.destination
   ).populate({
-    path: "listId",
+    path: "list",
     select: "owner collaborators",
   });
 
@@ -27,7 +26,7 @@ export const createJournalEntry = async (
   }
 
   // Check if user has access to the destination's travel list
-  const travelList = destination.listId as any;
+  const travelList = destination.list as any;
   const hasAccess =
     travelList.owner.toString() === authorId ||
     travelList.collaborators.includes(authorId);
@@ -57,9 +56,9 @@ export const getJournalEntryById = async (entryId: string): Promise<any> => {
     })
     .populate({
       path: "destination",
-      select: "name location listId",
+      select: "name location list",
       populate: {
-        path: "listId",
+        path: "list",
         select: "title owner collaborators",
       },
     });
@@ -99,9 +98,9 @@ export const updateJournalEntry = async (
     })
     .populate({
       path: "destination",
-      select: "name location listId",
+      select: "name location list",
       populate: {
-        path: "listId",
+        path: "list",
         select: "title owner collaborators",
       },
     });
@@ -145,14 +144,12 @@ export const getJournalEntries = async (
 
   const skip = (page - 1) * limit;
 
-  // Build filter object
   const filter: any = {};
 
   if (destination) filter.destination = destination;
   if (author) filter.author = author;
   if (typeof isPublic === "boolean") filter.public = isPublic;
 
-  // Add search functionality
   if (search) {
     filter.$or = [
       { title: { $regex: search, $options: "i" } },
@@ -160,7 +157,6 @@ export const getJournalEntries = async (
     ];
   }
 
-  // Build sort object
   const sortObj: any = {};
   sortObj[sort] = order === "asc" ? 1 : -1;
 
@@ -172,12 +168,17 @@ export const getJournalEntries = async (
       })
       .populate({
         path: "destination",
-        select: "name location listId",
+        select: "name location list",
         populate: {
-          path: "listId",
+          path: "list",
           select: "title owner collaborators",
         },
       })
+      .populate({
+        path: "comments",
+        select: "author content likes",
+      })
+      .populate({ path: "likes", select: "fullName username profileImage" })
       .sort(sortObj)
       .skip(skip)
       .limit(limit)
@@ -206,7 +207,7 @@ export const getJournalEntriesByDestination = async (
   userId?: string
 ): Promise<any[]> => {
   const destination = await DestinationModel.findById(destinationId).populate({
-    path: "listId",
+    path: "list",
     select: "owner collaborators",
   });
 
@@ -218,7 +219,7 @@ export const getJournalEntriesByDestination = async (
   const filter: any = { destination: destinationId };
 
   if (userId) {
-    const travelList = destination.listId as any;
+    const travelList = destination.list as any;
     const hasAccess =
       travelList.owner.toString() === userId ||
       travelList.collaborators.includes(userId);
@@ -273,9 +274,9 @@ export const getJournalEntriesByAuthor = async (
     })
     .populate({
       path: "destination",
-      select: "name location listId",
+      select: "name location list",
       populate: {
-        path: "listId",
+        path: "list",
         select: "title",
       },
     })
@@ -321,9 +322,9 @@ export const getPublicJournalEntries = async (
       })
       .populate({
         path: "destination",
-        select: "name location listId",
+        select: "name location list",
         populate: {
-          path: "listId",
+          path: "list",
           select: "title",
         },
       })
@@ -427,9 +428,9 @@ export const getRecentJournalEntries = async (
   const recentEntries = await JournalEntryModel.find({ author: userId })
     .populate({
       path: "destination",
-      select: "name location listId",
+      select: "name location list",
       populate: {
-        path: "listId",
+        path: "list",
         select: "title",
       },
     })

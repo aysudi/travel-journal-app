@@ -20,7 +20,6 @@ export const createDestination = async (req: Request, res: Response) => {
       });
     }
 
-    // Validate request body
     const { error, value } = destinationCreateSchema.validate(req.body);
     if (error) {
       return res.status(400).json({
@@ -124,7 +123,6 @@ export const updateDestination = async (req: Request, res: Response) => {
       });
     }
 
-    // Validate ID format
     const { error: idError } = objectIdSchema.validate(id);
     if (idError) {
       return res.status(400).json({
@@ -133,7 +131,6 @@ export const updateDestination = async (req: Request, res: Response) => {
       });
     }
 
-    // Validate request body
     const { error, value } = destinationUpdateSchema.validate(req.body);
     if (error) {
       return res.status(400).json({
@@ -199,7 +196,6 @@ export const deleteDestination = async (req: Request, res: Response) => {
       });
     }
 
-    // Validate ID format
     const { error } = objectIdSchema.validate(id);
     if (error) {
       return res.status(400).json({
@@ -244,12 +240,12 @@ export const getDestinations = async (req: Request, res: Response) => {
   try {
     const userId = (req.user as any)?.id; // Optional for public access
 
-    const { page, limit, listId, status, search, sort } = req.query;
+    const { page, limit, list, status, search, sort } = req.query;
 
     const queryParams = {
       page: page ? Number(page) : undefined,
       limit: limit ? Number(limit) : undefined,
-      listId: listId as string,
+      list: list as string,
       status: status as "Wishlist" | "Planned" | "Visited",
       search: search as string,
       sort: sort as string,
@@ -257,8 +253,8 @@ export const getDestinations = async (req: Request, res: Response) => {
     };
 
     // Validate ObjectIds if provided
-    if (queryParams.listId) {
-      const { error } = objectIdSchema.validate(queryParams.listId);
+    if (queryParams.list) {
+      const { error } = objectIdSchema.validate(queryParams.list);
       if (error) {
         return res.status(400).json({
           success: false,

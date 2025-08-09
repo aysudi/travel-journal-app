@@ -25,6 +25,13 @@ const travelListSchema = new mongoose.Schema(
       required: true,
     },
     collaborators: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    pendingRequests: [
+      {
+        user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        requestedAt: { type: Date, default: Date.now },
+        message: { type: String, maxlength: 200 },
+      },
+    ],
     coverImage: { type: String },
     destinations: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Destination" },
