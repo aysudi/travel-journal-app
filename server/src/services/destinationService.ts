@@ -16,7 +16,7 @@ export interface DestinationData {
   status?: "Wishlist" | "Planned" | "Visited";
   notes?: string;
   images?: string[];
-  listId: string;
+  list: string;
 }
 
 export interface DestinationUpdateData {
@@ -30,7 +30,7 @@ export interface DestinationUpdateData {
 }
 
 export interface DestinationQuery extends PaginationParams {
-  listId?: string;
+  list?: string;
   status?: "Wishlist" | "Planned" | "Visited";
   userId?: string;
 }
@@ -53,7 +53,7 @@ export const createDestination = async (
   userId: string
 ): Promise<any> => {
   // Verify travel list exists and user has access
-  const travelList = await TravelListModel.findById(destinationData.listId);
+  const travelList = await TravelListModel.findById(destinationData.list);
 
   if (!travelList) {
     throw new Error("Travel list not found");
@@ -84,7 +84,7 @@ export const getDestinationById = async (
 ): Promise<any> => {
   const destination = await DestinationModel.findById(destinationId)
     .populate({
-      path: "listId",
+      path: "list",
       select: "title owner collaborators",
       populate: {
         path: "owner",
@@ -114,7 +114,7 @@ export const updateDestination = async (
   userId: string
 ): Promise<any> => {
   const destination = await DestinationModel.findById(destinationId).populate(
-    "listId",
+    "list",
     "owner collaborators"
   );
 
@@ -123,7 +123,7 @@ export const updateDestination = async (
   }
 
   // Check if user has access to the travel list
-  const travelList = destination.listId as any;
+  const travelList = destination.list as any;
   const hasAccess =
     travelList.owner.toString() === userId ||
     travelList.collaborators.some(
@@ -139,7 +139,7 @@ export const updateDestination = async (
     { $set: updateData },
     { new: true, runValidators: true }
   ).populate({
-    path: "listId",
+    path: "list",
     select: "title owner collaborators",
     populate: {
       path: "owner",
@@ -156,7 +156,7 @@ export const deleteDestination = async (
   userId: string
 ): Promise<void> => {
   const destination = await DestinationModel.findById(destinationId).populate(
-    "listId",
+    "list",
     "owner collaborators"
   );
 
@@ -164,8 +164,7 @@ export const deleteDestination = async (
     throw new Error("Destination not found");
   }
 
-  // Check if user has access to the travel list
-  const travelList = destination.listId as any;
+  const travelList = destination.list as any;
   const hasAccess =
     travelList.owner.toString() === userId ||
     travelList.collaborators.some(
@@ -186,7 +185,7 @@ export const getDestinations = async (
   const {
     page = 1,
     limit = 10,
-    listId,
+    list,
     status,
     search,
     sort = "createdAt",
@@ -198,7 +197,7 @@ export const getDestinations = async (
   // Build filter object
   const filter: any = {};
 
-  if (listId) filter.listId = listId;
+  if (list) filter.list = list;
   if (status) filter.status = status;
 
   // Add search functionality
@@ -211,12 +210,12 @@ export const getDestinations = async (
   }
 
   // If userId is provided, filter by accessible travel lists
-  if (userId && !listId) {
+  if (userId && !list) {
     const accessibleLists = await TravelListModel.find({
       $or: [{ owner: userId }, { collaborators: userId }],
     }).select("_id");
 
-    filter.listId = { $in: accessibleLists.map((list) => list._id) };
+    filter.list = { $in: accessibleLists.map((list) => list._id) };
   }
 
   // Build sort object
@@ -226,7 +225,7 @@ export const getDestinations = async (
   const [destinations, total] = await Promise.all([
     DestinationModel.find(filter)
       .populate({
-        path: "listId",
+        path: "list",
         select: "title owner collaborators",
         populate: {
           path: "owner",
@@ -281,7 +280,7 @@ export const getDestinationsByTravelList = async (
     }
   }
 
-  const destinations = await DestinationModel.find({ listId })
+  const destinations = await DestinationModel.find({ list: listId })
     .populate({
       path: "journalEntries",
       select: "title content photos createdAt public author",
@@ -307,10 +306,10 @@ export const getDestinationsByStatus = async (
 
   const destinations = await DestinationModel.find({
     status,
-    listId: { $in: accessibleLists.map((list) => list._id) },
+    list: { $in: accessibleLists.map((list) => list._id) },
   })
     .populate({
-      path: "listId",
+      path: "list",
       select: "title owner collaborators",
     })
     .sort({ createdAt: -1 });
@@ -328,7 +327,7 @@ export const getDestinationStats = async (userId: string): Promise<any> => {
   const stats = await DestinationModel.aggregate([
     {
       $match: {
-        listId: { $in: accessibleLists.map((list) => list._id) },
+        list: { $in: accessibleLists.map((list) => list._id) },
       },
     },
     {
@@ -400,7 +399,7 @@ export const bulkUpdateDestinationStatus = async (
   // Verify all destinations exist and user has access
   const destinations = await DestinationModel.find({
     _id: { $in: destinationIds },
-  }).populate("listId", "owner collaborators");
+  }).populate("list", "owner collaborators");
 
   if (destinations.length !== destinationIds.length) {
     throw new Error("Some destinations not found");
@@ -408,7 +407,7 @@ export const bulkUpdateDestinationStatus = async (
 
   // Check access for all destinations
   for (const destination of destinations) {
-    const travelList = destination.listId as any;
+    const travelList = destination.list as any;
     const hasAccess =
       travelList.owner.toString() === userId ||
       travelList.collaborators.some(
@@ -446,10 +445,10 @@ export const getRecentDestinations = async (
   }).select("_id");
 
   const recentDestinations = await DestinationModel.find({
-    listId: { $in: accessibleLists.map((list) => list._id) },
+    list: { $in: accessibleLists.map((list) => list._id) },
   })
     .populate({
-      path: "listId",
+      path: "list",
       select: "title",
     })
     .sort({ createdAt: -1 })
@@ -475,7 +474,7 @@ export const searchDestinations = async (
   }).select("_id");
 
   const filter: any = {
-    listId: { $in: accessibleLists.map((list) => list._id) },
+    list: { $in: accessibleLists.map((list) => list._id) },
     $or: [
       { name: { $regex: searchQuery, $options: "i" } },
       { location: { $regex: searchQuery, $options: "i" } },
@@ -489,7 +488,7 @@ export const searchDestinations = async (
 
   const destinations = await DestinationModel.find(filter)
     .populate({
-      path: "listId",
+      path: "list",
       select: "title",
     })
     .sort({ createdAt: -1 })

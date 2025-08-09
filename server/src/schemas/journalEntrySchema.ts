@@ -24,6 +24,24 @@ const journalEntrySchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    likes: {
+      type: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+      ],
+      default: [],
+    },
+    comments: {
+      type: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Comment",
+        },
+      ],
+      default: [],
+    },
     public: { type: Boolean, default: false },
   },
   { timestamps: true, versionKey: false }

@@ -57,12 +57,6 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
-    status: {
-      type: String,
-      enum: ["Viewer", "Editor", "Owner"],
-      default: "Viewer",
-    },
-
     socketId: { type: String, default: null },
 
     lastLogin: { type: Date, default: null },
@@ -112,6 +106,44 @@ userSchema.virtual("allLists").get(function (this: any) {
     : [];
   return [...ownedLists, ...collaboratingLists];
 });
+
+// Helper method to get user's role in all their travel lists
+userSchema.methods.getAllListsWithRoles = async function () {
+  const TravelList = mongoose.model("TravelList");
+
+  // Get owned lists (user is Owner)
+  const ownedLists = await TravelList.find({ owner: this._id })
+    .select("title description isPublic createdAt")
+    .lean();
+
+  const ownedWithRoles = ownedLists.map((list) => ({
+    ...list,
+    role: "Owner",
+  }));
+
+  // Get collaborating lists (user has specific role)
+  const collaboratingLists = await TravelList.find({
+    "collaborators.user": this._id,
+  })
+    .select("title description isPublic createdAt collaborators")
+    .lean();
+
+  const collaboratingWithRoles = collaboratingLists.map((list) => {
+    const collaborator = list.collaborators.find(
+      (collab: any) => collab.user.toString() === this._id.toString()
+    );
+    return {
+      _id: list._id,
+      title: list.title,
+      description: list.description,
+      isPublic: list.isPublic,
+      createdAt: list.createdAt,
+      role: collaborator?.role || "Viewer",
+    };
+  });
+
+  return [...ownedWithRoles, ...collaboratingWithRoles];
+};
 
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ username: 1 }, { unique: true });
