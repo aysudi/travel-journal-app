@@ -63,9 +63,9 @@ const ChangePassword = ({ setShowChangePassword }: Props) => {
           Change Password
         </h2>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
               Current Password
             </label>
             <div className="relative">
@@ -79,7 +79,7 @@ const ChangePassword = ({ setShowChangePassword }: Props) => {
                   })
                 }
                 placeholder="Enter your current password"
-                className="w-full px-4 py-4 pr-12 border-2 border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white text-gray-800 placeholder-gray-400"
+                className="w-full px-3 py-3 pr-12 border-2 border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white text-gray-800 placeholder-gray-400"
               />
               <button
                 type="button"
@@ -96,7 +96,7 @@ const ChangePassword = ({ setShowChangePassword }: Props) => {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
               New Password
             </label>
             <div className="relative">
@@ -110,7 +110,7 @@ const ChangePassword = ({ setShowChangePassword }: Props) => {
                   })
                 }
                 placeholder="Enter your new password"
-                className="w-full px-4 py-4 pr-12 border-2 border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white text-gray-800 placeholder-gray-400"
+                className="w-full px-3 py-3 pr-12 border-2 border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white text-gray-800 placeholder-gray-400"
               />
               <button
                 type="button"
@@ -127,7 +127,7 @@ const ChangePassword = ({ setShowChangePassword }: Props) => {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
               Confirm New Password
             </label>
             <div className="relative">
@@ -141,7 +141,7 @@ const ChangePassword = ({ setShowChangePassword }: Props) => {
                   })
                 }
                 placeholder="Confirm your new password"
-                className="w-full px-4 py-4 pr-12 border-2 border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white text-gray-800 placeholder-gray-400"
+                className="w-full px-3 py-3 pr-12 border-2 border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white text-gray-800 placeholder-gray-400"
               />
               <button
                 type="button"
@@ -162,11 +162,11 @@ const ChangePassword = ({ setShowChangePassword }: Props) => {
           <button
             onClick={handlePasswordChange}
             disabled={changePasswordMutation.isPending}
-            className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-blue-300 disabled:to-blue-400 disabled:cursor-not-allowed text-white py-4 rounded-xl transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 cursor-pointer"
+            className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-blue-300 disabled:to-blue-400 disabled:cursor-not-allowed text-white py-3 rounded-xl transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 cursor-pointer"
           >
             {changePasswordMutation.isPending ? (
               <div className="flex items-center justify-center gap-2">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
                 Updating...
               </div>
             ) : (
@@ -176,7 +176,7 @@ const ChangePassword = ({ setShowChangePassword }: Props) => {
           <button
             onClick={() => setShowChangePassword(false)}
             disabled={changePasswordMutation.isPending}
-            className="flex-1 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 disabled:cursor-not-allowed text-gray-700 py-4 rounded-xl transition-all duration-200 font-semibold border-2 border-gray-200 hover:border-gray-300 cursor-pointer"
+            className="flex-1 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 disabled:cursor-not-allowed text-gray-700 py-3 rounded-xl transition-all duration-200 font-semibold border-2 border-gray-200 hover:border-gray-300 cursor-pointer"
           >
             Cancel
           </button>
