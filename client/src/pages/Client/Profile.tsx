@@ -1,23 +1,16 @@
-import React, { useState, useRef } from "react";
-import {
-  Camera,
-  Edit3,
-  Save,
-  X,
-  Calendar,
-  Crown,
-  MapPin,
-  Users,
-  BookOpen,
-} from "lucide-react";
-import { useUserProfile, useUpdateProfile } from "../../hooks/useAuth";
+import { useState } from "react";
+import { Calendar, Crown } from "lucide-react";
+import { useUserProfile } from "../../hooks/useAuth";
 import ChangePassword from "../../components/Client/Profile/ChangePassword";
 import UserInfo from "../../components/Client/Profile/UserInfo";
 import formatDate from "../../utils/formatDate";
+import Loading from "../../components/Common/Loading";
+import TravelStatistics from "../../components/Client/Profile/TravelStatistics";
+import ProfileImage from "../../components/Client/Profile/ProfileImage";
+import ActionsButtons from "../../components/Client/Profile/ActionsButtons";
 
 const Profile = () => {
   const { data: user, isLoading, isError, error } = useUserProfile();
-  const updateProfileMutation = useUpdateProfile();
 
   const [isEditing, setIsEditing] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -34,17 +27,8 @@ const Profile = () => {
   });
   const [imagePreview, setImagePreview] = useState<string>("");
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading your profile...</p>
-        </div>
-      </div>
-    );
+    return <Loading variant="page" />;
   }
 
   if (isError) {
@@ -70,55 +54,6 @@ const Profile = () => {
       </div>
     );
   }
-
-  const handleEdit = () => {
-    setIsEditing(true);
-    setEditData({
-      fullName: user.fullName,
-      username: user.username,
-      profileVisibility: user.profileVisibility,
-      profileImage: user.profileImage,
-    });
-  };
-
-  const handleSave = async () => {
-    try {
-      const formData = new FormData();
-
-      formData.append("fullName", editData.fullName);
-      formData.append("username", editData.username);
-      formData.append("profileVisibility", editData.profileVisibility);
-
-      if (editData.profileImage instanceof File) {
-        formData.append("profileImage", editData.profileImage);
-      }
-
-      await updateProfileMutation.mutateAsync(formData);
-      setIsEditing(false);
-      setImagePreview("");
-    } catch (error) {
-      console.error("Failed to update profile:", error);
-    }
-  };
-
-  const handleCancel = () => {
-    setIsEditing(false);
-    setImagePreview("");
-    setEditData({
-      fullName: user.fullName,
-      username: user.username,
-      profileVisibility: user.profileVisibility,
-      profileImage: user.profileImage,
-    });
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (e.currentTarget.files && file) {
-      setImagePreview(URL.createObjectURL(file));
-      setEditData((prev: any) => ({ ...prev, profileImage: file }));
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-8 px-4">
@@ -149,30 +84,13 @@ const Profile = () => {
           {/* Profile Info Section */}
           <div className="relative px-8 pb-8">
             {/* Profile Image */}
-            <div className="absolute -top-16 left-8">
-              <div className="relative">
-                <img
-                  src={imagePreview || user.profileImage}
-                  alt="Profile"
-                  className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover"
-                />
-                {isEditing && (
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-2 right-2 bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full shadow-lg transition-colors"
-                  >
-                    <Camera size={16} />
-                  </button>
-                )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden"
-                />
-              </div>
-            </div>
+            <ProfileImage
+              setImagePreview={setImagePreview}
+              isEditing={isEditing}
+              setEditData={setEditData}
+              imagePreview={imagePreview}
+              user={user}
+            />
 
             {/* Profile Header with Action Buttons */}
             <div className="pt-20 pb-6 border-b border-gray-100">
@@ -196,45 +114,14 @@ const Profile = () => {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3">
-                  {!isEditing ? (
-                    <button
-                      onClick={handleEdit}
-                      className="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition-colors font-medium cursor-pointer"
-                    >
-                      <Edit3 size={18} />
-                      Edit Profile
-                    </button>
-                  ) : (
-                    <>
-                      <button
-                        type="submit"
-                        onClick={handleSave}
-                        disabled={updateProfileMutation.isPending}
-                        className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 disabled:bg-green-300 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg transition-colors font-medium cursor-pointer"
-                      >
-                        {updateProfileMutation.isPending ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                            Saving...
-                          </>
-                        ) : (
-                          <>
-                            <Save size={18} />
-                            Save Changes
-                          </>
-                        )}
-                      </button>
-                      <button
-                        onClick={handleCancel}
-                        className="flex items-center justify-center gap-2 bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg transition-colors font-medium cursor-pointer"
-                      >
-                        <X size={18} />
-                        Cancel
-                      </button>
-                    </>
-                  )}
-                </div>
+                <ActionsButtons
+                  isEditing={isEditing}
+                  setIsEditing={setIsEditing}
+                  editData={editData}
+                  setEditData={setEditData}
+                  setImagePreview={setImagePreview}
+                  user={user}
+                />
               </div>
             </div>
 
@@ -250,35 +137,7 @@ const Profile = () => {
         </div>
 
         {/* Travel Statistics */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-            <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <MapPin size={32} className="text-blue-600" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">
-              {user.ownedLists?.length || 0}
-            </h3>
-            <p className="text-gray-600">Travel Lists Owned</p>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-            <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Users size={32} className="text-purple-600" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">
-              {user.collaboratingLists?.length || 0}
-            </h3>
-            <p className="text-gray-600">Collaborating Lists</p>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-            <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <BookOpen size={32} className="text-green-600" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">0</h3>
-            <p className="text-gray-600">Journal Entries</p>
-          </div>
-        </div>
+        <TravelStatistics user={user} />
 
         {/* Change Password Modal */}
         {showChangePassword && (

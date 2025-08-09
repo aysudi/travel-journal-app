@@ -15,9 +15,9 @@ export const getAll = async (params?: PaginationParams) => {
 
   const total = await TravelList.countDocuments(query);
   const lists = await TravelList.find(query)
-    .populate("owner", "firstName lastName email profileImage")
+    .populate("owner", "fullName email profileImage")
     .populate("destinations")
-    .populate("collaborators", "firstName lastName email profileImage")
+    .populate("collaborators", "fullName email profileImage")
     .sort({ [sort]: -1 })
     .skip((page - 1) * limit)
     .limit(limit);
@@ -34,13 +34,13 @@ export const getOne = async (id: string) =>
   await TravelList.findById(id)
     .populate("owner", "firstName lastName email profileImage")
     .populate("destinations")
-    .populate("collaborators", "firstName lastName email profileImage");
+    .populate("collaborators", "fullName email profileImage");
 
 export const getOwnedLists = async (userId: string) => {
   const userOwnedLists = await TravelList.find({ owner: userId })
-    .populate("owner", "firstName lastName email profileImage")
+    .populate("owner", "fullName email profileImage")
     .populate("destinations")
-    .populate("collaborators", "firstName lastName email profileImage")
+    .populate("collaborators", "fullName email profileImage")
     .sort({ createdAt: -1 });
 
   return userOwnedLists;
@@ -50,9 +50,9 @@ export const getCollaboratingLists = async (userId: string) => {
   const userCollaboratingLists = await TravelList.find({
     collaborators: userId,
   })
-    .populate("owner", "firstName lastName email profileImage")
+    .populate("owner", "fullName email profileImage")
     .populate("destinations")
-    .populate("collaborators", "firstName lastName email profileImage")
+    .populate("collaborators", "fullName email profileImage")
     .sort({ createdAt: -1 });
 
   return userCollaboratingLists;
@@ -68,9 +68,9 @@ export const getPublicLists = async (params: PaginationParams) => {
 
   const total = await TravelList.countDocuments(query);
   const lists = await TravelList.find(query)
-    .populate("owner", "firstName lastName email profileImage")
+    .populate("owner", "fullName email profileImage")
     .populate("destinations")
-    .populate("collaborators", "firstName lastName email profileImage")
+    .populate("collaborators", "fullName email profileImage")
     .sort({ [sort]: -1 })
     .skip((page - 1) * limit)
     .limit(limit);
