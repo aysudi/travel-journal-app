@@ -6,8 +6,6 @@ import {
   BookOpen,
   Crown,
   Globe,
-  Lock,
-  User,
   BarChart3,
 } from "lucide-react";
 import { useUserProfile } from "../../hooks/useAuth";
@@ -17,6 +15,10 @@ import {
   usePublicTravelLists,
 } from "../../hooks/useTravelList";
 import formatDate from "../../utils/formatDate";
+import Loading from "../../components/Common/Loading";
+import ProfileSummary from "../../components/Client/Dashboard/ProfileSummary";
+import RecentActivity from "../../components/Client/Dashboard/RecentActivity";
+import StatsGrid from "../../components/Client/Dashboard/StatsGrid";
 
 const Dashboard = () => {
   const { data: user, isLoading: userLoading } = useUserProfile();
@@ -28,14 +30,7 @@ const Dashboard = () => {
   const publicLists = publicListsData || [];
 
   if (userLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-slate-600">Loading your dashboard...</p>
-        </div>
-      </div>
-    );
+    return <Loading variant="page" />;
   }
 
   const stats = [
@@ -68,32 +63,6 @@ const Dashboard = () => {
       href: "/lists",
     },
   ];
-
-  const recentActivity = [
-    ...(ownedLists || []).slice(0, 3).map((list: any) => ({
-      id: `owned-${list._id}`,
-      listId: list._id,
-      type: "owned",
-      title: list.title,
-      description: `Created ${formatDate(list.createdAt)}`,
-      icon: MapPin,
-      href: `/lists/${list._id}`,
-    })),
-    ...(collaboratingLists || []).slice(0, 2).map((list: any) => ({
-      id: `collab-${list._id}`,
-      listId: list._id,
-      type: "collaboration",
-      title: list.title,
-      description: `Collaborating with ${list.owner?.fullName || "others"}`,
-      icon: Users,
-      href: `/lists/${list._id}`,
-    })),
-  ]
-    .filter(
-      (activity, index, arr) =>
-        arr.findIndex((item) => item.listId === activity.listId) === index
-    )
-    .slice(0, 5);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -130,193 +99,19 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <Link
-                key={stat.name}
-                to={stat.href}
-                className="group bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-white/20"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-600 group-hover:text-slate-700">
-                      {stat.name}
-                    </p>
-                    <p className="text-3xl font-bold text-slate-900 mt-2">
-                      {stat.value}
-                    </p>
-                  </div>
-                  <div
-                    className={`w-12 h-12 bg-gradient-to-r ${stat.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200`}
-                  >
-                    <Icon className="w-6 h-6 text-white" />
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+        <StatsGrid stats={stats} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Recent Activity */}
-          <div className="lg:col-span-2">
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-white/20">
-              <div className="p-6 border-b border-slate-100">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-slate-900">
-                    Recent Activity
-                  </h2>
-                  <Link
-                    to="/my-lists"
-                    className="text-blue-600 hover:text-blue-700 text-sm font-medium hover:bg-blue-50 px-3 py-1 rounded-md transition-all duration-200"
-                  >
-                    View all
-                  </Link>
-                </div>
-              </div>
-              <div className="p-6">
-                {recentActivity.length > 0 ? (
-                  <div className="space-y-4">
-                    {recentActivity.map((activity) => {
-                      const Icon = activity.icon;
-                      return (
-                        <Link
-                          key={activity.id}
-                          to={activity.href}
-                          className="flex items-center space-x-4 p-4 rounded-xl hover:bg-slate-50 transition-colors group"
-                        >
-                          <div
-                            className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                              activity.type === "owned"
-                                ? "bg-blue-100 text-blue-600"
-                                : "bg-purple-100 text-purple-600"
-                            }`}
-                          >
-                            <Icon size={16} />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-medium text-slate-900 group-hover:text-blue-600 transition-colors">
-                              {activity.title}
-                            </h3>
-                            <p className="text-sm text-slate-500">
-                              {activity.description}
-                            </p>
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <MapPin className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                    <p className="text-slate-500">No recent activity</p>
-                    <Link
-                      to="/my-lists"
-                      className="text-blue-600 hover:text-blue-700 text-sm font-medium mt-2 inline-block hover:bg-blue-50 px-3 py-1 rounded-md transition-all duration-200"
-                    >
-                      Create your first travel list
-                    </Link>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+          <RecentActivity
+            ownedLists={ownedLists}
+            collaboratingLists={collaboratingLists}
+          />
 
           {/* Profile Summary & Public Lists */}
           <div className="space-y-8">
             {/* Profile Summary */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-white/20">
-              <div className="p-6 border-b border-slate-100">
-                <h2 className="text-xl font-semibold text-slate-900">
-                  Profile Summary
-                </h2>
-              </div>
-              <div className="p-6">
-                <div className="flex items-center space-x-4 mb-6">
-                  <div className="relative">
-                    <img
-                      src={user?.profileImage}
-                      alt={user?.fullName}
-                      className="w-16 h-16 rounded-xl object-cover ring-2 ring-white shadow-lg"
-                    />
-                    {user?.isVerified && (
-                      <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center ring-2 ring-white">
-                        <svg
-                          className="w-3 h-3 text-white"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-slate-900">
-                      {user?.fullName}
-                    </h3>
-                    <p className="text-sm text-slate-500">@{user?.username}</p>
-                    <div className="flex items-center space-x-2 mt-1">
-                      {user?.profileVisibility === "public" ? (
-                        <div className="flex items-center space-x-1 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-medium">
-                          <Globe size={10} />
-                          <span>Public</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center space-x-1 bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs font-medium">
-                          <Lock size={10} />
-                          <span>Private</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-center justify-between text-sm bg-slate-50 px-3 py-2 rounded-lg">
-                    <span className="text-slate-600 font-medium">
-                      Member since
-                    </span>
-                    <span className="text-slate-900 font-semibold">
-                      {user?.createdAt ? formatDate(user.createdAt) : "N/A"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm bg-slate-50 px-3 py-2 rounded-lg">
-                    <span className="text-slate-600 font-medium">
-                      Account type
-                    </span>
-                    <span className="text-slate-900 font-semibold capitalize flex items-center space-x-1">
-                      {user?.provider === "local" ? (
-                        <span>🔒 Email</span>
-                      ) : user?.provider === "google" ? (
-                        <span>🔍 Google</span>
-                      ) : user?.provider === "github" ? (
-                        <span>🐙 GitHub</span>
-                      ) : (
-                        <span className="capitalize">{user?.provider}</span>
-                      )}
-                    </span>
-                  </div>
-                </div>
-
-                <Link
-                  to="/profile"
-                  className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-2.5 rounded-lg text-sm font-medium hover:shadow-md hover:shadow-blue-500/25 transition-all duration-200 flex items-center justify-center space-x-2 group"
-                >
-                  <User
-                    size={14}
-                    className="group-hover:scale-110 transition-transform duration-200"
-                  />
-                  <span>View Profile</span>
-                </Link>
-              </div>
-            </div>
+            <ProfileSummary user={user} />
 
             {/* Featured Public Lists */}
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-white/20">
