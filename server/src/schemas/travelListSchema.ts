@@ -18,32 +18,92 @@ const travelListSchema = new mongoose.Schema(
         maxlength: 30,
       },
     ],
-    isPublic: { type: Boolean, default: false },
+    visibility: {
+      type: String,
+      enum: ["private", "friends", "public"],
+      default: "private",
+    },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-    collaborators: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    pendingRequests: [
+
+    autoPermissions: {
+      friends: {
+        type: String,
+        enum: ["view", "suggest", "contribute"],
+        default: "suggest",
+      },
+      followers: {
+        type: String,
+        enum: ["view", "suggest", "contribute"],
+        default: "view",
+      },
+      public: {
+        type: String,
+        enum: ["view", "suggest", "contribute"],
+        default: "view",
+      },
+    },
+
+    customPermissions: [
       {
-        user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        requestedAt: { type: Date, default: Date.now },
-        message: { type: String, maxlength: 200 },
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        level: {
+          type: String,
+          enum: ["view", "suggest", "contribute", "co-owner"],
+          required: true,
+        },
+        grantedAt: {
+          type: Date,
+          default: Date.now,
+        },
+        grantedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
       },
     ],
+
+    settings: {
+      allowSuggestions: {
+        type: Boolean,
+        default: true,
+      },
+      requireApprovalForSuggestions: {
+        type: Boolean,
+        default: true,
+      },
+      notifyOnChanges: {
+        type: Boolean,
+        default: true,
+      },
+      allowFollowerSuggestions: {
+        type: Boolean,
+        default: false,
+      },
+    },
+
     coverImage: { type: String },
     destinations: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Destination" },
     ],
+
     chat: [{ type: mongoose.Schema.Types.ObjectId, ref: "Message" }],
   },
   { timestamps: true, versionKey: false }
 );
 
 travelListSchema.index({ owner: 1 });
-travelListSchema.index({ isPublic: 1 });
+travelListSchema.index({ visibility: 1 });
 travelListSchema.index({ tags: 1 });
 travelListSchema.index({ title: "text", description: "text" });
+travelListSchema.index({ "customPermissions.user": 1 });
+travelListSchema.index({ owner: 1, visibility: 1 });
 
 export default travelListSchema;
