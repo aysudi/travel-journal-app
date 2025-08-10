@@ -88,7 +88,7 @@ export const useCreateTravelList = () => {
       queryClient.invalidateQueries({ queryKey: travelListKeys.lists() });
       queryClient.invalidateQueries({ queryKey: travelListKeys.owned() });
 
-      queryClient.setQueryData(travelListKeys.list(newList._id), newList);
+      queryClient.setQueryData(travelListKeys.list(newList.id), newList);
     },
     onError: (error) => {
       console.error("Failed to create travel list:", error);
@@ -105,7 +105,7 @@ export const useUpdateTravelList = () => {
       travelListService.updateTravelList(id, data),
     onSuccess: (updatedList: TravelList) => {
       queryClient.setQueryData(
-        travelListKeys.list(updatedList._id),
+        travelListKeys.list(updatedList.id),
         updatedList
       );
 
@@ -151,7 +151,7 @@ export const useAddCollaborator = () => {
       travelListService.addCollaborator(listId, userId),
     onSuccess: (updatedList: TravelList) => {
       queryClient.setQueryData(
-        travelListKeys.list(updatedList._id),
+        travelListKeys.list(updatedList.id),
         updatedList
       );
 
@@ -174,7 +174,7 @@ export const useRemoveCollaborator = () => {
       travelListService.removeCollaborator(listId, userId),
     onSuccess: (updatedList: TravelList) => {
       queryClient.setQueryData(
-        travelListKeys.list(updatedList._id),
+        travelListKeys.list(updatedList.id),
         updatedList
       );
 
@@ -218,7 +218,7 @@ export const useDuplicateTravelList = () => {
     mutationFn: (listId: string) => travelListService.duplicateList(listId),
     onSuccess: (duplicatedList: TravelList) => {
       queryClient.setQueryData(
-        travelListKeys.list(duplicatedList._id),
+        travelListKeys.list(duplicatedList.id),
         duplicatedList
       );
 
