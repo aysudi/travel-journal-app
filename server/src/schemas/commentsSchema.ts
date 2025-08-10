@@ -19,4 +19,7 @@ const commentSchema = new mongoose.Schema(
   { timestamps: true, versionKey: false }
 );
 
+commentSchema.index({ journalEntry: 1, createdAt: -1 });
+commentSchema.index({ author: 1 });
+
 export default commentSchema;
