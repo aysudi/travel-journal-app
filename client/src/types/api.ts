@@ -44,13 +44,24 @@ export interface ChangePasswordData {
 
 // Travel List Types
 export interface TravelList {
-  _id: string;
+  id: string;
   title: string;
   description?: string;
   tags: string[];
-  isPublic: boolean;
+  visibility: "public" | "private" | "friends";
   owner: string;
-  collaborators: string[];
+  autoPermissions: {
+    friends: "view" | "suggest" | "contribute";
+    followers: "view" | "suggest" | "contribute";
+    public: "view" | "suggest" | "contribute";
+  };
+  customPermissions: string[];
+  settings: {
+    allowSuggestions: boolean;
+    requireApprovalForSuggestions: boolean;
+    notifyOnChanges: boolean;
+    allowFollowerSuggestions: boolean;
+  };
   coverImage?: string;
   destinations: string[];
   chat: string[];

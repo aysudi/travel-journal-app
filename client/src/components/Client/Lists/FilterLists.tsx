@@ -44,7 +44,7 @@ const FilterLists = ({
           {selectedTags.length > 0 && (
             <button
               onClick={clearAllTags}
-              className="text-xs text-blue-600 hover:text-blue-700"
+              className="text-xs text-blue-600 hover:text-blue-700 cursor-pointer"
             >
               Clear all
             </button>
@@ -55,7 +55,7 @@ const FilterLists = ({
             <button
               key={tag}
               onClick={() => handleTagToggle(tag)}
-              className={`px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer ${
                 selectedTags.includes(tag)
                   ? "bg-blue-500 text-white shadow-md"
                   : "bg-slate-100 text-slate-600 hover:bg-slate-200"

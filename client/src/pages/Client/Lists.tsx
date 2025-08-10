@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Filter, Plus, MapPin, Grid3X3, List as ListIcon } from "lucide-react";
-import { useTravelLists } from "../../hooks/useTravelList";
+import { usePublicTravelLists } from "../../hooks/useTravelList";
 import TravelListCard from "../../components/Client/Lists/TravelListCard";
 import TravelListRow from "../../components/Client/Lists/TravelListRow";
 import SearchLists from "../../components/Client/Lists/SearchLists";
@@ -13,7 +13,7 @@ import type { SortOption, SortOrder } from "../../types/sortType";
 type ViewMode = "grid" | "list";
 
 const Lists = () => {
-  const { data: lists, isLoading, isError, error } = useTravelLists();
+  const { data: lists, isLoading, isError, error } = usePublicTravelLists();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("updatedAt");
@@ -25,8 +25,7 @@ const Lists = () => {
   const filteredAndSortedLists = useMemo(() => {
     if (!lists) return [];
 
-    const listData = Array.isArray(lists) ? lists : lists.data || [];
-    let filtered = [...listData];
+    let filtered = [...lists];
 
     if (searchQuery) {
       filtered = filtered.filter(
@@ -77,7 +76,7 @@ const Lists = () => {
   }, [lists, searchQuery, sortBy, sortOrder, selectedTags]);
 
   if (isLoading) {
-    return <Loading variant="page" message="Loading your travel lists" />;
+    return <Loading variant="page" message="Loading public travel lists" />;
   }
 
   if (isError) {
@@ -94,7 +93,7 @@ const Lists = () => {
               </h3>
               <p className="text-slate-600 mb-6 leading-relaxed">
                 {error?.message ||
-                  "We couldn't load your travel lists right now. Please try again in a moment."}
+                  "We couldn't load public travel lists right now. Please try again in a moment."}
               </p>
               <button className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
                 Try Again
@@ -106,12 +105,7 @@ const Lists = () => {
     );
   }
 
-  if (
-    !lists ||
-    (Array.isArray(lists)
-      ? lists.length === 0
-      : !lists.data || lists.data.length === 0)
-  ) {
+  if (!lists || lists.length === 0) {
     return <EmptyLists />;
   }
 
@@ -149,7 +143,7 @@ const Lists = () => {
               <div className="flex items-center bg-slate-100 rounded-lg p-1">
                 <button
                   onClick={() => setViewMode("grid")}
-                  className={`p-2 rounded-md transition-all duration-200 ${
+                  className={`p-2 rounded-md transition-all duration-200 cursor-pointer ${
                     viewMode === "grid"
                       ? "bg-white text-blue-500 shadow-sm"
                       : "text-slate-500 hover:text-slate-700"
@@ -159,7 +153,7 @@ const Lists = () => {
                 </button>
                 <button
                   onClick={() => setViewMode("list")}
-                  className={`p-2 rounded-md transition-all duration-200 ${
+                  className={`p-2 rounded-md transition-all duration-200 cursor-pointer ${
                     viewMode === "list"
                       ? "bg-white text-blue-500 shadow-sm"
                       : "text-slate-500 hover:text-slate-700"
@@ -172,7 +166,7 @@ const Lists = () => {
               {/* Filter Button */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200 ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200 cursor-pointer ${
                   showFilters
                     ? "border-blue-500 bg-blue-50 text-blue-600"
                     : "border-slate-200 hover:border-slate-300"
@@ -206,9 +200,8 @@ const Lists = () => {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <p className="text-slate-600">
-              Showing {filteredAndSortedLists.length} of{" "}
-              {Array.isArray(lists) ? lists.length : lists?.data?.length || 0}{" "}
-              travel lists
+              Showing {filteredAndSortedLists.length} of {lists?.length || 0}{" "}
+              public travel lists
             </p>
             {selectedTags.length > 0 && (
               <div className="flex items-center gap-2">
