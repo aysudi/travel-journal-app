@@ -3,7 +3,6 @@ import * as travelListService from "../services/travelListService";
 import uploadMiddleware from "../middlewares/uploadMiddleware";
 import formatMongoData from "../utils/formatMongoData";
 
-// Get all travel lists (with pagination and search)
 export const getAllTravelLists = async (req: Request, res: Response) => {
   try {
     const { page, limit, search, sort } = req.query;
@@ -30,7 +29,6 @@ export const getAllTravelLists = async (req: Request, res: Response) => {
   }
 };
 
-// Get single travel list by ID
 export const getTravelListById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -58,7 +56,6 @@ export const getTravelListById = async (req: Request, res: Response) => {
   }
 };
 
-// Get user's owned travel lists
 export const getOwnedTravelLists = async (req: Request, res: Response) => {
   try {
     const userId = (req.user as any)?.id;
@@ -85,7 +82,6 @@ export const getOwnedTravelLists = async (req: Request, res: Response) => {
   }
 };
 
-// Get user's collaborating travel lists
 export const getCollaboratingTravelLists = async (
   req: Request,
   res: Response
@@ -117,7 +113,6 @@ export const getCollaboratingTravelLists = async (
   }
 };
 
-// Get public travel lists
 export const getPublicTravelLists = async (req: Request, res: Response) => {
   try {
     const { page, limit, search, sort } = req.query;
@@ -144,7 +139,6 @@ export const getPublicTravelLists = async (req: Request, res: Response) => {
   }
 };
 
-// Create new travel list
 export const createTravelList = async (req: Request, res: Response) => {
   try {
     const userId = (req.user as any)?.id;
@@ -176,7 +170,6 @@ export const createTravelList = async (req: Request, res: Response) => {
   }
 };
 
-// Update travel list
 export const updateTravelList = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -191,13 +184,15 @@ export const updateTravelList = async (req: Request, res: Response) => {
       });
     }
 
-    // Check if user is owner or collaborator
+    // Check if user is owner or has custom permission
     const isOwner = existingList.owner._id.toString() === userId;
-    const isCollaborator = existingList.collaborators.some(
-      (collaborator: any) => collaborator._id.toString() === userId
+    const hasCustomPermission = existingList.customPermissions.some(
+      (perm: any) =>
+        perm.user._id.toString() === userId &&
+        (perm.level === "contribute" || perm.level === "co-owner")
     );
 
-    if (!isOwner && !isCollaborator) {
+    if (!isOwner && !hasCustomPermission) {
       return res.status(403).json({
         success: false,
         message: "You don't have permission to update this travel list",
@@ -220,13 +215,11 @@ export const updateTravelList = async (req: Request, res: Response) => {
   }
 };
 
-// Delete travel list
 export const deleteTravelList = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const userId = (req.user as any)?.id;
 
-    // Check if travel list exists and user is owner
     const existingList = await travelListService.getOne(id);
     if (!existingList) {
       return res.status(404).json({
@@ -235,7 +228,6 @@ export const deleteTravelList = async (req: Request, res: Response) => {
       });
     }
 
-    // Only owner can delete
     if (existingList.owner._id.toString() !== userId) {
       return res.status(403).json({
         success: false,
@@ -258,21 +250,19 @@ export const deleteTravelList = async (req: Request, res: Response) => {
   }
 };
 
-// Add collaborator to travel list
-export const addCollaborator = async (req: Request, res: Response) => {
+export const addCustomPermission = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { userId: collaboratorId } = req.body;
+    const { userId: collaboratorId, permissionLevel = "contribute" } = req.body;
     const userId = (req.user as any)?.id;
 
     if (!collaboratorId) {
       return res.status(400).json({
         success: false,
-        message: "Collaborator user ID is required",
+        message: "User ID is required",
       });
     }
 
-    // Check if travel list exists and user is owner
     const existingList = await travelListService.getOne(id);
     if (!existingList) {
       return res.status(404).json({
@@ -281,47 +271,46 @@ export const addCollaborator = async (req: Request, res: Response) => {
       });
     }
 
-    // Only owner can add collaborators
     if (existingList.owner._id.toString() !== userId) {
       return res.status(403).json({
         success: false,
-        message: "Only the owner can add collaborators",
+        message: "Only the owner can add permissions",
       });
     }
 
-    // Check if user is already a collaborator
-    const isAlreadyCollaborator = existingList.collaborators.some(
-      (collaborator: any) => collaborator._id.toString() === collaboratorId
+    const hasExistingPermission = existingList.customPermissions.some(
+      (perm: any) => perm.user._id.toString() === collaboratorId
     );
 
-    if (isAlreadyCollaborator) {
+    if (hasExistingPermission) {
       return res.status(400).json({
         success: false,
-        message: "User is already a collaborator",
+        message: "User already has custom permission",
       });
     }
 
-    const updatedList = await travelListService.addCollaborator(
+    const updatedList = await travelListService.addCustomPermission(
       id,
-      collaboratorId
+      collaboratorId,
+      permissionLevel,
+      userId
     );
     res.status(200).json({
       success: true,
-      message: "Collaborator added successfully",
+      message: "Permission added successfully",
       data: updatedList,
     });
   } catch (error: any) {
-    console.error("Add collaborator error:", error);
+    console.error("Add custom permission error:", error);
     res.status(500).json({
       success: false,
-      message: "Failed to add collaborator",
+      message: "Failed to add permission",
       error: error.message,
     });
   }
 };
 
-// Remove collaborator from travel list
-export const removeCollaborator = async (req: Request, res: Response) => {
+export const removeCustomPermission = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { userId: collaboratorId } = req.body;
@@ -330,11 +319,10 @@ export const removeCollaborator = async (req: Request, res: Response) => {
     if (!collaboratorId) {
       return res.status(400).json({
         success: false,
-        message: "Collaborator user ID is required",
+        message: "User ID is required",
       });
     }
 
-    // Check if travel list exists and user is owner
     const existingList = await travelListService.getOne(id);
     if (!existingList) {
       return res.status(404).json({
@@ -343,40 +331,86 @@ export const removeCollaborator = async (req: Request, res: Response) => {
       });
     }
 
-    // Only owner can remove collaborators
     if (existingList.owner._id.toString() !== userId) {
       return res.status(403).json({
         success: false,
-        message: "Only the owner can remove collaborators",
+        message: "Only the owner can remove permissions",
       });
     }
 
-    const updatedList = await travelListService.removeCollaborator(
+    const updatedList = await travelListService.removeCustomPermission(
       id,
       collaboratorId
     );
     res.status(200).json({
       success: true,
-      message: "Collaborator removed successfully",
+      message: "Permission removed successfully",
       data: updatedList,
     });
   } catch (error: any) {
-    console.error("Remove collaborator error:", error);
+    console.error("Remove custom permission error:", error);
     res.status(500).json({
       success: false,
-      message: "Failed to remove collaborator",
+      message: "Failed to remove permission",
       error: error.message,
     });
   }
 };
 
-// Upload cover image for travel list
+// Update custom permission level
+export const updateCustomPermission = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { userId: collaboratorId, permissionLevel } = req.body;
+    const userId = (req.user as any)?.id;
+
+    if (!collaboratorId || !permissionLevel) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID and permission level are required",
+      });
+    }
+
+    const existingList = await travelListService.getOne(id);
+    if (!existingList) {
+      return res.status(404).json({
+        success: false,
+        message: "Travel list not found",
+      });
+    }
+
+    if (existingList.owner._id.toString() !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "Only the owner can update permissions",
+      });
+    }
+
+    const updatedList = await travelListService.updateCustomPermission(
+      id,
+      collaboratorId,
+      permissionLevel
+    );
+    res.status(200).json({
+      success: true,
+      message: "Permission updated successfully",
+      data: updatedList,
+    });
+  } catch (error: any) {
+    console.error("Update custom permission error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update permission",
+      error: error.message,
+    });
+  }
+};
+
 export const uploadCoverImage = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const userId = (req.user as any)?.id;
 
-    // Check if travel list exists and user has permission
     const existingList = await travelListService.getOne(id);
     if (!existingList) {
       return res.status(404).json({
@@ -385,13 +419,14 @@ export const uploadCoverImage = async (req: Request, res: Response) => {
       });
     }
 
-    // Check if user is owner or collaborator
     const isOwner = existingList.owner._id.toString() === userId;
-    const isCollaborator = existingList.collaborators.some(
-      (collaborator: any) => collaborator._id.toString() === userId
+    const hasCustomPermission = existingList.customPermissions.some(
+      (perm: any) =>
+        perm.user._id.toString() === userId &&
+        (perm.level === "contribute" || perm.level === "co-owner")
     );
 
-    if (!isOwner && !isCollaborator) {
+    if (!isOwner && !hasCustomPermission) {
       return res.status(403).json({
         success: false,
         message: "You don't have permission to upload cover image",
@@ -405,7 +440,6 @@ export const uploadCoverImage = async (req: Request, res: Response) => {
       });
     }
 
-    // Update travel list with new cover image
     const updatedList = await travelListService.updateCoverImage(
       id,
       (req.file as any).path
@@ -429,7 +463,6 @@ export const uploadCoverImage = async (req: Request, res: Response) => {
   }
 };
 
-// Duplicate travel list
 export const duplicateTravelList = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -442,7 +475,6 @@ export const duplicateTravelList = async (req: Request, res: Response) => {
       });
     }
 
-    // Check if travel list exists
     const existingList = await travelListService.getOne(id);
     if (!existingList) {
       return res.status(404).json({
@@ -451,14 +483,11 @@ export const duplicateTravelList = async (req: Request, res: Response) => {
       });
     }
 
-    // Check if list is public or user has access
-    const isPublic = existingList.isPublic;
-    const isOwner = existingList.owner._id.toString() === userId;
-    const isCollaborator = existingList.collaborators.some(
-      (collaborator: any) => collaborator._id.toString() === userId
+    const hasViewPermission = travelListService.checkUserPermission(
+      existingList,
+      userId
     );
-
-    if (!isPublic && !isOwner && !isCollaborator) {
+    if (!hasViewPermission) {
       return res.status(403).json({
         success: false,
         message: "You don't have permission to duplicate this travel list",

@@ -17,7 +17,7 @@ export const getAll = async (params?: PaginationParams) => {
   const lists = await TravelList.find(query)
     .populate("owner", "fullName email profileImage")
     .populate("destinations")
-    .populate("collaborators", "fullName email profileImage")
+    .populate("customPermissions.user", "fullName email profileImage")
     .sort({ [sort]: -1 })
     .skip((page - 1) * limit)
     .limit(limit);
@@ -34,13 +34,13 @@ export const getOne = async (id: string) =>
   await TravelList.findById(id)
     .populate("owner", "firstName lastName email profileImage")
     .populate("destinations")
-    .populate("collaborators", "fullName email profileImage");
+    .populate("customPermissions.user", "fullName email profileImage");
 
 export const getOwnedLists = async (userId: string) => {
   const userOwnedLists = await TravelList.find({ owner: userId })
     .populate("owner", "fullName email profileImage")
     .populate("destinations")
-    .populate("collaborators", "fullName email profileImage")
+    .populate("customPermissions.user", "fullName email profileImage")
     .sort({ createdAt: -1 });
 
   return userOwnedLists;
@@ -48,11 +48,11 @@ export const getOwnedLists = async (userId: string) => {
 
 export const getCollaboratingLists = async (userId: string) => {
   const userCollaboratingLists = await TravelList.find({
-    collaborators: userId,
+    "customPermissions.user": userId,
   })
     .populate("owner", "fullName email profileImage")
     .populate("destinations")
-    .populate("collaborators", "fullName email profileImage")
+    .populate("customPermissions.user", "fullName email profileImage")
     .sort({ createdAt: -1 });
 
   return userCollaboratingLists;
@@ -61,7 +61,7 @@ export const getCollaboratingLists = async (userId: string) => {
 export const getPublicLists = async (params: PaginationParams) => {
   const { page = 1, limit = 10, search = "", sort = "createdAt" } = params;
 
-  const query: any = { isPublic: true };
+  const query: any = { visibility: "public" };
   if (search) {
     query.title = { $regex: search, $options: "i" };
   }
@@ -70,7 +70,7 @@ export const getPublicLists = async (params: PaginationParams) => {
   const lists = await TravelList.find(query)
     .populate("owner", "fullName email profileImage")
     .populate("destinations")
-    .populate("collaborators", "fullName email profileImage")
+    .populate("customPermissions.user", "fullName email profileImage")
     .sort({ [sort]: -1 })
     .skip((page - 1) * limit)
     .limit(limit);
@@ -87,44 +87,73 @@ export const update = async (id: string, payload: any) =>
   await TravelList.findByIdAndUpdate(id, payload, { new: true })
     .populate("owner", "firstName lastName email profileImage")
     .populate("destinations")
-    .populate("collaborators", "firstName lastName email profileImage");
+    .populate("customPermissions.user", "fullName email profileImage");
 
 export const post = async (payload: any) => {
   const newList = await TravelList.create(payload);
   return await TravelList.findById(newList._id)
     .populate("owner", "firstName lastName email profileImage")
     .populate("destinations")
-    .populate("collaborators", "firstName lastName email profileImage");
+    .populate("customPermissions.user", "fullName email profileImage");
 };
 
 export const deleteOne = async (id: string) =>
   await TravelList.findByIdAndDelete(id);
 
-// Add collaborator to a travel list
-export const addCollaborator = async (listId: string, userId: string) => {
+export const addCustomPermission = async (
+  listId: string,
+  userId: string,
+  permissionLevel: string,
+  grantedBy: string
+) => {
   return await TravelList.findByIdAndUpdate(
     listId,
-    { $addToSet: { collaborators: userId } },
+    {
+      $addToSet: {
+        customPermissions: {
+          user: userId,
+          level: permissionLevel,
+          grantedBy: grantedBy,
+          grantedAt: new Date(),
+        },
+      },
+    },
     { new: true }
   )
     .populate("owner", "firstName lastName email profileImage")
     .populate("destinations")
-    .populate("collaborators", "firstName lastName email profileImage");
+    .populate("customPermissions.user", "fullName email profileImage");
 };
 
-// Remove collaborator from a travel list
-export const removeCollaborator = async (listId: string, userId: string) => {
+export const removeCustomPermission = async (
+  listId: string,
+  userId: string
+) => {
   return await TravelList.findByIdAndUpdate(
     listId,
-    { $pull: { collaborators: userId } },
+    { $pull: { customPermissions: { user: userId } } },
     { new: true }
   )
     .populate("owner", "firstName lastName email profileImage")
     .populate("destinations")
-    .populate("collaborators", "firstName lastName email profileImage");
+    .populate("customPermissions.user", "fullName email profileImage");
 };
 
-// Update cover image
+export const updateCustomPermission = async (
+  listId: string,
+  userId: string,
+  newPermissionLevel: string
+) => {
+  return await TravelList.findOneAndUpdate(
+    { _id: listId, "customPermissions.user": userId },
+    { $set: { "customPermissions.$.level": newPermissionLevel } },
+    { new: true }
+  )
+    .populate("owner", "firstName lastName email profileImage")
+    .populate("destinations")
+    .populate("customPermissions.user", "fullName email profileImage");
+};
+
 export const updateCoverImage = async (
   listId: string,
   coverImageUrl: string
@@ -136,10 +165,9 @@ export const updateCoverImage = async (
   )
     .populate("owner", "firstName lastName email profileImage")
     .populate("destinations")
-    .populate("collaborators", "firstName lastName email profileImage");
+    .populate("customPermissions.user", "fullName email profileImage");
 };
 
-// Duplicate a travel list
 export const duplicateList = async (listId: string, newOwnerId: string) => {
   const originalList = await TravelList.findById(listId).populate(
     "destinations"
@@ -153,9 +181,8 @@ export const duplicateList = async (listId: string, newOwnerId: string) => {
     title: `${originalList.title} (Copy)`,
     description: originalList.description,
     tags: [...originalList.tags],
-    isPublic: false,
+    visibility: "private",
     owner: newOwnerId,
-    collaborators: [],
     coverImage: originalList.coverImage,
     destinations: originalList.destinations,
   };
@@ -164,5 +191,19 @@ export const duplicateList = async (listId: string, newOwnerId: string) => {
   return await TravelList.findById(duplicatedList._id)
     .populate("owner", "firstName lastName email profileImage")
     .populate("destinations")
-    .populate("collaborators", "firstName lastName email profileImage");
+    .populate("customPermissions.user", "fullName email profileImage");
+};
+
+export const checkUserPermission = (list: any, userId: string) => {
+  if (list.owner.toString() === userId) return true;
+
+  const customPerm = list.customPermissions.find(
+    (p: any) => p.user.toString() === userId
+  );
+  if (customPerm) return true;
+
+  if (list.visibility === "public") return true;
+  if (list.visibility === "private") return false;
+
+  return false;
 };

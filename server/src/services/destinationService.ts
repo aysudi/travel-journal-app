@@ -47,23 +47,22 @@ export interface PaginatedDestinations {
   };
 }
 
-// Create a new destination
 export const createDestination = async (
   destinationData: DestinationData,
   userId: string
 ): Promise<any> => {
-  // Verify travel list exists and user has access
   const travelList = await TravelListModel.findById(destinationData.list);
 
   if (!travelList) {
     throw new Error("Travel list not found");
   }
 
-  // Check if user has access to the travel list
   const hasAccess =
     travelList.owner.toString() === userId ||
-    travelList.collaborators.some(
-      (collaboratorId: any) => collaboratorId.toString() === userId
+    travelList.customPermissions.some(
+      (perm: any) =>
+        perm.user.toString() === userId &&
+        (perm.level === "contribute" || perm.level === "co-owner")
     );
 
   if (!hasAccess) {
@@ -78,14 +77,13 @@ export const createDestination = async (
   return await getDestinationById(destination._id.toString());
 };
 
-// Get destination by ID with populated fields
 export const getDestinationById = async (
   destinationId: string
 ): Promise<any> => {
   const destination = await DestinationModel.findById(destinationId)
     .populate({
       path: "list",
-      select: "title owner collaborators",
+      select: "title owner customPermissions",
       populate: {
         path: "owner",
         select: "fullName username profileImage",
@@ -107,7 +105,6 @@ export const getDestinationById = async (
   return destination;
 };
 
-// Update destination
 export const updateDestination = async (
   destinationId: string,
   updateData: DestinationUpdateData,
@@ -115,19 +112,20 @@ export const updateDestination = async (
 ): Promise<any> => {
   const destination = await DestinationModel.findById(destinationId).populate(
     "list",
-    "owner collaborators"
+    "owner customPermissions"
   );
 
   if (!destination) {
     throw new Error("Destination not found");
   }
 
-  // Check if user has access to the travel list
   const travelList = destination.list as any;
   const hasAccess =
     travelList.owner.toString() === userId ||
-    travelList.collaborators.some(
-      (collaboratorId: any) => collaboratorId.toString() === userId
+    travelList.customPermissions.some(
+      (perm: any) =>
+        perm.user.toString() === userId &&
+        (perm.level === "contribute" || perm.level === "co-owner")
     );
 
   if (!hasAccess) {
@@ -140,7 +138,7 @@ export const updateDestination = async (
     { new: true, runValidators: true }
   ).populate({
     path: "list",
-    select: "title owner collaborators",
+    select: "title owner customPermissions",
     populate: {
       path: "owner",
       select: "fullName username profileImage",
@@ -150,14 +148,13 @@ export const updateDestination = async (
   return updatedDestination;
 };
 
-// Delete destination
 export const deleteDestination = async (
   destinationId: string,
   userId: string
 ): Promise<void> => {
   const destination = await DestinationModel.findById(destinationId).populate(
     "list",
-    "owner collaborators"
+    "owner customPermissions"
   );
 
   if (!destination) {
@@ -167,8 +164,10 @@ export const deleteDestination = async (
   const travelList = destination.list as any;
   const hasAccess =
     travelList.owner.toString() === userId ||
-    travelList.collaborators.some(
-      (collaboratorId: any) => collaboratorId.toString() === userId
+    travelList.customPermissions.some(
+      (perm: any) =>
+        perm.user.toString() === userId &&
+        (perm.level === "contribute" || perm.level === "co-owner")
     );
 
   if (!hasAccess) {
@@ -178,7 +177,6 @@ export const deleteDestination = async (
   await DestinationModel.findByIdAndDelete(destinationId);
 };
 
-// Get destinations with filtering, pagination, and search
 export const getDestinations = async (
   query: DestinationQuery
 ): Promise<PaginatedDestinations> => {
@@ -194,13 +192,11 @@ export const getDestinations = async (
 
   const skip = (page - 1) * limit;
 
-  // Build filter object
   const filter: any = {};
 
   if (list) filter.list = list;
   if (status) filter.status = status;
 
-  // Add search functionality
   if (search) {
     filter.$or = [
       { name: { $regex: search, $options: "i" } },
@@ -209,24 +205,22 @@ export const getDestinations = async (
     ];
   }
 
-  // If userId is provided, filter by accessible travel lists
   if (userId && !list) {
     const accessibleLists = await TravelListModel.find({
-      $or: [{ owner: userId }, { collaborators: userId }],
+      $or: [{ owner: userId }, { "customPermissions.user": userId }],
     }).select("_id");
 
     filter.list = { $in: accessibleLists.map((list) => list._id) };
   }
 
-  // Build sort object
   const sortObj: any = {};
-  sortObj[sort] = -1; // Default to descending
+  sortObj[sort] = -1;
 
   const [destinations, total] = await Promise.all([
     DestinationModel.find(filter)
       .populate({
         path: "list",
-        select: "title owner collaborators",
+        select: "title owner customPermissions",
         populate: {
           path: "owner",
           select: "fullName username profileImage",
@@ -254,7 +248,6 @@ export const getDestinations = async (
   };
 };
 
-// Get destinations by travel list ID
 export const getDestinationsByTravelList = async (
   listId: string,
   userId?: string
@@ -265,12 +258,11 @@ export const getDestinationsByTravelList = async (
     throw new Error("Travel list not found");
   }
 
-  // Check access if userId provided
   if (userId) {
     const hasAccess =
       travelList.owner.toString() === userId ||
-      travelList.collaborators.some(
-        (collaboratorId: any) => collaboratorId.toString() === userId
+      travelList.customPermissions.some(
+        (perm: any) => perm.user.toString() === userId
       );
 
     if (!hasAccess) {
@@ -294,14 +286,12 @@ export const getDestinationsByTravelList = async (
   return destinations;
 };
 
-// Get destinations by status
 export const getDestinationsByStatus = async (
   status: "Wishlist" | "Planned" | "Visited",
   userId: string
 ): Promise<any[]> => {
-  // Get user's accessible travel lists
   const accessibleLists = await TravelListModel.find({
-    $or: [{ owner: userId }, { collaborators: userId }],
+    $or: [{ owner: userId }, { "customPermissions.user": userId }],
   }).select("_id");
 
   const destinations = await DestinationModel.find({
@@ -310,18 +300,16 @@ export const getDestinationsByStatus = async (
   })
     .populate({
       path: "list",
-      select: "title owner collaborators",
+      select: "title owner customPermissions",
     })
     .sort({ createdAt: -1 });
 
   return destinations;
 };
 
-// Get destination statistics for a user
 export const getDestinationStats = async (userId: string): Promise<any> => {
-  // Get user's accessible travel lists
   const accessibleLists = await TravelListModel.find({
-    $or: [{ owner: userId }, { collaborators: userId }],
+    $or: [{ owner: userId }, { "customPermissions.user": userId }],
   }).select("_id");
 
   const stats = await DestinationModel.aggregate([
@@ -374,7 +362,6 @@ export const getDestinationStats = async (userId: string): Promise<any> => {
   );
 };
 
-// Update destination status (common operation)
 export const updateDestinationStatus = async (
   destinationId: string,
   status: "Wishlist" | "Planned" | "Visited",
@@ -382,7 +369,6 @@ export const updateDestinationStatus = async (
 ): Promise<any> => {
   const updateData: any = { status };
 
-  // If marking as visited, set dateVisited to current date
   if (status === "Visited") {
     updateData.dateVisited = new Date();
   }
@@ -390,28 +376,27 @@ export const updateDestinationStatus = async (
   return await updateDestination(destinationId, updateData, userId);
 };
 
-// Bulk update destinations status
 export const bulkUpdateDestinationStatus = async (
   destinationIds: string[],
   status: "Wishlist" | "Planned" | "Visited",
   userId: string
 ): Promise<any> => {
-  // Verify all destinations exist and user has access
   const destinations = await DestinationModel.find({
     _id: { $in: destinationIds },
-  }).populate("list", "owner collaborators");
+  }).populate("list", "owner customPermissions");
 
   if (destinations.length !== destinationIds.length) {
     throw new Error("Some destinations not found");
   }
 
-  // Check access for all destinations
   for (const destination of destinations) {
     const travelList = destination.list as any;
     const hasAccess =
       travelList.owner.toString() === userId ||
-      travelList.collaborators.some(
-        (collaboratorId: any) => collaboratorId.toString() === userId
+      travelList.customPermissions.some(
+        (perm: any) =>
+          perm.user.toString() === userId &&
+          (perm.level === "contribute" || perm.level === "co-owner")
       );
 
     if (!hasAccess) {
@@ -434,14 +419,12 @@ export const bulkUpdateDestinationStatus = async (
   };
 };
 
-// Get recent destinations activity for dashboard
 export const getRecentDestinations = async (
   userId: string,
   limit: number = 5
 ): Promise<any[]> => {
-  // Get user's accessible travel lists
   const accessibleLists = await TravelListModel.find({
-    $or: [{ owner: userId }, { collaborators: userId }],
+    $or: [{ owner: userId }, { "customPermissions.user": userId }],
   }).select("_id");
 
   const recentDestinations = await DestinationModel.find({
@@ -459,7 +442,6 @@ export const getRecentDestinations = async (
   return recentDestinations;
 };
 
-// Search destinations across all accessible travel lists
 export const searchDestinations = async (
   searchQuery: string,
   userId: string,
@@ -468,9 +450,8 @@ export const searchDestinations = async (
     limit?: number;
   }
 ): Promise<any[]> => {
-  // Get user's accessible travel lists
   const accessibleLists = await TravelListModel.find({
-    $or: [{ owner: userId }, { collaborators: userId }],
+    $or: [{ owner: userId }, { "customPermissions.user": userId }],
   }).select("_id");
 
   const filter: any = {
