@@ -8,8 +8,9 @@ import {
   createTravelList,
   updateTravelList,
   deleteTravelList,
-  addCollaborator,
-  removeCollaborator,
+  addCustomPermission,
+  removeCustomPermission,
+  updateCustomPermission,
   uploadCoverImage,
   duplicateTravelList,
 } from "../controllers/travelListController";
@@ -31,8 +32,9 @@ travelListRouter.post("/", createTravelList);
 travelListRouter.put("/:id", updateTravelList);
 travelListRouter.delete("/:id", deleteTravelList);
 
-travelListRouter.post("/:id/collaborators", addCollaborator);
-travelListRouter.delete("/:id/collaborators", removeCollaborator);
+travelListRouter.post("/:id/permissions", addCustomPermission);
+travelListRouter.put("/:id/permissions", updateCustomPermission);
+travelListRouter.delete("/:id/permissions", removeCustomPermission);
 
 travelListRouter.post(
   "/:id/cover-image",

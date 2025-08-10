@@ -1,3 +1,4 @@
+import { required } from "joi";
 import mongoose from "mongoose";
 
 const travelListSchema = new mongoose.Schema(
@@ -89,7 +90,7 @@ const travelListSchema = new mongoose.Schema(
       },
     },
 
-    coverImage: { type: String },
+    coverImage: { type: String, required: true },
     destinations: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Destination" },
     ],
