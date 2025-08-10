@@ -2,11 +2,11 @@ import type { TravelList } from "../../../services";
 import formatDate from "../../../utils/formatDate";
 import {
   MapPin,
-  Users,
   Calendar,
   Globe,
   Lock,
   MoreVertical,
+  UserCheck,
 } from "lucide-react";
 
 const TravelListRow: React.FC<{ list: TravelList }> = ({ list }) => (
@@ -34,13 +34,25 @@ const TravelListRow: React.FC<{ list: TravelList }> = ({ list }) => (
           <div className="flex items-center gap-2 ml-4">
             <div
               className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                list.isPublic
+                list.visibility === "public"
                   ? "bg-green-100 text-green-700"
+                  : list.visibility === "friends"
+                  ? "bg-blue-100 text-blue-700"
                   : "bg-slate-100 text-slate-700"
               }`}
             >
-              {list.isPublic ? <Globe size={12} /> : <Lock size={12} />}
-              {list.isPublic ? "Public" : "Private"}
+              {list.visibility === "public" ? (
+                <Globe size={12} />
+              ) : list.visibility === "friends" ? (
+                <UserCheck size={12} />
+              ) : (
+                <Lock size={12} />
+              )}
+              {list.visibility === "public"
+                ? "Public"
+                : list.visibility === "friends"
+                ? "Friends"
+                : "Private"}
             </div>
           </div>
         </div>
@@ -56,10 +68,6 @@ const TravelListRow: React.FC<{ list: TravelList }> = ({ list }) => (
             <div className="flex items-center gap-1">
               <MapPin size={14} />
               <span>{list.destinations.length} destinations</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Users size={14} />
-              <span>{list.collaborators.length + 1} members</span>
             </div>
             <div className="flex items-center gap-1">
               <Calendar size={14} />
