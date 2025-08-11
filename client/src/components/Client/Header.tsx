@@ -46,7 +46,7 @@ const Header = () => {
     { name: "Dashboard", path: "/dashboard" },
     { name: "My Lists", path: "/my-lists" },
     { name: "Lists", path: "/lists" },
-    { name: "Journal", path: "/journal" },
+    { name: "Journals", path: "/journals" },
   ];
 
   useEffect(() => {

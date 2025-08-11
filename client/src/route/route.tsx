@@ -9,7 +9,7 @@ import CheckEmail from "../pages/Auth/CheckEmail";
 
 //client
 import Dashboard from "../pages/Client/Dashboard";
-import Journal from "../pages/Client/Journal";
+import Journals from "../pages/Client/Journals";
 import ListDetails from "../pages/Client/ListDetails";
 import Lists from "../pages/Client/Lists";
 import Profile from "../pages/Client/Profile";
@@ -51,8 +51,8 @@ const ROUTES = [
         element: <ListDetails />,
       },
       {
-        path: "journal",
-        element: <Journal />,
+        path: "journals",
+        element: <Journals />,
       },
     ],
   },
