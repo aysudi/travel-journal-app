@@ -120,7 +120,7 @@ export const useCreateJournalEntry = () => {
       }
 
       queryClient.invalidateQueries({
-        queryKey: journalEntryKeys.byAuthor(newEntry.author),
+        queryKey: journalEntryKeys.byAuthor(newEntry.author._id),
       });
 
       if (newEntry.isPublic) {
@@ -173,7 +173,7 @@ export const useUpdateJournalEntry = () => {
       }
 
       queryClient.invalidateQueries({
-        queryKey: journalEntryKeys.byAuthor(updatedEntry.author),
+        queryKey: journalEntryKeys.byAuthor(updatedEntry.author._id),
       });
 
       queryClient.invalidateQueries({ queryKey: journalEntryKeys.public() });
@@ -222,7 +222,7 @@ export const useDeleteJournalEntry = () => {
         }
 
         queryClient.invalidateQueries({
-          queryKey: journalEntryKeys.byAuthor(cachedEntry.author),
+          queryKey: journalEntryKeys.byAuthor(cachedEntry.author._id),
         });
 
         if (cachedEntry.isPublic) {
@@ -251,7 +251,7 @@ export const useUploadJournalImages = () => {
         journalEntryKeys.list(variables.entryId),
         (oldData: JournalEntry | undefined) =>
           oldData
-            ? { ...oldData, images: [...oldData.images, ...result.images] }
+            ? { ...oldData, photos: [...oldData.photos, ...result.images] }
             : oldData
       );
 
@@ -336,7 +336,7 @@ export const useToggleJournalEntryVisibility = () => {
       }
 
       queryClient.invalidateQueries({
-        queryKey: journalEntryKeys.byAuthor(updatedEntry.author),
+        queryKey: journalEntryKeys.byAuthor(updatedEntry.author._id),
       });
     },
     onError: (error) => {

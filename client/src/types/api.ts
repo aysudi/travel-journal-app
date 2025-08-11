@@ -98,12 +98,13 @@ export interface Destination {
   _id: string;
   name: string;
   description?: string;
-  location: {
-    coordinates: [number, number];
-    address?: string;
-    city?: string;
-    country?: string;
-  };
+  //   location: {
+  //     coordinates: [number, number];
+  //     address?: string;
+  //     city?: string;
+  //     country?: string;
+  //   };
+  location: string;
   images: string[];
   visitedDate?: string;
   rating?: number;
@@ -135,11 +136,16 @@ export interface JournalEntry {
   _id: string;
   title: string;
   content: string;
-  images: string[];
+  photos: string[];
   tags: string[];
   destination?: string;
   travelList?: string;
-  author: string;
+  author: {
+    _id: string;
+    fullName: string;
+    username: string;
+    profileImage: string;
+  };
   isPublic: boolean;
   createdAt: string;
   updatedAt: string;

@@ -9,7 +9,7 @@ import type {
 } from "../types/api";
 
 export class DestinationService {
-  private readonly endpoint = "/api/destinations";
+  private readonly endpoint = "/destinations";
 
   async getDestinations(
     travelListId?: string,
@@ -99,7 +99,7 @@ export class DestinationService {
 }
 
 export class JournalEntryService {
-  private readonly endpoint = "/api/journal-entries";
+  private readonly endpoint = "/journal-entries";
 
   async getJournalEntries(
     params?: PaginationParams & {
