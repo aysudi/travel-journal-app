@@ -21,33 +21,10 @@ import {
 } from "lucide-react";
 import { useTravelList } from "../../hooks/useTravelList";
 import Loading from "../../components/Common/Loading";
-
-interface Destination {
-  _id: string;
-  name: string;
-  location: string;
-  status: "Wishlist" | "Planned" | "Visited";
-  datePlanned?: string;
-  dateVisited?: string;
-  notes?: string;
-  images: string[];
-  list: string;
-  createdAt: string;
-}
-
-interface Journal {
-  _id: string;
-  title: string;
-  content: string;
-  photos: string[];
-  destination: string;
-  author: {
-    fullName: string;
-    username: string;
-    profileImage: string;
-  };
-  createdAt: string;
-}
+import { useJournalEntriesByTravelList } from "../../hooks/useEntries";
+import { useDestinationsByTravelList } from "../../hooks/useDestination";
+import type { Destination, JournalEntry } from "../../types/api";
+import formatDate, { formatDateInHours } from "../../utils/formatDate";
 
 const ListDetails = () => {
   const { listId } = useParams<{ listId: string }>();
@@ -69,75 +46,49 @@ const ListDetails = () => {
   );
 
   const { data: travelList, isLoading, error } = useTravelList(listId || "");
+  const {
+    data: destinations,
+    isLoading: isLoadingDestinations,
+    error: errorDestinations,
+  } = useDestinationsByTravelList(listId || "");
+  const {
+    data: journals,
+    isLoading: isLoadingJournals,
+    error: errorJournals,
+  } = useJournalEntriesByTravelList(listId || "");
 
-  // Mock data for destinations and journals (replace with actual API calls)
-  const destinations: Destination[] = [
-    {
-      _id: "1",
-      name: "Eiffel Tower",
-      location: "Paris, France",
-      status: "Visited",
-      dateVisited: "2024-06-15",
-      notes:
-        "Amazing sunset views from the top! Don't forget to book tickets in advance.",
-      images: [
-        "https://images.unsplash.com/photo-1511739001486-6bfe10ce785f?w=400",
-      ],
-      list: listId || "",
-      createdAt: "2024-06-01T10:00:00Z",
-    },
-    {
-      _id: "2",
-      name: "Santorini",
-      location: "Greece",
-      status: "Planned",
-      datePlanned: "2024-08-20",
-      notes: "Perfect for sunset photography. Book accommodation in Oia.",
-      images: [
-        "https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?w=400",
-      ],
-      list: listId || "",
-      createdAt: "2024-05-15T14:30:00Z",
-    },
-    {
-      _id: "3",
-      name: "Tokyo",
-      location: "Japan",
-      status: "Wishlist",
-      notes: "Experience cherry blossom season and try authentic sushi.",
-      images: [
-        "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400",
-      ],
-      list: listId || "",
-      createdAt: "2024-05-01T09:15:00Z",
-    },
-  ];
+  // Ensure we have arrays to work with
+  const destinationsArray = destinations || [];
+  const journalsArray = journals || [];
 
-  const journals: Journal[] = [
-    {
-      _id: "1",
-      title: "A Magical Evening at the Eiffel Tower",
-      content:
-        "The golden hour at the Eiffel Tower was absolutely breathtaking...",
-      photos: [
-        "https://images.unsplash.com/photo-1511739001486-6bfe10ce785f?w=400",
-      ],
-      destination: "1",
-      author: {
-        fullName: "Sarah Johnson",
-        username: "sarahj",
-        profileImage:
-          "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100",
-      },
-      createdAt: "2024-06-16T18:00:00Z",
-    },
-  ];
+  // Helper function to determine destination status
+  const getDestinationStatus = (dest: Destination): string => {
+    if (dest.visitedDate) return "Visited";
+    if (dest.notes?.toLowerCase().includes("planned")) return "Planned";
+    return "Wishlist";
+  };
 
-  if (isLoading) {
+  // Helper function to get location string
+  // const getLocationString = (location: Destination["location"]): string => {
+  //   return (
+  //     [location.city, location.country].filter(Boolean).join(", ") ||
+  //     location.address ||
+  //     `${location.coordinates[0]}, ${location.coordinates[1]}`
+  //   );
+  // };
+
+  if (isLoading || isLoadingDestinations || isLoadingJournals) {
     return <Loading variant="page" />;
   }
 
-  if (error || !travelList) {
+  if (
+    error ||
+    !travelList ||
+    !destinations ||
+    !journals ||
+    errorDestinations ||
+    errorJournals
+  ) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
         <div className="text-center">
@@ -153,27 +104,36 @@ const ListDetails = () => {
     );
   }
 
-  const filteredDestinations = destinations.filter((dest) => {
-    if (filterStatus === "all") return true;
-    return dest.status === filterStatus;
-  });
-
-  const sortedDestinations = filteredDestinations.sort((a, b) => {
-    switch (sortBy) {
-      case "newest":
-        return (
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-      case "oldest":
-        return (
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        );
-      case "alphabetical":
-        return a.name.localeCompare(b.name);
-      default:
-        return 0;
+  const filteredDestinations = (destinationsArray as Destination[]).filter(
+    (dest: Destination) => {
+      if (filterStatus === "all") return true;
+      if (filterStatus === "Visited") return !!dest.visitedDate;
+      if (filterStatus === "Planned")
+        return !dest.visitedDate && dest.notes?.includes("planned");
+      if (filterStatus === "Wishlist")
+        return !dest.visitedDate && !dest.notes?.includes("planned");
+      return false;
     }
-  });
+  );
+
+  const sortedDestinations = filteredDestinations.sort(
+    (a: Destination, b: Destination) => {
+      switch (sortBy) {
+        case "newest":
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+        case "oldest":
+          return (
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+        case "alphabetical":
+          return a.name.localeCompare(b.name);
+        default:
+          return 0;
+      }
+    }
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -195,7 +155,6 @@ const ListDetails = () => {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Handle file upload logic here
       console.log("File selected:", file);
     }
   };
@@ -204,6 +163,8 @@ const ListDetails = () => {
     setSelectedDestination(destination);
     setShowDestinationDetail(true);
   };
+
+  console.log(selectedDestination);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -286,19 +247,23 @@ const ListDetails = () => {
             <div className="flex items-center gap-6">
               <div className="text-center">
                 <div className="text-2xl font-bold text-gray-800">
-                  {destinations.length}
+                  {(destinationsArray as Destination[]).length}
                 </div>
                 <div className="text-sm text-gray-600">Destinations</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-gray-800">
-                  {journals.length}
+                  {(journalsArray as JournalEntry[]).length}
                 </div>
                 <div className="text-sm text-gray-600">Journals</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-gray-800">
-                  {destinations.filter((d) => d.status === "Visited").length}
+                  {
+                    (destinationsArray as Destination[]).filter(
+                      (d: Destination) => !!d.visitedDate
+                    ).length
+                  }
                 </div>
                 <div className="text-sm text-gray-600">Visited</div>
               </div>
@@ -341,7 +306,9 @@ const ListDetails = () => {
               >
                 <div className="flex items-center gap-2 cursor-pointer">
                   <MapPin size={18} />
-                  <span>Destinations ({destinations.length})</span>
+                  <span>
+                    Destinations ({(destinationsArray as Destination[]).length})
+                  </span>
                 </div>
               </button>
               <button
@@ -354,7 +321,9 @@ const ListDetails = () => {
               >
                 <div className="flex items-center gap-2 cursor-pointer">
                   <BookOpen size={18} />
-                  <span>Journals ({journals.length})</span>
+                  <span>
+                    Journals ({(journalsArray as JournalEntry[]).length})
+                  </span>
                 </div>
               </button>
               <button
@@ -367,7 +336,19 @@ const ListDetails = () => {
               >
                 <div className="flex items-center gap-2 cursor-pointer">
                   <Camera size={18} />
-                  <span>Photos</span>
+                  <span>
+                    Photos (
+                    {
+                      (destinationsArray as Destination[])
+                        .flatMap((d: Destination) => d.images)
+                        .concat(
+                          (journalsArray as JournalEntry[]).flatMap(
+                            (j: JournalEntry) => j.photos
+                          )
+                        ).length
+                    }
+                    )
+                  </span>
                 </div>
               </button>
             </nav>
@@ -415,99 +396,100 @@ const ListDetails = () => {
 
                 {/* Destinations Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {sortedDestinations.map((destination) => (
-                    <div
-                      key={destination._id}
-                      onClick={() => handleDestinationClick(destination)}
-                      className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer"
-                    >
-                      {/* Destination Image */}
-                      <div className="relative h-48 bg-gray-200 overflow-hidden">
-                        {destination.images[0] ? (
-                          <img
-                            src={destination.images[0]}
-                            alt={destination.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center">
-                            <MapPin size={48} className="text-indigo-400" />
+                  {sortedDestinations.map(
+                    (destination: Destination, idx: number) => {
+                      const status = getDestinationStatus(destination);
+                      return (
+                        <div
+                          key={idx}
+                          onClick={() => handleDestinationClick(destination)}
+                          className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer"
+                        >
+                          {/* Destination Image */}
+                          <div className="relative h-48 bg-gray-200 overflow-hidden">
+                            {destination.images[0] ? (
+                              <img
+                                src={destination.images[0]}
+                                alt={destination.name}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center">
+                                <MapPin size={48} className="text-indigo-400" />
+                              </div>
+                            )}
+
+                            {/* Status Badge */}
+                            <div className="absolute top-3 left-3">
+                              <span
+                                className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                                  status
+                                )}`}
+                              >
+                                {status}
+                              </span>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                              <div className="flex gap-2">
+                                <button className="bg-white/90 hover:bg-white text-gray-700 p-2 rounded-full shadow-lg transition-colors duration-200 cursor-pointer">
+                                  <Edit3 size={14} />
+                                </button>
+                                <button className="bg-white/90 hover:bg-white text-red-600 p-2 rounded-full shadow-lg transition-colors duration-200 cursor-pointer">
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </div>
                           </div>
-                        )}
 
-                        {/* Status Badge */}
-                        <div className="absolute top-3 left-3">
-                          <span
-                            className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
-                              destination.status
-                            )}`}
-                          >
-                            {destination.status}
-                          </span>
-                        </div>
+                          {/* Destination Info */}
+                          <div className="p-5">
+                            <h3 className="font-semibold text-lg text-gray-800 mb-2 group-hover:text-indigo-600 transition-colors duration-200">
+                              {destination.name}
+                            </h3>
+                            <div className="flex items-center gap-1 text-gray-600 mb-3">
+                              <MapPin size={16} />
+                              <span className="text-sm">
+                                {destination.location}
+                              </span>
+                            </div>
 
-                        {/* Action Buttons */}
-                        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                          <div className="flex gap-2">
-                            <button className="bg-white/90 hover:bg-white text-gray-700 p-2 rounded-full shadow-lg transition-colors duration-200 cursor-pointer">
-                              <Edit3 size={14} />
-                            </button>
-                            <button className="bg-white/90 hover:bg-white text-red-600 p-2 rounded-full shadow-lg transition-colors duration-200 cursor-pointer">
-                              <Trash2 size={14} />
-                            </button>
+                            {/* Date Info */}
+                            {destination.visitedDate && (
+                              <div className="flex items-center gap-1 text-gray-600 mb-3">
+                                <Calendar size={16} />
+                                <span className="text-sm">
+                                  Visited{" "}
+                                  {new Date(
+                                    destination.visitedDate
+                                  ).toLocaleDateString()}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Notes Preview */}
+                            {destination.notes && (
+                              <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                                {destination.notes}
+                              </p>
+                            )}
+
+                            {/* Action Buttons */}
+                            <div className="flex items-center justify-between">
+                              <button className="text-indigo-600 hover:text-indigo-700 text-sm font-medium flex items-center gap-1 transition-colors duration-200">
+                                <BookOpen size={16} />
+                                <span>Add Journal</span>
+                              </button>
+                              <button className="text-gray-500 hover:text-gray-700 transition-colors duration-200">
+                                <Heart size={18} />
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-
-                      {/* Destination Info */}
-                      <div className="p-5">
-                        <h3 className="font-semibold text-lg text-gray-800 mb-2 group-hover:text-indigo-600 transition-colors duration-200">
-                          {destination.name}
-                        </h3>
-                        <div className="flex items-center gap-1 text-gray-600 mb-3">
-                          <MapPin size={16} />
-                          <span className="text-sm">
-                            {destination.location}
-                          </span>
-                        </div>
-
-                        {/* Date Info */}
-                        {(destination.datePlanned ||
-                          destination.dateVisited) && (
-                          <div className="flex items-center gap-1 text-gray-600 mb-3">
-                            <Calendar size={16} />
-                            <span className="text-sm">
-                              {destination.dateVisited
-                                ? `Visited ${new Date(
-                                    destination.dateVisited
-                                  ).toLocaleDateString()}`
-                                : `Planned ${new Date(
-                                    destination.datePlanned!
-                                  ).toLocaleDateString()}`}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Notes Preview */}
-                        {destination.notes && (
-                          <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                            {destination.notes}
-                          </p>
-                        )}
-
-                        {/* Action Buttons */}
-                        <div className="flex items-center justify-between">
-                          <button className="text-indigo-600 hover:text-indigo-700 text-sm font-medium flex items-center gap-1 transition-colors duration-200">
-                            <BookOpen size={16} />
-                            <span>Add Journal</span>
-                          </button>
-                          <button className="text-gray-500 hover:text-gray-700 transition-colors duration-200">
-                            <Heart size={18} />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                      );
+                    }
+                  )}
                 </div>
 
                 {/* Empty State */}
@@ -538,76 +520,233 @@ const ListDetails = () => {
             {activeTab === "journals" && (
               <div>
                 <div className="space-y-6">
-                  {journals.map((journal) => (
-                    <div
-                      key={journal._id}
-                      className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
-                    >
-                      <div className="p-6">
-                        {/* Author Info */}
-                        <div className="flex items-center gap-3 mb-4">
-                          <img
-                            src={journal.author.profileImage}
-                            alt={journal.author.fullName}
-                            className="w-10 h-10 rounded-full object-cover"
-                          />
-                          <div>
-                            <p className="font-medium text-gray-800">
-                              {journal.author.fullName}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              @{journal.author.username}
-                            </p>
-                          </div>
-                          <div className="ml-auto text-sm text-gray-500">
-                            {new Date(journal.createdAt).toLocaleDateString()}
+                  {(journalsArray as JournalEntry[]).map(
+                    (journal: JournalEntry, idx: number) => {
+                      return (
+                        <div
+                          key={idx}
+                          className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
+                        >
+                          <div className="p-6">
+                            {/* Author Info with enhanced design */}
+                            <div className="flex items-center justify-between mb-6">
+                              <div className="flex items-center gap-3">
+                                {/* Profile Image */}
+                                <div className="relative">
+                                  {journal.author.profileImage ? (
+                                    <img
+                                      src={journal.author.profileImage}
+                                      alt={journal.author.fullName}
+                                      className="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-lg"
+                                    />
+                                  ) : (
+                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center ring-2 ring-white shadow-lg">
+                                      <span className="text-white font-semibold text-lg">
+                                        {journal.author.fullName
+                                          .charAt(0)
+                                          .toUpperCase()}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {/* Online indicator */}
+                                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white"></div>
+                                </div>
+
+                                <div className="flex flex-col">
+                                  <p className="font-semibold text-gray-900 hover:text-indigo-600 transition-colors duration-200 cursor-pointer">
+                                    {journal.author.fullName}
+                                  </p>
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-sm text-gray-500">
+                                      @{journal.author.username}
+                                    </p>
+                                    <span className="text-gray-300">•</span>
+                                    <div
+                                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                                        journal.isPublic
+                                          ? "bg-green-50 text-green-700 border border-green-200"
+                                          : "bg-gray-50 text-gray-600 border border-gray-200"
+                                      }`}
+                                    >
+                                      {journal.isPublic ? (
+                                        <>
+                                          <Globe size={10} />
+                                          <span>Public</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Lock size={10} />
+                                          <span>Private</span>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Date with improved formatting */}
+                              <div className="text-right">
+                                <p className="text-sm font-medium text-gray-600">
+                                  {formatDate(journal.createdAt)}
+                                </p>
+                                <p className="text-xs text-gray-400">
+                                  {formatDateInHours(journal.createdAt)}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Journal Content with enhanced design */}
+                            <div className="mb-6">
+                              <h3 className="text-xl font-bold text-gray-900 mb-3 leading-tight hover:text-indigo-600 transition-colors duration-200 cursor-pointer">
+                                {journal.title}
+                              </h3>
+                              <div className="prose prose-gray max-w-none">
+                                <p className="text-gray-700 leading-relaxed text-base line-clamp-4">
+                                  {journal.content}
+                                </p>
+                              </div>
+
+                              {/* Read more button for long content */}
+                              {journal.content.length > 200 && (
+                                <button className="text-indigo-600 hover:text-indigo-700 text-sm font-medium mt-2 transition-colors duration-200">
+                                  Read more
+                                </button>
+                              )}
+                            </div>
+
+                            {/* Tags with improved styling */}
+                            {journal.tags && journal.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-2 mb-6">
+                                {journal.tags.map(
+                                  (tag: string, index: number) => (
+                                    <span
+                                      key={index}
+                                      className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 border border-indigo-100 hover:from-indigo-100 hover:to-purple-100 transition-all duration-200 cursor-pointer"
+                                    >
+                                      #{tag}
+                                    </span>
+                                  )
+                                )}
+                              </div>
+                            )}
+
+                            {/* Journal Images with enhanced gallery */}
+                            {journal.photos.length > 0 && (
+                              <div className="mb-6">
+                                <div
+                                  className={`grid gap-3 ${
+                                    journal.photos.length === 1
+                                      ? "grid-cols-1 max-w-md"
+                                      : journal.photos.length === 2
+                                      ? "grid-cols-2"
+                                      : journal.photos.length === 3
+                                      ? "grid-cols-3"
+                                      : "grid-cols-2 md:grid-cols-4"
+                                  }`}
+                                >
+                                  {journal.photos
+                                    .slice(0, 4)
+                                    .map((image: string, index: number) => (
+                                      <div
+                                        key={index}
+                                        className="relative group cursor-pointer overflow-hidden rounded-xl shadow-md hover:shadow-xl transition-all duration-300"
+                                      >
+                                        <img
+                                          src={image}
+                                          alt={`Journal photo ${index + 1}`}
+                                          className={`w-full object-cover transition-transform duration-300 group-hover:scale-105 ${
+                                            journal.photos.length === 1
+                                              ? "h-64"
+                                              : "h-32 md:h-24"
+                                          }`}
+                                        />
+                                        {/* Hover overlay */}
+                                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                                        {/* Photo indicator for multiple photos */}
+                                        {journal.photos.length > 4 &&
+                                          index === 3 && (
+                                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                              <span className="text-white font-semibold text-lg">
+                                                +{journal.photos.length - 4}
+                                              </span>
+                                            </div>
+                                          )}
+                                      </div>
+                                    ))}
+                                </div>
+
+                                {/* View all photos link */}
+                                {journal.photos.length > 4 && (
+                                  <button className="text-indigo-600 hover:text-indigo-700 text-sm font-medium mt-3 transition-colors duration-200">
+                                    View all {journal.photos.length} photos
+                                  </button>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Actions with enhanced design */}
+                            <div className="flex items-center justify-between pt-5 border-t border-gray-100">
+                              <div className="flex items-center gap-6">
+                                <button className="group flex items-center gap-2 text-gray-500 hover:text-red-500 transition-all duration-200">
+                                  <div className="p-2 rounded-full group-hover:bg-red-50 transition-colors duration-200">
+                                    <Heart
+                                      size={18}
+                                      className="group-hover:scale-110 transition-transform duration-200"
+                                    />
+                                  </div>
+                                  <span className="text-sm font-medium">
+                                    Like
+                                  </span>
+                                  <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full group-hover:bg-red-100 group-hover:text-red-600 transition-colors duration-200">
+                                    0
+                                  </span>
+                                </button>
+
+                                <button className="group flex items-center gap-2 text-gray-500 hover:text-indigo-500 transition-all duration-200">
+                                  <div className="p-2 rounded-full group-hover:bg-indigo-50 transition-colors duration-200">
+                                    <MessageSquare
+                                      size={18}
+                                      className="group-hover:scale-110 transition-transform duration-200"
+                                    />
+                                  </div>
+                                  <span className="text-sm font-medium">
+                                    Comment
+                                  </span>
+                                  <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors duration-200">
+                                    0
+                                  </span>
+                                </button>
+
+                                <button className="group flex items-center gap-2 text-gray-500 hover:text-blue-500 transition-all duration-200">
+                                  <div className="p-2 rounded-full group-hover:bg-blue-50 transition-colors duration-200">
+                                    <Share2
+                                      size={18}
+                                      className="group-hover:scale-110 transition-transform duration-200"
+                                    />
+                                  </div>
+                                  <span className="text-sm font-medium">
+                                    Share
+                                  </span>
+                                </button>
+                              </div>
+
+                              {/* Additional actions menu */}
+                              <div className="relative">
+                                <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all duration-200">
+                                  <MoreVertical size={16} />
+                                </button>
+                              </div>
+                            </div>
                           </div>
                         </div>
-
-                        {/* Journal Content */}
-                        <h3 className="text-xl font-semibold text-gray-800 mb-3">
-                          {journal.title}
-                        </h3>
-                        <p className="text-gray-600 mb-4 line-clamp-3">
-                          {journal.content}
-                        </p>
-
-                        {/* Journal Photos */}
-                        {journal.photos.length > 0 && (
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
-                            {journal.photos.slice(0, 4).map((photo, index) => (
-                              <img
-                                key={index}
-                                src={photo}
-                                alt={`Journal photo ${index + 1}`}
-                                className="w-full h-24 object-cover rounded-lg"
-                              />
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Actions */}
-                        <div className="flex items-center gap-6 pt-4 border-t border-gray-100">
-                          <button className="flex items-center gap-2 text-gray-600 hover:text-red-500 transition-colors duration-200">
-                            <Heart size={18} />
-                            <span className="text-sm">Like</span>
-                          </button>
-                          <button className="flex items-center gap-2 text-gray-600 hover:text-indigo-500 transition-colors duration-200">
-                            <MessageSquare size={18} />
-                            <span className="text-sm">Comment</span>
-                          </button>
-                          <button className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors duration-200">
-                            <Share2 size={18} />
-                            <span className="text-sm">Share</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                      );
+                    }
+                  )}
                 </div>
 
                 {/* Empty State for Journals */}
-                {journals.length === 0 && (
+                {(journalsArray as JournalEntry[]).length === 0 && (
                   <div className="text-center py-12">
                     <BookOpen
                       size={64}
@@ -634,10 +773,14 @@ const ListDetails = () => {
               <div>
                 {/* Photo Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {destinations
-                    .flatMap((d) => d.images)
-                    .concat(journals.flatMap((j) => j.photos))
-                    .map((photo, index) => (
+                  {(destinationsArray as Destination[])
+                    .flatMap((d: Destination) => d.images)
+                    .concat(
+                      (journalsArray as JournalEntry[]).flatMap(
+                        (j: JournalEntry) => j.photos
+                      )
+                    )
+                    .map((photo: string, index: number) => (
                       <div
                         key={index}
                         className="aspect-square bg-gray-200 rounded-lg overflow-hidden group cursor-pointer"
@@ -652,9 +795,13 @@ const ListDetails = () => {
                 </div>
 
                 {/* Empty State for Photos */}
-                {destinations
-                  .flatMap((d) => d.images)
-                  .concat(journals.flatMap((j) => j.photos)).length === 0 && (
+                {(destinationsArray as Destination[])
+                  .flatMap((d: Destination) => d.images)
+                  .concat(
+                    (journalsArray as JournalEntry[]).flatMap(
+                      (j: JournalEntry) => j.photos
+                    )
+                  ).length === 0 && (
                   <div className="text-center py-12">
                     <Camera size={64} className="text-gray-300 mx-auto mb-4" />
                     <h3 className="text-xl font-medium text-gray-600 mb-2">
@@ -865,10 +1012,10 @@ const ListDetails = () => {
               <div className="absolute top-4 left-4">
                 <span
                   className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(
-                    selectedDestination.status
+                    getDestinationStatus(selectedDestination)
                   )}`}
                 >
-                  {selectedDestination.status}
+                  {getDestinationStatus(selectedDestination)}
                 </span>
               </div>
             </div>
@@ -885,18 +1032,14 @@ const ListDetails = () => {
                 </div>
 
                 {/* Date Info */}
-                {(selectedDestination.datePlanned ||
-                  selectedDestination.dateVisited) && (
+                {selectedDestination.visitedDate && (
                   <div className="flex items-center gap-2 text-gray-600 mb-4">
                     <Calendar size={18} />
                     <span>
-                      {selectedDestination.dateVisited
-                        ? `Visited on ${new Date(
-                            selectedDestination.dateVisited
-                          ).toLocaleDateString()}`
-                        : `Planned for ${new Date(
-                            selectedDestination.datePlanned!
-                          ).toLocaleDateString()}`}
+                      Visited on{" "}
+                      {new Date(
+                        selectedDestination.visitedDate
+                      ).toLocaleDateString()}
                     </span>
                   </div>
                 )}
@@ -918,7 +1061,7 @@ const ListDetails = () => {
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                       {selectedDestination.images
                         .slice(1)
-                        .map((image, index) => (
+                        .map((image: string, index: number) => (
                           <img
                             key={index}
                             src={image}
