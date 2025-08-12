@@ -22,8 +22,8 @@ export const useAllListInvitations = () => {
   return useQuery({
     queryKey: listInvitationKeys.lists(),
     queryFn: () => listInvitationService.getAllInvitations(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     retry: 2,
   });
 };
@@ -34,8 +34,8 @@ export const useListInvitation = (id: string) => {
     queryKey: listInvitationKeys.list(id),
     queryFn: () => listInvitationService.getInvitationById(id),
     enabled: !!id,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     retry: 2,
   });
 };
@@ -48,9 +48,9 @@ export const useInvitationsByInvitee = (inviteeId: string, status?: string) => {
       : listInvitationKeys.byInvitee(inviteeId),
     queryFn: () =>
       listInvitationService.getInvitationsByInvitee(inviteeId, status),
-    enabled: !!inviteeId,
-    staleTime: 2 * 60 * 1000, // 2 minutes (invitations are time-sensitive)
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !!inviteeId, // Only run when inviteeId is truthy
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
     retry: 2,
   });
 };
@@ -64,8 +64,8 @@ export const useInvitationsByInviter = (inviterId: string, status?: string) => {
     queryFn: () =>
       listInvitationService.getInvitationsByInviter(inviterId, status),
     enabled: !!inviterId,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
     retry: 2,
   });
 };
@@ -78,10 +78,8 @@ export const useCreateListInvitation = () => {
     mutationFn: (invitationData: CreateListInvitationData) =>
       listInvitationService.createInvitation(invitationData),
     onSuccess: (newInvitation: ListInvitation) => {
-      // Invalidate all invitation queries
       queryClient.invalidateQueries({ queryKey: listInvitationKeys.all });
 
-      // Invalidate specific invitee and inviter queries
       if (typeof newInvitation.invitee === "string") {
         queryClient.invalidateQueries({
           queryKey: listInvitationKeys.byInvitee(newInvitation.invitee),
@@ -94,7 +92,6 @@ export const useCreateListInvitation = () => {
         });
       }
 
-      // Set the new invitation in cache
       queryClient.setQueryData(
         listInvitationKeys.list(newInvitation._id),
         newInvitation
@@ -110,7 +107,20 @@ export const useCreateListInvitation = () => {
 
 // Get pending invitations received by user
 export const usePendingReceivedInvitations = (userId: string) => {
-  return useInvitationsByInvitee(userId, "pending");
+  return useQuery({
+    queryKey: listInvitationKeys.byInviteeStatus(userId, "pending"),
+    queryFn: async () => {
+      const result = await listInvitationService.getInvitationsByInvitee(
+        userId,
+        "pending"
+      );
+      return result;
+    },
+    enabled: !!userId,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    retry: 2,
+  });
 };
 
 // Get pending invitations sent by user

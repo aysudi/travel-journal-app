@@ -80,9 +80,13 @@ export const getUserProfile = async (
       });
     }
 
+    console.log("DEBUG USER CONTROLLER: Raw user from DB:", user);
+    const formattedUser = formatMongoData(user);
+    console.log("DEBUG USER CONTROLLER: Formatted user:", formattedUser);
+
     res.status(200).json({
       message: "User profile retrieved successfully",
-      data: formatMongoData(user),
+      data: formattedUser,
     });
   } catch (error) {
     next(error);
