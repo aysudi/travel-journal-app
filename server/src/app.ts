@@ -1,6 +1,7 @@
 import cors from "cors";
 import express from "express";
 import passport from "passport";
+import config from "./config/config.js";
 
 import "./models/User.js";
 import "./models/TravelList.js";
@@ -23,7 +24,18 @@ import listInvitationRouter from "./routes/listInvitationRoutes.js";
 const app = express();
 
 app.use(express.json());
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      config.CLIENT_URL || "http://localhost:5176",
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "http://localhost:5175",
+      "http://localhost:5176",
+    ],
+    credentials: true,
+  })
+);
 app.use(passport.initialize());
 
 // Using routes

@@ -108,9 +108,11 @@ export interface ListInvitation {
 
 export interface CreateListInvitationData {
   list: string;
-  inviter: string;
-  invitee: string;
+  inviter?: string;
+  invitee?: string;
+  inviteeEmail?: string;
   permissionLevel: "view" | "suggest" | "contribute" | "co-owner";
+  expiresAt?: string;
 }
 
 // Destination Types

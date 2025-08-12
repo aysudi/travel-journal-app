@@ -264,6 +264,48 @@ export class ListInvitationService {
     const response = await apiConfig.request<ListInvitation[]>(url);
     return response || [];
   }
+
+  // Accept invitation
+  async acceptInvitation(invitationId: string): Promise<ListInvitation> {
+    const response = await apiConfig.request<ListInvitation>(
+      `${this.endpoint}/${invitationId}/accept`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response;
+  }
+
+  // Reject invitation
+  async rejectInvitation(invitationId: string): Promise<ListInvitation> {
+    const response = await apiConfig.request<ListInvitation>(
+      `${this.endpoint}/${invitationId}/reject`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response;
+  }
+
+  // Cancel invitation (for inviters)
+  async cancelInvitation(invitationId: string): Promise<{ message: string }> {
+    const response = await apiConfig.request<{ message: string }>(
+      `${this.endpoint}/${invitationId}/cancel`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response;
+  }
 }
 
 export const destinationService = new DestinationService();

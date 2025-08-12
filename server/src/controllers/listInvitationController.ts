@@ -37,15 +37,19 @@ export const getInvitationById = async (req: Request, res: Response) => {
 };
 
 // Create new invitation
-export const createInvitation = async (req: Request, res: Response) => {
+export const createInvitation = async (req: any, res: Response) => {
   try {
-    const { list, inviter, invitee, permissionLevel } = req.body;
+    const { list, invitee, inviteeEmail, permissionLevel, expiresAt } =
+      req.body;
+    const inviterId = req.user.id;
 
     const invitation = await listInvitationService.createInvitation({
       list,
-      inviter,
+      inviter: inviterId,
       invitee,
+      inviteeEmail,
       permissionLevel,
+      expiresAt,
     });
 
     res.status(201).json({
@@ -104,6 +108,72 @@ export const getInvitationsByInviter = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : "Internal server error",
+    });
+  }
+};
+
+// Accept invitation
+export const acceptInvitation = async (req: any, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const invitation = await listInvitationService.acceptInvitation(id, userId);
+
+    res.status(200).json({
+      success: true,
+      data: invitation,
+      message: "Invitation accepted successfully",
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message:
+        error instanceof Error ? error.message : "Failed to accept invitation",
+    });
+  }
+};
+
+// Reject invitation
+export const rejectInvitation = async (req: any, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const invitation = await listInvitationService.rejectInvitation(id, userId);
+
+    res.status(200).json({
+      success: true,
+      data: invitation,
+      message: "Invitation rejected successfully",
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message:
+        error instanceof Error ? error.message : "Failed to reject invitation",
+    });
+  }
+};
+
+// Cancel invitation
+export const cancelInvitation = async (req: any, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const result = await listInvitationService.cancelInvitation(id, userId);
+
+    res.status(200).json({
+      success: true,
+      data: result,
+      message: "Invitation canceled successfully",
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message:
+        error instanceof Error ? error.message : "Failed to cancel invitation",
     });
   }
 };
