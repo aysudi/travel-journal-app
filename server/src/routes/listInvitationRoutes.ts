@@ -10,9 +10,9 @@ import {
 const router = Router();
 
 router.get("/", getAllInvitations);
-router.post("/", createInvitation);
 router.get("/invitee/:inviteeId", getInvitationsByInvitee);
 router.get("/inviter/:inviterId", getInvitationsByInviter);
+router.post("/", createInvitation);
 router.get("/:id", getInvitationById);
 
 export default router;

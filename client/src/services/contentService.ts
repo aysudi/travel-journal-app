@@ -204,35 +204,30 @@ export class ListInvitationService {
 
   // Get all invitations
   async getAllInvitations(): Promise<ListInvitation[]> {
-    const response = await apiConfig.request<{ data: ListInvitation[] }>(
-      this.endpoint
-    );
-    return response.data;
+    const response = await apiConfig.request<ListInvitation[]>(this.endpoint);
+    return response || [];
   }
 
   // Get invitation by ID
   async getInvitationById(id: string): Promise<ListInvitation> {
-    const response = await apiConfig.request<{ data: ListInvitation }>(
+    const response = await apiConfig.request<ListInvitation>(
       `${this.endpoint}/${id}`
     );
-    return response.data;
+    return response;
   }
 
   // Create new invitation
   async createInvitation(
     invitationData: CreateListInvitationData
   ): Promise<ListInvitation> {
-    const response = await apiConfig.request<{ data: ListInvitation }>(
-      this.endpoint,
-      {
-        method: "POST",
-        body: JSON.stringify(invitationData),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    return response.data;
+    const response = await apiConfig.request<ListInvitation>(this.endpoint, {
+      method: "POST",
+      body: JSON.stringify(invitationData),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    return response;
   }
 
   // Get invitations for a specific invitee (received invitations)
@@ -248,8 +243,9 @@ export class ListInvitationService {
       ? `${this.endpoint}/invitee/${inviteeId}?${query}`
       : `${this.endpoint}/invitee/${inviteeId}`;
 
-    const response = await apiConfig.request<{ data: ListInvitation[] }>(url);
-    return response.data;
+    const response = await apiConfig.request<ListInvitation[]>(url);
+
+    return response || [];
   }
 
   // Get invitations sent by a specific inviter (sent invitations)
@@ -265,8 +261,8 @@ export class ListInvitationService {
       ? `${this.endpoint}/inviter/${inviterId}?${query}`
       : `${this.endpoint}/inviter/${inviterId}`;
 
-    const response = await apiConfig.request<{ data: ListInvitation[] }>(url);
-    return response.data;
+    const response = await apiConfig.request<ListInvitation[]>(url);
+    return response || [];
   }
 }
 
