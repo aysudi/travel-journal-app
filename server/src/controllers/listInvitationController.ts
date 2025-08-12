@@ -5,6 +5,7 @@ import listInvitationService from "../services/listInvitationService.js";
 export const getAllInvitations = async (req: Request, res: Response) => {
   try {
     const invitations = await listInvitationService.getAllInvitations();
+
     res.status(200).json({
       success: true,
       data: invitations,
