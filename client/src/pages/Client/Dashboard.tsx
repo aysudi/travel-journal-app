@@ -1,18 +1,9 @@
 import { Link } from "react-router";
-import {
-  MapPin,
-  Plus,
-  Users,
-  BookOpen,
-  Crown,
-  Globe,
-  BarChart3,
-} from "lucide-react";
+import { MapPin, Plus, Users, BookOpen, Crown, BarChart3 } from "lucide-react";
 import { useUserProfile } from "../../hooks/useAuth";
 import {
   useOwnedTravelLists,
   useCollaboratingTravelLists,
-  usePublicTravelLists,
 } from "../../hooks/useTravelList";
 import { useJournalEntriesByAuthor } from "../../hooks/useEntries";
 import formatDate from "../../utils/formatDate";
@@ -21,13 +12,15 @@ import ProfileSummary from "../../components/Client/Dashboard/ProfileSummary";
 import RecentActivity from "../../components/Client/Dashboard/RecentActivity";
 import StatsGrid from "../../components/Client/Dashboard/StatsGrid";
 import { usePendingReceivedInvitations } from "../../hooks/useListInvitations";
+import RecentStories from "../../components/Client/Dashboard/RecentStories";
+import DiscoverLists from "../../components/Client/Dashboard/DiscoverLists";
+import CollaboratingLists from "../../components/Client/Dashboard/CollaboratingLists";
 
 const Dashboard = () => {
   const { data: user, isLoading: userLoading } = useUserProfile();
   const { data: ownedLists } = useOwnedTravelLists();
   const { data: collaboratingLists } = useCollaboratingTravelLists();
-  const { data: publicListsData, isLoading: publicLoading } =
-    usePublicTravelLists({ limit: 3 });
+
   const { data: recentJournalsData, isLoading: journalsLoading } =
     useJournalEntriesByAuthor(user?.id || "");
 
@@ -35,7 +28,6 @@ const Dashboard = () => {
     user?.id || ""
   );
 
-  const publicLists = publicListsData || [];
   const recentJournals = (recentJournalsData as any) || [];
 
   if (userLoading) {
@@ -125,69 +117,7 @@ const Dashboard = () => {
 
             {/* Lists I'm Collaborating On */}
             {collaboratingLists && collaboratingLists.length > 0 && (
-              <div
-                id="collaborating"
-                className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-white/20"
-              >
-                <div className="p-6 border-b border-slate-100">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
-                      <Users className="w-5 h-5 text-purple-600" />
-                      Lists I'm Collaborating On
-                    </h2>
-                    <span className="text-sm text-slate-500">
-                      {collaboratingLists.length} list
-                      {collaboratingLists.length !== 1 ? "s" : ""}
-                    </span>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <div className="space-y-4">
-                    {collaboratingLists
-                      .slice(0, 3)
-                      .map((list: any, ind: number) => (
-                        <Link
-                          key={ind}
-                          to={`/lists/${list.id}`}
-                          className="block p-4 rounded-xl hover:bg-slate-50 transition-colors group border border-slate-100"
-                        >
-                          <div className="flex items-start space-x-3">
-                            <div className="w-10 h-10 bg-gradient-to-r from-purple-400 to-pink-500 rounded-lg flex items-center justify-center">
-                              <Users className="w-5 h-5 text-white" />
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h3 className="font-medium text-slate-900 group-hover:text-purple-600 transition-colors">
-                                  {list.title}
-                                </h3>
-                                <span className="text-xs bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full">
-                                  Invited
-                                </span>
-                              </div>
-                              <p className="text-sm text-slate-500">
-                                {list.description &&
-                                list.description.length > 80
-                                  ? `${list.description.substring(0, 80)}...`
-                                  : list.description || "No description"}
-                              </p>
-                              <div className="flex items-center space-x-2 mt-2">
-                                <span className="text-xs text-slate-400">
-                                  by {list.owner?.fullName || "Unknown"}
-                                </span>
-                                <span className="text-xs text-slate-400">
-                                  •
-                                </span>
-                                <span className="text-xs text-slate-400">
-                                  {list.destinations?.length || 0} destinations
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </Link>
-                      ))}
-                  </div>
-                </div>
-              </div>
+              <CollaboratingLists collaboratingLists={collaboratingLists} />
             )}
 
             {/* Pending List Invitations */}
@@ -248,10 +178,10 @@ const Dashboard = () => {
                                   Expires: {formatDate(invitation.expiresAt)}
                                 </span>
                                 <div className="flex items-center space-x-2">
-                                  <button className="text-xs bg-green-100 text-green-700 hover:bg-green-200 px-3 py-1.5 rounded-md font-medium transition-colors">
+                                  <button className="text-xs bg-green-100 text-green-700 hover:bg-green-200 px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer">
                                     Accept
                                   </button>
-                                  <button className="text-xs bg-red-100 text-red-700 hover:bg-red-200 px-3 py-1.5 rounded-md font-medium transition-colors">
+                                  <button className="text-xs bg-red-100 text-red-700 hover:bg-red-200 px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer">
                                     Decline
                                   </button>
                                 </div>
@@ -276,106 +206,11 @@ const Dashboard = () => {
             )}
 
             {/* Recent Travel Stories */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-white/20">
-              <div className="p-6 border-b border-slate-100">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
-                    <BookOpen className="w-5 h-5 text-green-600" />
-                    My Recent Journal Entries
-                  </h2>
-                  <Link
-                    to="/journals"
-                    className="text-green-600 hover:text-green-700 text-sm font-medium hover:bg-green-50 px-3 py-1 rounded-md transition-all duration-200"
-                  >
-                    View all
-                  </Link>
-                </div>
-              </div>
-              <div className="p-6">
-                {journalsLoading ? (
-                  <div className="space-y-4">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="animate-pulse">
-                        <div className="flex items-start space-x-3">
-                          <div className="w-10 h-10 bg-slate-200 rounded-lg"></div>
-                          <div className="flex-1">
-                            <div className="h-4 bg-slate-200 rounded w-3/4 mb-2"></div>
-                            <div className="h-3 bg-slate-200 rounded w-1/2"></div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : recentJournals && recentJournals.length > 0 ? (
-                  <div className="space-y-4">
-                    {recentJournals
-                      .slice(0, 4)
-                      .map((journal: any, ind: number) => (
-                        <div
-                          key={ind}
-                          className="p-4 rounded-xl hover:bg-slate-50 transition-colors group border border-slate-100"
-                        >
-                          <div className="flex items-start space-x-3">
-                            <div className="relative">
-                              {user?.profileImage ? (
-                                <img
-                                  src={user.profileImage}
-                                  alt={user.fullName}
-                                  className="w-10 h-10 rounded-full object-cover"
-                                />
-                              ) : (
-                                <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-                                  <span className="text-white font-semibold text-sm">
-                                    {user?.fullName?.charAt(0).toUpperCase() ||
-                                      "?"}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-medium text-slate-900 group-hover:text-green-600 transition-colors truncate">
-                                {journal.title}
-                              </h3>
-                              <p className="text-sm text-slate-500 line-clamp-2 mt-1">
-                                {journal.content}
-                              </p>
-                              <div className="flex items-center space-x-2 mt-2">
-                                <span className="text-xs text-slate-400">
-                                  {journal.createdAt
-                                    ? formatDate(journal.createdAt)
-                                    : "Recently"}
-                                </span>
-                                {journal.photos &&
-                                  journal.photos.length > 0 && (
-                                    <>
-                                      <span className="text-xs text-slate-400">
-                                        •
-                                      </span>
-                                      <span className="text-xs text-slate-400">
-                                        {journal.photos.length} photo
-                                        {journal.photos.length !== 1 ? "s" : ""}
-                                      </span>
-                                    </>
-                                  )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-6">
-                    <BookOpen className="w-8 h-8 text-slate-300 mx-auto mb-3" />
-                    <p className="text-slate-500 text-sm">
-                      No journal entries yet
-                    </p>
-                    <p className="text-slate-400 text-xs mt-1">
-                      Start documenting your travel adventures!
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
+            <RecentStories
+              user={user}
+              recentJournals={recentJournals}
+              journalsLoading={journalsLoading}
+            />
           </div>
 
           {/* Right Column - Profile & Discovery */}
@@ -384,76 +219,7 @@ const Dashboard = () => {
             <ProfileSummary user={user} />
 
             {/* Discover Lists */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-white/20">
-              <div className="p-6 border-b border-slate-100">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
-                    <Globe className="w-5 h-5 text-blue-600" />
-                    Discover Lists
-                  </h2>
-                  <Link
-                    to="/explore"
-                    className="text-blue-600 hover:text-blue-700 text-sm font-medium hover:bg-blue-50 px-3 py-1 rounded-md transition-all duration-200"
-                  >
-                    View all
-                  </Link>
-                </div>
-              </div>
-              <div className="p-6">
-                {publicLoading ? (
-                  <div className="space-y-3">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="animate-pulse">
-                        <div className="h-4 bg-slate-200 rounded w-3/4 mb-2"></div>
-                        <div className="h-3 bg-slate-200 rounded w-1/2"></div>
-                      </div>
-                    ))}
-                  </div>
-                ) : publicLists.length > 0 ? (
-                  <div className="space-y-4">
-                    {publicLists.map((list: any, ind: number) => (
-                      <Link
-                        key={ind}
-                        to={`/lists/${list.id}`}
-                        className="block p-4 rounded-xl hover:bg-slate-50 transition-colors group border border-slate-100"
-                      >
-                        <div className="flex items-start space-x-3">
-                          <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-lg flex items-center justify-center">
-                            <Globe className="w-5 h-5 text-white" />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-medium text-slate-900 group-hover:text-blue-600 transition-colors">
-                              {list.title}
-                            </h3>
-                            <p className="text-sm text-slate-500">
-                              {list.description && list.description.length > 80
-                                ? `${list.description.substring(0, 80)}...`
-                                : list.description}
-                            </p>
-                            <div className="flex items-center space-x-2 mt-2">
-                              <span className="text-xs text-slate-400">
-                                by {list.owner?.fullName || "Unknown"}
-                              </span>
-                              <span className="text-xs text-slate-400">•</span>
-                              <span className="text-xs text-slate-400">
-                                {list.destinations?.length || 0} destinations
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-6">
-                    <Globe className="w-8 h-8 text-slate-300 mx-auto mb-3" />
-                    <p className="text-slate-500 text-sm">
-                      No public lists available
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
+            <DiscoverLists />
           </div>
         </div>
       </div>
