@@ -1,0 +1,129 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { listInvitationService } from "../services/contentService";
+import type { ListInvitation, CreateListInvitationData } from "../types/api";
+
+// Query Keys
+export const listInvitationKeys = {
+  all: ["listInvitations"] as const,
+  lists: () => [...listInvitationKeys.all, "list"] as const,
+  list: (id: string) => [...listInvitationKeys.lists(), id] as const,
+  byInvitee: (inviteeId: string) =>
+    [...listInvitationKeys.all, "invitee", inviteeId] as const,
+  byInviter: (inviterId: string) =>
+    [...listInvitationKeys.all, "inviter", inviterId] as const,
+  byInviteeStatus: (inviteeId: string, status: string) =>
+    [...listInvitationKeys.byInvitee(inviteeId), status] as const,
+  byInviterStatus: (inviterId: string, status: string) =>
+    [...listInvitationKeys.byInviter(inviterId), status] as const,
+};
+
+// Get all invitations
+export const useAllListInvitations = () => {
+  return useQuery({
+    queryKey: listInvitationKeys.lists(),
+    queryFn: () => listInvitationService.getAllInvitations(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: 2,
+  });
+};
+
+// Get invitation by ID
+export const useListInvitation = (id: string) => {
+  return useQuery({
+    queryKey: listInvitationKeys.list(id),
+    queryFn: () => listInvitationService.getInvitationById(id),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: 2,
+  });
+};
+
+// Get invitations by invitee (received invitations)
+export const useInvitationsByInvitee = (inviteeId: string, status?: string) => {
+  return useQuery({
+    queryKey: status
+      ? listInvitationKeys.byInviteeStatus(inviteeId, status)
+      : listInvitationKeys.byInvitee(inviteeId),
+    queryFn: () =>
+      listInvitationService.getInvitationsByInvitee(inviteeId, status),
+    enabled: !!inviteeId,
+    staleTime: 2 * 60 * 1000, // 2 minutes (invitations are time-sensitive)
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
+  });
+};
+
+// Get invitations by inviter (sent invitations)
+export const useInvitationsByInviter = (inviterId: string, status?: string) => {
+  return useQuery({
+    queryKey: status
+      ? listInvitationKeys.byInviterStatus(inviterId, status)
+      : listInvitationKeys.byInviter(inviterId),
+    queryFn: () =>
+      listInvitationService.getInvitationsByInviter(inviterId, status),
+    enabled: !!inviterId,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
+  });
+};
+
+// Create invitation mutation
+export const useCreateListInvitation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (invitationData: CreateListInvitationData) =>
+      listInvitationService.createInvitation(invitationData),
+    onSuccess: (newInvitation: ListInvitation) => {
+      // Invalidate all invitation queries
+      queryClient.invalidateQueries({ queryKey: listInvitationKeys.all });
+
+      // Invalidate specific invitee and inviter queries
+      if (typeof newInvitation.invitee === "string") {
+        queryClient.invalidateQueries({
+          queryKey: listInvitationKeys.byInvitee(newInvitation.invitee),
+        });
+      }
+
+      if (typeof newInvitation.inviter === "string") {
+        queryClient.invalidateQueries({
+          queryKey: listInvitationKeys.byInviter(newInvitation.inviter),
+        });
+      }
+
+      // Set the new invitation in cache
+      queryClient.setQueryData(
+        listInvitationKeys.list(newInvitation._id),
+        newInvitation
+      );
+    },
+    onError: (error) => {
+      console.error("Failed to create invitation:", error);
+    },
+  });
+};
+
+// Helper hooks for specific invitation statuses
+
+// Get pending invitations received by user
+export const usePendingReceivedInvitations = (userId: string) => {
+  return useInvitationsByInvitee(userId, "pending");
+};
+
+// Get pending invitations sent by user
+export const usePendingSentInvitations = (userId: string) => {
+  return useInvitationsByInviter(userId, "pending");
+};
+
+// Get accepted invitations received by user
+export const useAcceptedReceivedInvitations = (userId: string) => {
+  return useInvitationsByInvitee(userId, "accepted");
+};
+
+// Get accepted invitations sent by user
+export const useAcceptedSentInvitations = (userId: string) => {
+  return useInvitationsByInviter(userId, "accepted");
+};
