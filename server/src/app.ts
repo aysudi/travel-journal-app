@@ -8,6 +8,7 @@ import "./models/JournalEntry.js";
 import "./models/Destination.js";
 import "./models/Message.js";
 import "./models/Notification.js";
+import "./models/ListInvitation.js";
 
 import userRouter from "./routes/userRoute.js";
 import travelListRouter from "./routes/travelListRoute.js";
@@ -17,6 +18,7 @@ import messageRouter from "./routes/messageRoute.js";
 import googleRouter from "./routes/googleRoute.js";
 import githubRouter from "./routes/githubRoute.js";
 import commentRouter from "./routes/commentRoute.js";
+import listInvitationRouter from "./routes/listInvitationRoutes.js";
 
 const app = express();
 
@@ -33,6 +35,7 @@ app.use("/destinations", destinationRouter);
 app.use("/journal-entries", journalEntryRouter);
 app.use("/messages", messageRouter);
 app.use("/comments", commentRouter);
+app.use("/list-invitations", listInvitationRouter);
 
 app.get("/", (_, res) => {
   res.send("Server is up and running!");
