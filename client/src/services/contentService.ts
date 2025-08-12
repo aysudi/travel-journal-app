@@ -6,6 +6,8 @@ import type {
   CreateJournalEntryData,
   PaginatedResponse,
   PaginationParams,
+  ListInvitation,
+  CreateListInvitationData,
 } from "../types/api";
 
 export class DestinationService {
@@ -197,5 +199,77 @@ export class JournalEntryService {
   }
 }
 
+export class ListInvitationService {
+  private readonly endpoint = "/list-invitations";
+
+  // Get all invitations
+  async getAllInvitations(): Promise<ListInvitation[]> {
+    const response = await apiConfig.request<{ data: ListInvitation[] }>(
+      this.endpoint
+    );
+    return response.data;
+  }
+
+  // Get invitation by ID
+  async getInvitationById(id: string): Promise<ListInvitation> {
+    const response = await apiConfig.request<{ data: ListInvitation }>(
+      `${this.endpoint}/${id}`
+    );
+    return response.data;
+  }
+
+  // Create new invitation
+  async createInvitation(
+    invitationData: CreateListInvitationData
+  ): Promise<ListInvitation> {
+    const response = await apiConfig.request<{ data: ListInvitation }>(
+      this.endpoint,
+      {
+        method: "POST",
+        body: JSON.stringify(invitationData),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response.data;
+  }
+
+  // Get invitations for a specific invitee (received invitations)
+  async getInvitationsByInvitee(
+    inviteeId: string,
+    status?: string
+  ): Promise<ListInvitation[]> {
+    const searchParams = new URLSearchParams();
+    if (status) searchParams.append("status", status);
+
+    const query = searchParams.toString();
+    const url = query
+      ? `${this.endpoint}/invitee/${inviteeId}?${query}`
+      : `${this.endpoint}/invitee/${inviteeId}`;
+
+    const response = await apiConfig.request<{ data: ListInvitation[] }>(url);
+    return response.data;
+  }
+
+  // Get invitations sent by a specific inviter (sent invitations)
+  async getInvitationsByInviter(
+    inviterId: string,
+    status?: string
+  ): Promise<ListInvitation[]> {
+    const searchParams = new URLSearchParams();
+    if (status) searchParams.append("status", status);
+
+    const query = searchParams.toString();
+    const url = query
+      ? `${this.endpoint}/inviter/${inviterId}?${query}`
+      : `${this.endpoint}/inviter/${inviterId}`;
+
+    const response = await apiConfig.request<{ data: ListInvitation[] }>(url);
+    return response.data;
+  }
+}
+
 export const destinationService = new DestinationService();
 export const journalEntryService = new JournalEntryService();
+export const listInvitationService = new ListInvitationService();
