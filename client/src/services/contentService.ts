@@ -17,9 +17,28 @@ export class DestinationService {
     travelListId?: string,
     params?: PaginationParams
   ): Promise<PaginatedResponse<Destination>> {
-    const searchParams = new URLSearchParams();
+    // If travelListId is provided, use the specific endpoint for travel list destinations
+    if (travelListId) {
+      const response = await apiConfig.request<Destination[]>(
+        `/destinations/travel-list/${travelListId}`
+      );
+      
+      // Convert array response to paginated response format
+      return {
+        data: response,
+        pagination: {
+          page: 1,
+          limit: response.length,
+          total: response.length,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false,
+        },
+      };
+    }
 
-    if (travelListId) searchParams.append("travelListId", travelListId);
+    // Otherwise, use the general destinations endpoint with query parameters
+    const searchParams = new URLSearchParams();
     if (params?.page) searchParams.append("page", params.page.toString());
     if (params?.limit) searchParams.append("limit", params.limit.toString());
     if (params?.search) searchParams.append("search", params.search);
