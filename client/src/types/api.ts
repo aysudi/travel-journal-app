@@ -93,6 +93,26 @@ export interface UpdateTravelListData {
   coverImage?: string;
 }
 
+// List Invitation Types
+export interface ListInvitation {
+  _id: string;
+  list: TravelList | string;
+  inviter: UserProfile | string;
+  invitee: UserProfile | string;
+  permissionLevel: "view" | "suggest" | "contribute" | "co-owner";
+  status: "pending" | "accepted" | "rejected" | "expired";
+  expiresAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateListInvitationData {
+  list: string;
+  inviter: string;
+  invitee: string;
+  permissionLevel: "view" | "suggest" | "contribute" | "co-owner";
+}
+
 // Destination Types
 export interface Destination {
   _id: string;
