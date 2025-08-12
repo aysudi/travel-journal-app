@@ -15,7 +15,10 @@ import formatDate from "../../../utils/formatDate";
 import { Link } from "react-router";
 
 const TravelListCard: React.FC<{ list: TravelList }> = ({ list }) => (
-  <div className="group bg-white rounded-2xl shadow-lg border border-slate-200/50 overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+  <Link
+    to={`/lists/${list.id}`}
+    className="group bg-white rounded-2xl shadow-lg border border-slate-200/50 overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
+  >
     {/* Cover Image */}
     <div className="h-48 bg-gradient-to-br from-blue-400 via-purple-500 to-indigo-600 relative overflow-hidden">
       {list.coverImage ? (
@@ -70,12 +73,9 @@ const TravelListCard: React.FC<{ list: TravelList }> = ({ list }) => (
     {/* Content */}
     <div className="p-6">
       <div className="flex items-start justify-between mb-3">
-        <Link
-          to={`/lists/${list.id}`}
-          className="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2 hover:underline cursor-pointer"
-        >
+        <h3 className="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2">
           {list.title}
-        </Link>
+        </h3>
         <button className="p-1 hover:bg-slate-100 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
           <MoreVertical size={16} className="text-slate-500" />
         </button>
@@ -126,19 +126,16 @@ const TravelListCard: React.FC<{ list: TravelList }> = ({ list }) => (
 
       {/* Action Buttons */}
       <div className="flex gap-2">
-        <Link
-          to={`/lists/${list.id}`}
-          className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-        >
+        <button className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 cursor-pointer">
           <Eye size={16} />
           View List
-        </Link>
+        </button>
         <button className="p-2 border border-slate-200 hover:border-slate-300 rounded-lg transition-colors cursor-pointer">
           <Share2 size={16} className="text-slate-600" />
         </button>
       </div>
     </div>
-  </div>
+  </Link>
 );
 
 export default TravelListCard;

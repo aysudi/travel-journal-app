@@ -441,3 +441,97 @@ export const getRecentJournalEntries = async (
 
   return recentEntries;
 };
+
+// Get journal entries by travel list ID
+export const getJournalEntriesByTravelList = async (
+  travelListId: string,
+  query: Omit<JournalEntryQuery, 'destination'> = {}
+): Promise<PaginatedJournalEntries> => {
+  const {
+    page = 1,
+    limit = 10,
+    author,
+    public: isPublic,
+    search,
+    sort = "createdAt",
+    order = "desc",
+  } = query;
+
+  const skip = (page - 1) * limit;
+
+  // First, get all destinations in this travel list
+  const destinations = await DestinationModel.find({ list: travelListId }).select('_id');
+  const destinationIds = destinations.map(dest => dest._id);
+
+  if (destinationIds.length === 0) {
+    // No destinations in this travel list, return empty result
+    return {
+      data: [],
+      pagination: {
+        currentPage: page,
+        totalPages: 0,
+        totalItems: 0,
+        itemsPerPage: limit,
+        hasNext: false,
+        hasPrev: false,
+      },
+    };
+  }
+
+  const filter: any = {
+    destination: { $in: destinationIds }
+  };
+
+  if (author) filter.author = author;
+  if (typeof isPublic === "boolean") filter.public = isPublic;
+
+  if (search) {
+    filter.$or = [
+      { title: { $regex: search, $options: "i" } },
+      { content: { $regex: search, $options: "i" } },
+    ];
+  }
+
+  const sortObj: any = {};
+  sortObj[sort] = order === "asc" ? 1 : -1;
+
+  const [entries, total] = await Promise.all([
+    JournalEntryModel.find(filter)
+      .populate({
+        path: "author",
+        select: "fullName username profileImage",
+      })
+      .populate({
+        path: "destination",
+        select: "name location list",
+        populate: {
+          path: "list",
+          select: "title owner customPermissions",
+        },
+      })
+      .populate({
+        path: "comments",
+        select: "author content likes",
+      })
+      .populate({ path: "likes", select: "fullName username profileImage" })
+      .sort(sortObj)
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    JournalEntryModel.countDocuments(filter),
+  ]);
+
+  const totalPages = Math.ceil(total / limit);
+
+  return {
+    data: entries,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalItems: total,
+      itemsPerPage: limit,
+      hasNext: page < totalPages,
+      hasPrev: page > 1,
+    },
+  };
+};
