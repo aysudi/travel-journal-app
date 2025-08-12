@@ -18,6 +18,7 @@ import PrivateRoute from "./PrivateRoute";
 import PublicRoute from "./PublicRoute";
 import AuthCallback from "../pages/Auth/AuthCallback";
 import MyLists from "../pages/Client/MyLists";
+import JournalDetails from "../pages/Client/JournalDetails";
 
 const ROUTES = [
   // Root redirect to login
@@ -43,7 +44,7 @@ const ROUTES = [
         element: <MyLists />,
       },
       {
-        path: "lists",
+        path: "explore",
         element: <Lists />,
       },
       {
@@ -53,6 +54,10 @@ const ROUTES = [
       {
         path: "journals",
         element: <Journals />,
+      },
+      {
+        path: "journals/:journalId",
+        element: <JournalDetails />,
       },
     ],
   },
