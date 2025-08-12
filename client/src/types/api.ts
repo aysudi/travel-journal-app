@@ -13,7 +13,7 @@ export interface ApiError {
 
 // User Types
 export interface UserProfile {
-  _id: string;
+  id: string;
   fullName: string;
   username: string;
   email: string;

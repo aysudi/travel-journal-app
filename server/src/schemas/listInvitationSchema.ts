@@ -27,7 +27,6 @@ const listInvitationSchema = new mongoose.Schema(
       enum: ["pending", "accepted", "rejected", "expired"],
       default: "pending",
     },
-    message: { type: String },
     expiresAt: {
       type: Date,
       default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),

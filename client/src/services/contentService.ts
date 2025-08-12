@@ -111,10 +111,10 @@ export class JournalEntryService {
     const searchParams = new URLSearchParams();
 
     if (params?.destinationId)
-      searchParams.append("destinationId", params.destinationId);
+      searchParams.append("destination", params.destinationId);
     if (params?.travelListId)
       searchParams.append("travelListId", params.travelListId);
-    if (params?.authorId) searchParams.append("authorId", params.authorId);
+    if (params?.authorId) searchParams.append("author", params.authorId);
     if (params?.page) searchParams.append("page", params.page.toString());
     if (params?.limit) searchParams.append("limit", params.limit.toString());
     if (params?.search) searchParams.append("search", params.search);
