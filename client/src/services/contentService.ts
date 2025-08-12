@@ -22,7 +22,7 @@ export class DestinationService {
       const response = await apiConfig.request<Destination[]>(
         `/destinations/travel-list/${travelListId}`
       );
-      
+
       // Convert array response to paginated response format
       return {
         data: response,

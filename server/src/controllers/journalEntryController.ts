@@ -261,7 +261,9 @@ export const getJournalEntries = async (req: Request, res: Response) => {
       };
 
       if (queryParams.author) {
-        const { error: authorError } = objectIdSchema.validate(queryParams.author);
+        const { error: authorError } = objectIdSchema.validate(
+          queryParams.author
+        );
         if (authorError) {
           return res.status(400).json({
             success: false,

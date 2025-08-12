@@ -445,7 +445,7 @@ export const getRecentJournalEntries = async (
 // Get journal entries by travel list ID
 export const getJournalEntriesByTravelList = async (
   travelListId: string,
-  query: Omit<JournalEntryQuery, 'destination'> = {}
+  query: Omit<JournalEntryQuery, "destination"> = {}
 ): Promise<PaginatedJournalEntries> => {
   const {
     page = 1,
@@ -460,8 +460,10 @@ export const getJournalEntriesByTravelList = async (
   const skip = (page - 1) * limit;
 
   // First, get all destinations in this travel list
-  const destinations = await DestinationModel.find({ list: travelListId }).select('_id');
-  const destinationIds = destinations.map(dest => dest._id);
+  const destinations = await DestinationModel.find({
+    list: travelListId,
+  }).select("_id");
+  const destinationIds = destinations.map((dest) => dest._id);
 
   if (destinationIds.length === 0) {
     // No destinations in this travel list, return empty result
@@ -479,7 +481,7 @@ export const getJournalEntriesByTravelList = async (
   }
 
   const filter: any = {
-    destination: { $in: destinationIds }
+    destination: { $in: destinationIds },
   };
 
   if (author) filter.author = author;
