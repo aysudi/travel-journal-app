@@ -107,7 +107,6 @@ export class ApiConfig {
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
 
-    // Check if Content-Type should be skipped (for FormData)
     const skipContentType = options.body instanceof FormData;
     const headers = this.getHeaders(includeAuth, skipContentType);
 
