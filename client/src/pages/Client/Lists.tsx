@@ -229,9 +229,9 @@ const Lists = () => {
         {/* Lists Grid/List View */}
         {viewMode === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredAndSortedLists.map((list, idx) => (
-              <TravelListCard key={idx} list={list} />
-            ))}
+            {filteredAndSortedLists.map((list, idx) => {
+              return <TravelListCard key={idx} list={list} />;
+            })}
           </div>
         ) : (
           <div className="space-y-4">

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import type { TravelList } from "../../../services";
 import formatDate from "../../../utils/formatDate";
 import {
@@ -76,9 +77,12 @@ const TravelListRow: React.FC<{ list: TravelList }> = ({ list }) => (
           </div>
 
           <div className="flex items-center gap-2">
-            <button className="bg-blue-500 hover:bg-blue-600 text-white py-1.5 px-4 rounded-lg text-sm font-medium transition-colors">
+            <Link
+              to={`/lists/${list.id}`}
+              className="bg-blue-500 hover:bg-blue-600 text-white py-1.5 px-4 rounded-lg text-sm font-medium transition-colors"
+            >
               View
-            </button>
+            </Link>
             <button className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
               <MoreVertical size={16} className="text-slate-500" />
             </button>

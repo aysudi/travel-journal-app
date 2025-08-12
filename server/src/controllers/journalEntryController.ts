@@ -232,11 +232,56 @@ export const getJournalEntries = async (req: Request, res: Response) => {
       limit,
       destination,
       author,
+      travelListId,
       public: isPublic,
       search,
       sort,
       order,
     } = req.query;
+
+    // If travelListId is provided, use the specific function for travel list entries
+    if (travelListId) {
+      const { error } = objectIdSchema.validate(travelListId);
+      if (error) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid travel list ID",
+        });
+      }
+
+      const queryParams = {
+        page: page ? Number(page) : undefined,
+        limit: limit ? Number(limit) : undefined,
+        author: author as string,
+        public:
+          isPublic === "true" ? true : isPublic === "false" ? false : undefined,
+        search: search as string,
+        sort: sort as string,
+        order: (order as "asc" | "desc") || "desc",
+      };
+
+      if (queryParams.author) {
+        const { error: authorError } = objectIdSchema.validate(queryParams.author);
+        if (authorError) {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid author ID",
+          });
+        }
+      }
+
+      const result = await journalEntryService.getJournalEntriesByTravelList(
+        travelListId as string,
+        queryParams
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: "Journal entries retrieved successfully",
+        data: formatMongoData(result.data),
+        pagination: result.pagination,
+      });
+    }
 
     const queryParams = {
       page: page ? Number(page) : undefined,

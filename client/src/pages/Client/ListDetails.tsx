@@ -57,11 +57,9 @@ const ListDetails = () => {
     error: errorJournals,
   } = useJournalEntriesByTravelList(listId || "");
 
-  // Ensure we have arrays to work with
-  const destinationsArray = destinations || [];
+  const destinationsArray = destinations?.data || [];
   const journalsArray = journals || [];
 
-  // Helper function to determine destination status
   const getDestinationStatus = (dest: Destination): string => {
     if (dest.visitedDate) return "Visited";
     if (dest.notes?.toLowerCase().includes("planned")) return "Planned";
@@ -163,8 +161,6 @@ const ListDetails = () => {
     setSelectedDestination(destination);
     setShowDestinationDetail(true);
   };
-
-  console.log(selectedDestination);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
