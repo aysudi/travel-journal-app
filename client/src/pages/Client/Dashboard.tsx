@@ -11,10 +11,15 @@ import Loading from "../../components/Common/Loading";
 import ProfileSummary from "../../components/Client/Dashboard/ProfileSummary";
 import RecentActivity from "../../components/Client/Dashboard/RecentActivity";
 import StatsGrid from "../../components/Client/Dashboard/StatsGrid";
-import { usePendingReceivedInvitations } from "../../hooks/useListInvitations";
+import {
+  useAcceptInvitation,
+  useRejectInvitation,
+  usePendingReceivedInvitations,
+} from "../../hooks/useListInvitations";
 import RecentStories from "../../components/Client/Dashboard/RecentStories";
 import DiscoverLists from "../../components/Client/Dashboard/DiscoverLists";
 import CollaboratingLists from "../../components/Client/Dashboard/CollaboratingLists";
+import Swal from "sweetalert2";
 
 const Dashboard = () => {
   const { data: user, isLoading: userLoading } = useUserProfile();
@@ -27,6 +32,10 @@ const Dashboard = () => {
   const { data: pendingInvitations } = usePendingReceivedInvitations(
     user?.id || ""
   );
+
+  // Move the hook calls to the top level
+  const acceptInvitationMutation = useAcceptInvitation();
+  const rejectInvitationMutation = useRejectInvitation();
 
   const recentJournals = (recentJournalsData as any) || [];
 
@@ -68,6 +77,52 @@ const Dashboard = () => {
       href: "/lists",
     },
   ];
+
+  const handleAcceptInvitation = (invitationId: string) => {
+    acceptInvitationMutation.mutate(invitationId, {
+      onSuccess: (acceptedInvitation) => {
+        const listTitle = typeof acceptedInvitation.list === 'object' 
+          ? acceptedInvitation.list.title 
+          : 'the travel list';
+        
+        Swal.fire({
+          title: "Invitation Accepted!",
+          text: `You've successfully joined "${listTitle}" as a ${acceptedInvitation.permissionLevel}.`,
+          icon: "success",
+          confirmButtonColor: "#10b981",
+        });
+      },
+      onError: (error) => {
+        Swal.fire({
+          title: "Error",
+          text: error instanceof Error ? error.message : "Failed to accept invitation",
+          icon: "error",
+          confirmButtonColor: "#ef4444",
+        });
+      }
+    });
+  };
+
+  const handleRejectInvitation = (invitationId: string) => {
+    rejectInvitationMutation.mutate(invitationId, {
+      onSuccess: () => {
+        Swal.fire({
+          title: "Invitation Rejected!",
+          text: "The invitation has been rejected.",
+          icon: "success",
+          confirmButtonColor: "#10b981",
+        });
+      },
+      onError: (error) => {
+        Swal.fire({
+          title: "Error",
+          text: error instanceof Error ? error.message : "Failed to reject invitation",
+          icon: "error",
+          confirmButtonColor: "#ef4444",
+        });
+      }
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -178,11 +233,46 @@ const Dashboard = () => {
                                   Expires: {formatDate(invitation.expiresAt)}
                                 </span>
                                 <div className="flex items-center space-x-2">
-                                  <button className="text-xs bg-green-100 text-green-700 hover:bg-green-200 px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer">
-                                    Accept
+                                  <button
+                                    onClick={() => {
+                                      handleAcceptInvitation(invitation._id);
+                                    }}
+                                    disabled={
+                                      acceptInvitationMutation.isPending
+                                    }
+                                    className="text-xs bg-green-100 text-green-700 hover:bg-green-200 disabled:bg-green-50 disabled:text-green-400 px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                  >
+                                    {acceptInvitationMutation.isPending
+                                      ? "Accepting..."
+                                      : "Accept"}
                                   </button>
-                                  <button className="text-xs bg-red-100 text-red-700 hover:bg-red-200 px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer">
-                                    Decline
+                                  <button
+                                    onClick={() => {
+                                      Swal.fire({
+                                        title: "Are you sure?",
+                                        text: "You won't be able to revert this!",
+                                        icon: "warning",
+                                        showCancelButton: true,
+                                        confirmButtonColor: "#3085d6",
+                                        cancelButtonColor: "#d33",
+                                        confirmButtonText:
+                                          "Yes, reject invitation!",
+                                      }).then((result) => {
+                                        if (result.isConfirmed) {
+                                          handleRejectInvitation(
+                                            invitation._id
+                                          );
+                                        }
+                                      });
+                                    }}
+                                    disabled={
+                                      rejectInvitationMutation.isPending
+                                    }
+                                    className="text-xs bg-red-100 text-red-700 hover:bg-red-200 disabled:bg-red-50 disabled:text-red-400 px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                  >
+                                    {rejectInvitationMutation.isPending
+                                      ? "Declining..."
+                                      : "Decline"}
                                   </button>
                                 </div>
                               </div>
