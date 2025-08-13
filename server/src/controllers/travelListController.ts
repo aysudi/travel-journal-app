@@ -463,38 +463,12 @@ export const uploadCoverImage = async (req: Request, res: Response) => {
   }
 };
 
-export const duplicateTravelList = async (req: Request, res: Response) => {
+export const duplicateTravelList = async (req: any, res: Response) => {
   try {
     const { id } = req.params;
-    const userId = (req.user as any)?.id;
-
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "User not authenticated",
-      });
-    }
-
-    const existingList = await travelListService.getOne(id);
-    if (!existingList) {
-      return res.status(404).json({
-        success: false,
-        message: "Travel list not found",
-      });
-    }
-
-    const hasViewPermission = travelListService.checkUserPermission(
-      existingList,
-      userId
-    );
-    if (!hasViewPermission) {
-      return res.status(403).json({
-        success: false,
-        message: "You don't have permission to duplicate this travel list",
-      });
-    }
-
+    const userId = req.user.id;
     const duplicatedList = await travelListService.duplicateList(id, userId);
+
     res.status(201).json({
       success: true,
       message: "Travel list duplicated successfully",
@@ -505,6 +479,31 @@ export const duplicateTravelList = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: "Failed to duplicate travel list",
+      error: error.message,
+    });
+  }
+};
+
+export const getFriendsLists = async (req: any, res: Response) => {
+  try {
+    const userId = req.user.id;
+    const { limit } = req.query;
+
+    const friendsLists = await travelListService.getFriendsLists(
+      userId,
+      limit ? Number(limit) : 10
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Friends' travel lists retrieved successfully",
+      data: formatMongoData(friendsLists),
+    });
+  } catch (error: any) {
+    console.error("Get friends' lists error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to retrieve friends' travel lists",
       error: error.message,
     });
   }

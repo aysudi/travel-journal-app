@@ -1,5 +1,12 @@
 import TravelList from "../models/TravelList";
 
+interface PaginationParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sort?: string;
+}
+
 export const getAll = async (params?: PaginationParams) => {
   const {
     page = 1,
@@ -194,8 +201,9 @@ export const duplicateList = async (listId: string, newOwnerId: string) => {
     .populate("customPermissions.user", "fullName email profileImage");
 };
 
-export const checkUserPermission = (list: any, userId: string) => {
-  if (list.owner.toString() === userId) return true;
+export const canUserAccessList = (list: any, userId: string): boolean => {
+  if (!list) return false;
+  if (list.owner._id.toString() === userId) return true;
 
   const customPerm = list.customPermissions.find(
     (p: any) => p.user.toString() === userId
@@ -206,4 +214,33 @@ export const checkUserPermission = (list: any, userId: string) => {
   if (list.visibility === "private") return false;
 
   return false;
+};
+
+export const getFriendsLists = async (userId: string, limit: number = 10) => {
+  const User = await import("../models/User.js");
+  const UserModel = User.default;
+
+  // Get current user with friends
+  const currentUser = await UserModel.findById(userId).populate(
+    "friends",
+    "_id"
+  );
+  if (!currentUser || !currentUser.friends.length) {
+    return [];
+  }
+
+  // Get friend IDs
+  const friendIds = currentUser.friends.map((friend: any) => friend._id);
+
+  // Find lists created by friends with "friends" visibility only
+  const friendsLists = await TravelList.find({
+    owner: { $in: friendIds },
+    visibility: "friends", // Only lists with friends visibility
+  })
+    .populate("owner", "fullName username email profileImage")
+    .populate("destinations")
+    .sort({ createdAt: -1 })
+    .limit(limit);
+
+  return friendsLists;
 };
