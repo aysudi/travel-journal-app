@@ -13,6 +13,12 @@ import {
   getUserProfile,
   updateProfile,
   changePassword,
+  sendFriendRequest,
+  acceptFriendRequest,
+  rejectFriendRequest,
+  removeFriend,
+  getUserFriends,
+  searchUsers,
 } from "../controllers/userController.js";
 import userValidate from "../middlewares/userValidate.js";
 import { authenticateToken } from "../middlewares/authMiddleware.js";
@@ -36,6 +42,15 @@ userRouter.get("/verify-email", verifyUserEmail);
 userRouter.post("/forgot-password", forgotPassword);
 userRouter.post("/reset-password", resetPassword);
 userRouter.put("/change-password", authenticateToken, changePassword);
+
+// Friend routes
+userRouter.get("/friends/search", authenticateToken, searchUsers);
+userRouter.get("/friends", authenticateToken, getUserFriends);
+userRouter.post("/friends/request", authenticateToken, sendFriendRequest);
+userRouter.post("/friends/accept", authenticateToken, acceptFriendRequest);
+userRouter.post("/friends/reject", authenticateToken, rejectFriendRequest);
+userRouter.delete("/friends/:friendId", authenticateToken, removeFriend);
+
 userRouter.get("/:email", getUserByEmail);
 userRouter.delete("/:id", deleteUser);
 

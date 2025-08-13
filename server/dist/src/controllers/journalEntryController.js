@@ -11,7 +11,6 @@ export const createJournalEntry = async (req, res) => {
                 message: "Authentication required",
             });
         }
-        // Validate request body
         const { error, value } = journalEntryCreateSchema.validate(req.body);
         if (error) {
             return res.status(400).json({
@@ -52,7 +51,6 @@ export const createJournalEntry = async (req, res) => {
 export const getJournalEntryById = async (req, res) => {
     try {
         const { id } = req.params;
-        // Validate ID format
         const { error } = objectIdSchema.validate(id);
         if (error) {
             return res.status(400).json({
@@ -93,7 +91,6 @@ export const updateJournalEntry = async (req, res) => {
                 message: "Authentication required",
             });
         }
-        // Validate ID format
         const { error: idError } = objectIdSchema.validate(id);
         if (idError) {
             return res.status(400).json({
@@ -101,7 +98,6 @@ export const updateJournalEntry = async (req, res) => {
                 message: "Invalid journal entry ID",
             });
         }
-        // Validate request body
         const { error, value } = journalEntryUpdateSchema.validate(req.body);
         if (error) {
             return res.status(400).json({
@@ -149,7 +145,6 @@ export const deleteJournalEntry = async (req, res) => {
                 message: "Authentication required",
             });
         }
-        // Validate ID format
         const { error } = objectIdSchema.validate(id);
         if (error) {
             return res.status(400).json({
@@ -187,7 +182,41 @@ export const deleteJournalEntry = async (req, res) => {
 // Get journal entries with filtering, pagination, and search
 export const getJournalEntries = async (req, res) => {
     try {
-        const { page, limit, destination, author, public: isPublic, search, sort, order, } = req.query;
+        const { page, limit, destination, author, travelListId, public: isPublic, search, sort, order, } = req.query;
+        if (travelListId) {
+            const { error } = objectIdSchema.validate(travelListId);
+            if (error) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid travel list ID",
+                });
+            }
+            const queryParams = {
+                page: page ? Number(page) : undefined,
+                limit: limit ? Number(limit) : undefined,
+                author: author,
+                public: isPublic === "true" ? true : isPublic === "false" ? false : undefined,
+                search: search,
+                sort: sort,
+                order: order || "desc",
+            };
+            if (queryParams.author) {
+                const { error: authorError } = objectIdSchema.validate(queryParams.author);
+                if (authorError) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Invalid author ID",
+                    });
+                }
+            }
+            const result = await journalEntryService.getJournalEntriesByTravelList(travelListId, queryParams);
+            return res.status(200).json({
+                success: true,
+                message: "Journal entries retrieved successfully",
+                data: formatMongoData(result.data),
+                pagination: result.pagination,
+            });
+        }
         const queryParams = {
             page: page ? Number(page) : undefined,
             limit: limit ? Number(limit) : undefined,
@@ -198,7 +227,6 @@ export const getJournalEntries = async (req, res) => {
             sort: sort,
             order: order || "desc",
         };
-        // Validate ObjectIds if provided
         if (queryParams.destination) {
             const { error } = objectIdSchema.validate(queryParams.destination);
             if (error) {
@@ -237,9 +265,8 @@ export const getJournalEntries = async (req, res) => {
 // Get journal entries by destination ID
 export const getJournalEntriesByDestination = async (req, res) => {
     try {
-        const userId = req.user?.id; // Optional for access control
+        const userId = req.user?.id;
         const { destinationId } = req.params;
-        // Validate destination ID format
         const { error } = objectIdSchema.validate(destinationId);
         if (error) {
             return res.status(400).json({
@@ -272,9 +299,8 @@ export const getJournalEntriesByDestination = async (req, res) => {
 // Get journal entries by author ID
 export const getJournalEntriesByAuthor = async (req, res) => {
     try {
-        const currentUserId = req.user?.id; // Optional for privacy control
+        const currentUserId = req.user?.id;
         const { authorId } = req.params;
-        // Validate author ID format
         const { error } = objectIdSchema.validate(authorId);
         if (error) {
             return res.status(400).json({
@@ -369,7 +395,7 @@ export const getRecentJournalEntries = async (req, res) => {
                 message: "Authentication required",
             });
         }
-        const limitNum = limit ? Math.min(Number(limit), 20) : 5; // Max 20 entries
+        const limitNum = limit ? Math.min(Number(limit), 20) : 5;
         const entries = await journalEntryService.getRecentJournalEntries(userId, limitNum);
         res.status(200).json({
             success: true,
@@ -397,14 +423,12 @@ export const bulkUpdateJournalEntries = async (req, res) => {
                 message: "Authentication required",
             });
         }
-        // Validate request body
         if (!Array.isArray(entryIds) || entryIds.length === 0) {
             return res.status(400).json({
                 success: false,
                 message: "Entry IDs array is required and cannot be empty",
             });
         }
-        // Validate each ID format
         for (const id of entryIds) {
             const { error } = objectIdSchema.validate(id);
             if (error) {
@@ -414,7 +438,6 @@ export const bulkUpdateJournalEntries = async (req, res) => {
                 });
             }
         }
-        // Validate update data
         const { error, value } = journalEntryUpdateSchema.validate(updateData);
         if (error) {
             return res.status(400).json({
@@ -459,14 +482,13 @@ export const getMyJournalEntries = async (req, res) => {
         const queryParams = {
             page: page ? Number(page) : undefined,
             limit: limit ? Number(limit) : undefined,
-            author: userId, // Filter by current user
+            author: userId,
             destination: destination,
             public: isPublic === "true" ? true : isPublic === "false" ? false : undefined,
             search: search,
             sort: sort,
             order: order || "desc",
         };
-        // Validate destination ID if provided
         if (queryParams.destination) {
             const { error } = objectIdSchema.validate(queryParams.destination);
             if (error) {

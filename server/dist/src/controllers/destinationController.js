@@ -1,5 +1,5 @@
 import * as destinationService from "../services/destinationService";
-import { destinationCreateSchema, destinationUpdateSchema, destinationStatusSchema, objectIdSchema } from "../validations/destination.validation";
+import { destinationCreateSchema, destinationUpdateSchema, destinationStatusSchema, objectIdSchema, } from "../validations/destination.validation";
 import formatMongoData from "../utils/formatMongoData";
 // Create a new destination
 export const createDestination = async (req, res) => {
@@ -11,7 +11,6 @@ export const createDestination = async (req, res) => {
                 message: "Authentication required",
             });
         }
-        // Validate request body
         const { error, value } = destinationCreateSchema.validate(req.body);
         if (error) {
             return res.status(400).json({
@@ -99,7 +98,6 @@ export const updateDestination = async (req, res) => {
                 message: "Authentication required",
             });
         }
-        // Validate ID format
         const { error: idError } = objectIdSchema.validate(id);
         if (idError) {
             return res.status(400).json({
@@ -107,7 +105,6 @@ export const updateDestination = async (req, res) => {
                 message: "Invalid destination ID",
             });
         }
-        // Validate request body
         const { error, value } = destinationUpdateSchema.validate(req.body);
         if (error) {
             return res.status(400).json({
@@ -161,7 +158,6 @@ export const deleteDestination = async (req, res) => {
                 message: "Authentication required",
             });
         }
-        // Validate ID format
         const { error } = objectIdSchema.validate(id);
         if (error) {
             return res.status(400).json({
@@ -199,20 +195,17 @@ export const deleteDestination = async (req, res) => {
 // Get destinations with filtering, pagination, and search
 export const getDestinations = async (req, res) => {
     try {
-        const userId = req.user?.id; // Optional for public access
-        const { page, limit, listId, status, search, sort, } = req.query;
+        const userId = req.user?.id;
+        const { list, status, search, sort } = req.query;
         const queryParams = {
-            page: page ? Number(page) : undefined,
-            limit: limit ? Number(limit) : undefined,
-            listId: listId,
+            list: list,
             status: status,
             search: search,
             sort: sort,
             userId: userId,
         };
-        // Validate ObjectIds if provided
-        if (queryParams.listId) {
-            const { error } = objectIdSchema.validate(queryParams.listId);
+        if (queryParams.list) {
+            const { error } = objectIdSchema.validate(queryParams.list);
             if (error) {
                 return res.status(400).json({
                     success: false,
@@ -220,12 +213,11 @@ export const getDestinations = async (req, res) => {
                 });
             }
         }
-        const result = await destinationService.getDestinations(queryParams);
+        const destinations = await destinationService.getDestinations(queryParams);
         res.status(200).json({
             success: true,
             message: "Destinations retrieved successfully",
-            data: formatMongoData(result.data),
-            pagination: result.pagination,
+            data: formatMongoData(destinations),
         });
     }
     catch (error) {
@@ -495,14 +487,15 @@ export const searchDestinations = async (req, res) => {
                 message: "Authentication required",
             });
         }
-        if (!searchQuery || typeof searchQuery !== 'string') {
+        if (!searchQuery || typeof searchQuery !== "string") {
             return res.status(400).json({
                 success: false,
                 message: "Search query is required",
             });
         }
         // Validate status if provided
-        if (status && !["Wishlist", "Planned", "Visited"].includes(status)) {
+        if (status &&
+            !["Wishlist", "Planned", "Visited"].includes(status)) {
             return res.status(400).json({
                 success: false,
                 message: "Invalid status. Must be Wishlist, Planned, or Visited",

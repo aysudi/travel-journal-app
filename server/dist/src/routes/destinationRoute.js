@@ -2,7 +2,6 @@ import express from "express";
 import { createDestination, getDestinationById, updateDestination, deleteDestination, getDestinations, getDestinationsByTravelList, getDestinationsByStatus, getDestinationStats, updateDestinationStatus, bulkUpdateDestinationStatus, getRecentDestinations, searchDestinations, } from "../controllers/destinationController";
 import { authenticateToken } from "../middlewares/authMiddleware";
 const destinationRouter = express.Router();
-// Public routes (limited access - some may require optional auth)
 destinationRouter.get("/travel-list/:listId", getDestinationsByTravelList);
 destinationRouter.get("/:id", getDestinationById);
 // Protected routes (authentication required)

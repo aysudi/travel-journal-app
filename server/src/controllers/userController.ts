@@ -21,6 +21,7 @@ import { sendVerificationEmail } from "../utils/sendMail.js";
 import config from "../config/config.js";
 import "../models/TravelList.js";
 import "../models/Destination.js";
+import UserModel from "../models/User.js";
 
 export const getUsers = async (
   _: Request,
@@ -80,9 +81,7 @@ export const getUserProfile = async (
       });
     }
 
-    console.log("DEBUG USER CONTROLLER: Raw user from DB:", user);
     const formattedUser = formatMongoData(user);
-    console.log("DEBUG USER CONTROLLER: Formatted user:", formattedUser);
 
     res.status(200).json({
       message: "User profile retrieved successfully",
@@ -410,6 +409,236 @@ export const changePassword = async (
 
     res.status(200).json({
       message: "Password changed successfully!",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Friends functionality
+export const sendFriendRequest = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user.id;
+    const { targetUserId } = req.body;
+
+    const currentUser = await UserModel.findById(userId);
+    if (!currentUser) {
+      return res.status(404).json({
+        message: "User not found",
+        data: null,
+      });
+    }
+
+    const result = await currentUser.sendFriendRequest(targetUserId);
+
+    res.status(200).json({
+      message: result.message,
+      data: null,
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      message: error.message,
+      data: null,
+    });
+  }
+};
+
+export const acceptFriendRequest = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user.id;
+    const { fromUserId } = req.body;
+
+    const currentUser = await UserModel.findById(userId);
+    if (!currentUser) {
+      return res.status(404).json({
+        message: "User not found",
+        data: null,
+      });
+    }
+
+    const result = await currentUser.acceptFriendRequest(fromUserId);
+
+    res.status(200).json({
+      message: result.message,
+      data: null,
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      message: error.message,
+      data: null,
+    });
+  }
+};
+
+export const rejectFriendRequest = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user.id;
+    const { fromUserId } = req.body;
+
+    const currentUser = await UserModel.findById(userId);
+    if (!currentUser) {
+      return res.status(404).json({
+        message: "User not found",
+        data: null,
+      });
+    }
+
+    const result = await currentUser.rejectFriendRequest(fromUserId);
+
+    res.status(200).json({
+      message: result.message,
+      data: null,
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      message: error.message,
+      data: null,
+    });
+  }
+};
+
+export const removeFriend = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user.id;
+    const { friendId } = req.params;
+
+    const currentUser = await UserModel.findById(userId);
+    if (!currentUser) {
+      return res.status(404).json({
+        message: "User not found",
+        data: null,
+      });
+    }
+
+    const result = await currentUser.removeFriend(friendId);
+
+    res.status(200).json({
+      message: result.message,
+      data: null,
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      message: error.message,
+      data: null,
+    });
+  }
+};
+
+export const getUserFriends = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user.id;
+
+    const user = await UserModel.findById(userId)
+      .populate({
+        path: "friends",
+        select: "fullName username profileImage isVerified",
+      })
+      .populate([
+        {
+          path: "friendRequestsReceived.from",
+          select: "fullName username profileImage isVerified",
+        },
+        {
+          path: "friendRequestsSent.to",
+          select: "fullName username profileImage isVerified",
+        },
+      ]);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+        data: null,
+      });
+    }
+
+    res.status(200).json({
+      message: "Friends data retrieved successfully",
+      data: {
+        friends: formatMongoData(user.friends),
+        friendRequestsReceived: formatMongoData(user.friendRequestsReceived),
+        friendRequestsSent: formatMongoData(user.friendRequestsSent),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const searchUsers = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user.id;
+    const { query } = req.query;
+
+    if (!query || query.trim().length < 2) {
+      return res.status(400).json({
+        message: "Search query must be at least 2 characters",
+        data: [],
+      });
+    }
+
+    const currentUser = await UserModel.findById(userId);
+    if (!currentUser) {
+      return res.status(404).json({
+        message: "User not found",
+        data: null,
+      });
+    }
+
+    const users = await UserModel.find({
+      _id: { $ne: userId },
+      $or: [
+        { fullName: { $regex: query, $options: "i" } },
+        { username: { $regex: query, $options: "i" } },
+        { email: { $regex: query, $options: "i" } },
+      ],
+    })
+      .select("fullName username profileImage isVerified profileVisibility")
+      .limit(20);
+
+    const searchResults = users.map((user: any) => ({
+      id: user._id,
+      fullName: user.fullName,
+      username: user.username,
+      profileImage: user.profileImage,
+      isVerified: user.isVerified,
+      profileVisibility: user.profileVisibility,
+      // Check relationship status
+      isFriend: currentUser.friends.includes(user._id),
+      hasRequestPending: currentUser.friendRequestsSent.some(
+        (req: any) => req.to.toString() === user._id.toString()
+      ),
+      hasReceivedRequest: currentUser.friendRequestsReceived.some(
+        (req: any) => req.from.toString() === user._id.toString()
+      ),
+    }));
+
+    res.status(200).json({
+      message: "Search results retrieved successfully",
+      data: searchResults,
     });
   } catch (error) {
     next(error);

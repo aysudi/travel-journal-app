@@ -69,21 +69,39 @@ const userSchema = new mongoose.Schema(
       type: [{ type: mongoose.Schema.Types.ObjectId, ref: "TravelList" }],
       default: [],
     },
-    collaboratingLists: {
-      type: [{ type: mongoose.Schema.Types.ObjectId, ref: "TravelList" }],
-      default: [],
-    },
 
-    following: [
+    friends: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
       },
     ],
-    followers: [
+
+    friendRequestsReceived: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        from: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        sentAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+
+    friendRequestsSent: [
+      {
+        to: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        sentAt: {
+          type: Date,
+          default: Date.now,
+        },
       },
     ],
 
@@ -114,10 +132,7 @@ userSchema.virtual("notifications", {
 
 userSchema.virtual("allLists").get(function (this: any) {
   const ownedLists = Array.isArray(this.ownedLists) ? this.ownedLists : [];
-  const collaboratingLists = Array.isArray(this.collaboratingLists)
-    ? this.collaboratingLists
-    : [];
-  return [...ownedLists, ...collaboratingLists];
+  return ownedLists;
 });
 
 userSchema.methods.getAllListsWithRoles = async function () {
@@ -155,11 +170,148 @@ userSchema.methods.getAllListsWithRoles = async function () {
   return [...ownedWithRoles, ...collaboratingWithRoles];
 };
 
+// Friend-related methods
+userSchema.methods.sendFriendRequest = async function (targetUserId: string) {
+  const User = mongoose.model("User");
+  const targetUser = await User.findById(targetUserId);
+
+  if (!targetUser) {
+    throw new Error("User not found");
+  }
+
+  if (this.friends.includes(targetUserId)) {
+    throw new Error("Already friends");
+  }
+
+  // Check if there's already a pending request
+  if (
+    this.friendRequestsSent.some(
+      (req: any) => req.to.toString() === targetUserId
+    )
+  ) {
+    throw new Error("Friend request already sent");
+  }
+
+  if (
+    targetUser.friendRequestsReceived.some(
+      (req: any) => req.from.toString() === this._id.toString()
+    )
+  ) {
+    throw new Error("Friend request already exists");
+  }
+
+  // If target user has public profile, automatically become friends
+  if (targetUser.profileVisibility === "public") {
+    // Add each other as friends
+    this.friends.push(targetUserId);
+    targetUser.friends.push(this._id);
+
+    await Promise.all([this.save(), targetUser.save()]);
+
+    return { message: "Added as friend successfully (public profile)" };
+  } else {
+    // For private profiles, send friend request
+    this.friendRequestsSent.push({ to: targetUserId, sentAt: new Date() });
+    await this.save();
+
+    targetUser.friendRequestsReceived.push({
+      from: this._id,
+      sentAt: new Date(),
+    });
+    await targetUser.save();
+
+    return { message: "Friend request sent successfully" };
+  }
+};
+
+userSchema.methods.acceptFriendRequest = async function (fromUserId: string) {
+  const User = mongoose.model("User");
+  const fromUser = await User.findById(fromUserId);
+
+  if (!fromUser) {
+    throw new Error("User not found");
+  }
+
+  const requestIndex = this.friendRequestsReceived.findIndex(
+    (req: any) => req.from.toString() === fromUserId
+  );
+
+  if (requestIndex === -1) {
+    throw new Error("Friend request not found");
+  }
+
+  this.friendRequestsReceived.splice(requestIndex, 1);
+  const sentRequestIndex = fromUser.friendRequestsSent.findIndex(
+    (req: any) => req.to.toString() === this._id.toString()
+  );
+  if (sentRequestIndex !== -1) {
+    fromUser.friendRequestsSent.splice(sentRequestIndex, 1);
+  }
+
+  // Add each other as friends
+  this.friends.push(fromUserId);
+  fromUser.friends.push(this._id);
+
+  await Promise.all([this.save(), fromUser.save()]);
+
+  return { message: "Friend request accepted" };
+};
+
+userSchema.methods.rejectFriendRequest = async function (fromUserId: string) {
+  const User = mongoose.model("User");
+  const fromUser = await User.findById(fromUserId);
+
+  if (!fromUser) {
+    throw new Error("User not found");
+  }
+
+  // Remove the friend request from both users
+  const requestIndex = this.friendRequestsReceived.findIndex(
+    (req: any) => req.from.toString() === fromUserId
+  );
+
+  if (requestIndex === -1) {
+    throw new Error("Friend request not found");
+  }
+
+  this.friendRequestsReceived.splice(requestIndex, 1);
+  const sentRequestIndex = fromUser.friendRequestsSent.findIndex(
+    (req: any) => req.to.toString() === this._id.toString()
+  );
+  if (sentRequestIndex !== -1) {
+    fromUser.friendRequestsSent.splice(sentRequestIndex, 1);
+  }
+
+  await Promise.all([this.save(), fromUser.save()]);
+
+  return { message: "Friend request rejected" };
+};
+
+userSchema.methods.removeFriend = async function (friendId: string) {
+  const User = mongoose.model("User");
+  const friend = await User.findById(friendId);
+
+  if (!friend) {
+    throw new Error("User not found");
+  }
+
+  // Remove from both friends lists
+  this.friends = this.friends.filter((id: any) => id.toString() !== friendId);
+  friend.friends = friend.friends.filter(
+    (id: any) => id.toString() !== this._id.toString()
+  );
+
+  await Promise.all([this.save(), friend.save()]);
+
+  return { message: "Friend removed successfully" };
+};
+
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ username: 1 }, { unique: true });
 userSchema.index({ isVerified: 1 });
-userSchema.index({ followers: 1 });
-userSchema.index({ following: 1 });
+userSchema.index({ friends: 1 });
+userSchema.index({ "friendRequestsReceived.from": 1 });
+userSchema.index({ "friendRequestsSent.to": 1 });
 userSchema.index({ provider: 1 });
 
 export default userSchema;

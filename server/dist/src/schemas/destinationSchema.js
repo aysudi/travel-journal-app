@@ -9,8 +9,8 @@ const destinationSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    datePlanned: { type: Date },
-    dateVisited: { type: Date },
+    datePlanned: { type: Date, default: null },
+    dateVisited: { type: Date, default: null },
     status: {
         type: String,
         enum: ["Wishlist", "Planned", "Visited"],
@@ -21,7 +21,7 @@ const destinationSchema = new mongoose.Schema({
         maxlength: 1000,
     },
     images: [{ type: String }],
-    listId: {
+    list: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "TravelList",
         required: true,
@@ -34,9 +34,9 @@ destinationSchema.virtual("journalEntries", {
     localField: "_id",
     foreignField: "destination",
 });
-destinationSchema.index({ listId: 1 });
+destinationSchema.index({ list: 1 });
 destinationSchema.index({ status: 1 });
-destinationSchema.index({ country: 1 });
+destinationSchema.index({ location: 1 });
 destinationSchema.index({ datePlanned: 1 });
 destinationSchema.index({ dateVisited: 1 });
 export default destinationSchema;
