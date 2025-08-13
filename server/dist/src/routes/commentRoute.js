@@ -1,6 +1,12 @@
 import express from "express";
-import { getAllComments, postComment } from "../controllers/commentController";
+import { getAllComments, postComment, getCommentsByJournalEntry, removeComment, toggleCommentLike } from "../controllers/commentController";
+import { authenticateToken } from "../middlewares/authMiddleware";
 const commentRouter = express.Router();
-commentRouter.get("/", getAllComments);
-commentRouter.post("/", postComment);
+// Public routes
+commentRouter.get("/journal/:journalEntryId", getCommentsByJournalEntry);
+// Protected routes
+commentRouter.get("/", authenticateToken, getAllComments);
+commentRouter.post("/", authenticateToken, postComment);
+commentRouter.delete("/:commentId", authenticateToken, removeComment);
+commentRouter.patch("/:commentId/like", authenticateToken, toggleCommentLike);
 export default commentRouter;

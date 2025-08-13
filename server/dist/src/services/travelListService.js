@@ -146,7 +146,7 @@ export const getFriendsLists = async (userId, limit = 10) => {
     const User = await import("../models/User.js");
     const UserModel = User.default;
     // Get current user with friends
-    const currentUser = await UserModel.findById(userId).populate('friends', '_id');
+    const currentUser = await UserModel.findById(userId).populate("friends", "_id");
     if (!currentUser || !currentUser.friends.length) {
         return [];
     }
