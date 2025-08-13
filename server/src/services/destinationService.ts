@@ -1,13 +1,6 @@
 import DestinationModel from "../models/Destination.js";
 import TravelListModel from "../models/TravelList.js";
 
-interface PaginationParams {
-  page?: number;
-  limit?: number;
-  search?: string;
-  sort?: string;
-}
-
 export interface DestinationData {
   name: string;
   location: string;
@@ -29,22 +22,12 @@ export interface DestinationUpdateData {
   images?: string[];
 }
 
-export interface DestinationQuery extends PaginationParams {
+export interface DestinationQuery {
   list?: string;
   status?: "Wishlist" | "Planned" | "Visited";
   userId?: string;
-}
-
-export interface PaginatedDestinations {
-  data: any[];
-  pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-    itemsPerPage: number;
-    hasNext: boolean;
-    hasPrev: boolean;
-  };
+  search?: string;
+  sort?: string;
 }
 
 export const createDestination = async (
@@ -179,18 +162,8 @@ export const deleteDestination = async (
 
 export const getDestinations = async (
   query: DestinationQuery
-): Promise<PaginatedDestinations> => {
-  const {
-    page = 1,
-    limit = 10,
-    list,
-    status,
-    search,
-    sort = "createdAt",
-    userId,
-  } = query;
-
-  const skip = (page - 1) * limit;
+): Promise<any[]> => {
+  const { list, status, search, sort = "createdAt", userId } = query;
 
   const filter: any = {};
 
@@ -216,36 +189,19 @@ export const getDestinations = async (
   const sortObj: any = {};
   sortObj[sort] = -1;
 
-  const [destinations, total] = await Promise.all([
-    DestinationModel.find(filter)
-      .populate({
-        path: "list",
-        select: "title owner customPermissions",
-        populate: {
-          path: "owner",
-          select: "fullName username profileImage",
-        },
-      })
-      .sort(sortObj)
-      .skip(skip)
-      .limit(limit)
-      .lean(),
-    DestinationModel.countDocuments(filter),
-  ]);
+  const destinations = await DestinationModel.find()
+    .sort(sortObj)
+    .populate({
+      path: "list",
+      select: "title owner customPermissions",
+      populate: {
+        path: "owner",
+        select: "fullName username profileImage",
+      },
+    })
+    .lean();
 
-  const totalPages = Math.ceil(total / limit);
-
-  return {
-    data: destinations,
-    pagination: {
-      currentPage: page,
-      totalPages,
-      totalItems: total,
-      itemsPerPage: limit,
-      hasNext: page < totalPages,
-      hasPrev: page > 1,
-    },
-  };
+  return destinations;
 };
 
 export const getDestinationsByTravelList = async (

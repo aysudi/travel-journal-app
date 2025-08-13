@@ -18,6 +18,7 @@ import {
   SortAsc,
   MoreVertical,
   UserCheck,
+  Eye,
 } from "lucide-react";
 import { useTravelList } from "../../hooks/useTravelList";
 import Loading from "../../components/Common/Loading";
@@ -38,6 +39,7 @@ const ListDetails = () => {
   const [showDestinationDetail, setShowDestinationDetail] = useState(false);
   const [selectedDestination, setSelectedDestination] =
     useState<Destination | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [filterStatus, setFilterStatus] = useState<
     "all" | "Wishlist" | "Planned" | "Visited"
   >("all");
@@ -57,7 +59,7 @@ const ListDetails = () => {
     error: errorJournals,
   } = useJournalEntriesByTravelList(listId || "");
 
-  const destinationsArray = destinations?.data || [];
+  const destinationsArray = destinations || [];
   const journalsArray = journals || [];
 
   const getDestinationStatus = (dest: Destination): string => {
@@ -159,13 +161,18 @@ const ListDetails = () => {
 
   const handleDestinationClick = (destination: Destination) => {
     setSelectedDestination(destination);
+    setSelectedImageIndex(0);
     setShowDestinationDetail(true);
+  };
+
+  const handleImageClick = (imageIndex: number) => {
+    setSelectedImageIndex(imageIndex);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       {/* Cover Image Section */}
-      <div className="relative h-80 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 overflow-hidden">
+      <div className="relative h-140 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 overflow-hidden">
         {travelList?.coverImage ? (
           <img
             src={travelList.coverImage}
@@ -236,6 +243,165 @@ const ListDetails = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Owner and Collaborators Section */}
+        <div className="bg-white rounded-2xl shadow-xl p-6 mb-8">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            List Members
+          </h3>
+          <div
+            className={`grid grid-cols-1 gap-6 ${
+              travelList?.customPermissions?.filter(
+                (p: any) => p.level === "co-owner"
+              )?.length > 0 &&
+              travelList?.customPermissions?.filter(
+                (p: any) => p.level !== "co-owner"
+              )?.length > 0
+                ? "md:grid-cols-3"
+                : travelList?.customPermissions?.filter(
+                    (p: any) => p.level === "co-owner"
+                  )?.length > 0 ||
+                  travelList?.customPermissions?.filter(
+                    (p: any) => p.level !== "co-owner"
+                  )?.length > 0
+                ? "md:grid-cols-2"
+                : "md:grid-cols-1"
+            }`}
+          >
+            {/* Owner */}
+            <div>
+              <h4 className="text-sm font-medium text-gray-600 mb-3 flex items-center gap-2">
+                <Users size={16} />
+                Owner
+              </h4>
+              <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-100">
+                {(travelList?.owner as any)?.profileImage ? (
+                  <img
+                    src={(travelList.owner as any).profileImage}
+                    alt={(travelList.owner as any).fullName}
+                    className="w-10 h-10 rounded-full object-cover ring-2 ring-indigo-200"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center ring-2 ring-indigo-200">
+                    <span className="text-white font-semibold text-sm">
+                      {(travelList?.owner as any)?.fullName
+                        ?.charAt(0)
+                        ?.toUpperCase()}
+                    </span>
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-gray-900 truncate">
+                    {(travelList?.owner as any)?.fullName}
+                  </p>
+                  <p className="text-sm text-gray-500 truncate">
+                    @{(travelList?.owner as any)?.username}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Co-owners - Only show if they exist */}
+            {travelList?.customPermissions?.filter(
+              (p: any) => p.level === "co-owner"
+            )?.length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium text-gray-600 mb-3 flex items-center gap-2">
+                  <UserCheck size={16} />
+                  Co-owners (
+                  {travelList?.customPermissions?.filter(
+                    (p: any) => p.level === "co-owner"
+                  )?.length || 0}
+                  )
+                </h4>
+                <div className="space-y-2 max-h-32 overflow-y-auto">
+                  {travelList.customPermissions
+                    .filter((p: any) => p.level === "co-owner")
+                    .map((permission: any, index: number) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-3 p-2 bg-green-50 rounded-lg border border-green-100"
+                      >
+                        {permission.user?.profileImage ? (
+                          <img
+                            src={permission.user.profileImage}
+                            alt={permission.user.fullName}
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-green-400 flex items-center justify-center">
+                            <span className="text-white font-semibold text-xs">
+                              {permission.user?.fullName
+                                ?.charAt(0)
+                                ?.toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 text-sm truncate">
+                            {permission.user?.fullName}
+                          </p>
+                          <p className="text-xs text-gray-500 truncate">
+                            @{permission.user?.username}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            {/* Other Collaborators - Only show if they exist */}
+            {travelList?.customPermissions?.filter(
+              (p: any) => p.level !== "co-owner"
+            )?.length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium text-gray-600 mb-3 flex items-center gap-2">
+                  <Users size={16} />
+                  Collaborators (
+                  {travelList?.customPermissions?.filter(
+                    (p: any) => p.level !== "co-owner"
+                  )?.length || 0}
+                  )
+                </h4>
+                <div className="space-y-2 max-h-32 overflow-y-auto">
+                  {travelList.customPermissions
+                    .filter((p: any) => p.level !== "co-owner")
+                    .map((permission: any, index: number) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-3 p-2 bg-blue-50 rounded-lg border border-blue-100"
+                      >
+                        {permission.user?.profileImage ? (
+                          <img
+                            src={permission.user.profileImage}
+                            alt={permission.user.fullName}
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-blue-400 flex items-center justify-center">
+                            <span className="text-white font-semibold text-xs">
+                              {permission.user?.fullName
+                                ?.charAt(0)
+                                ?.toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 text-sm truncate">
+                            {permission.user?.fullName}
+                          </p>
+                          <p className="text-xs text-gray-500 truncate">
+                            @{permission.user?.username} • {permission.level}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Action Bar */}
         <div className="bg-white rounded-2xl shadow-xl p-6 mb-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -983,10 +1149,10 @@ const ListDetails = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-0 max-w-4xl w-full max-h-[90vh] overflow-hidden">
             {/* Modal Header with Image */}
-            <div className="relative h-64 bg-gray-200 overflow-hidden">
-              {selectedDestination.images[0] ? (
+            <div className="relative h-82 bg-gray-200 overflow-hidden">
+              {selectedDestination.images[selectedImageIndex] ? (
                 <img
-                  src={selectedDestination.images[0]}
+                  src={selectedDestination.images[selectedImageIndex]}
                   alt={selectedDestination.name}
                   className="w-full h-full object-cover"
                 />
@@ -1051,22 +1217,38 @@ const ListDetails = () => {
                 )}
 
                 {/* Images Gallery */}
-                {selectedDestination.images.length > 1 && (
+                {selectedDestination.images.length > 0 && (
                   <div className="mb-6">
                     <h3 className="font-semibold text-gray-800 mb-3">Photos</h3>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {selectedDestination.images
-                        .slice(1)
-                        .map((image: string, index: number) => (
-                          <img
+                      {selectedDestination.images.map(
+                        (image: string, index: number) => (
+                          <div
                             key={index}
-                            src={image}
-                            alt={`${selectedDestination.name} photo ${
-                              index + 2
+                            className={`relative cursor-pointer group overflow-hidden rounded-lg ${
+                              selectedImageIndex === index
+                                ? "ring-2 ring-indigo-500 ring-offset-2"
+                                : ""
                             }`}
-                            className="w-full h-24 object-cover rounded-lg"
-                          />
-                        ))}
+                            onClick={() => handleImageClick(index)}
+                          >
+                            <img
+                              src={image}
+                              alt={`${selectedDestination.name} photo ${
+                                index + 1
+                              }`}
+                              className="w-full h-40 object-cover transition-transform duration-200 group-hover:scale-105"
+                            />
+                            {selectedImageIndex === index && (
+                              <div className="absolute inset-0 bg-indigo-500/20 flex items-center justify-center">
+                                <div className="bg-white rounded-full p-2">
+                                  <Eye size={16} className="text-indigo-600" />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      )}
                     </div>
                   </div>
                 )}

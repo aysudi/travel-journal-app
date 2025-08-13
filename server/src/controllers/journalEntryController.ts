@@ -19,7 +19,6 @@ export const createJournalEntry = async (req: Request, res: Response) => {
       });
     }
 
-    // Validate request body
     const { error, value } = journalEntryCreateSchema.validate(req.body);
     if (error) {
       return res.status(400).json({
@@ -69,7 +68,6 @@ export const getJournalEntryById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    // Validate ID format
     const { error } = objectIdSchema.validate(id);
     if (error) {
       return res.status(400).json({
@@ -116,7 +114,6 @@ export const updateJournalEntry = async (req: Request, res: Response) => {
       });
     }
 
-    // Validate ID format
     const { error: idError } = objectIdSchema.validate(id);
     if (idError) {
       return res.status(400).json({
@@ -125,7 +122,6 @@ export const updateJournalEntry = async (req: Request, res: Response) => {
       });
     }
 
-    // Validate request body
     const { error, value } = journalEntryUpdateSchema.validate(req.body);
     if (error) {
       return res.status(400).json({
@@ -184,7 +180,6 @@ export const deleteJournalEntry = async (req: Request, res: Response) => {
       });
     }
 
-    // Validate ID format
     const { error } = objectIdSchema.validate(id);
     if (error) {
       return res.status(400).json({
@@ -239,7 +234,6 @@ export const getJournalEntries = async (req: Request, res: Response) => {
       order,
     } = req.query;
 
-    // If travelListId is provided, use the specific function for travel list entries
     if (travelListId) {
       const { error } = objectIdSchema.validate(travelListId);
       if (error) {
@@ -297,7 +291,6 @@ export const getJournalEntries = async (req: Request, res: Response) => {
       order: (order as "asc" | "desc") || "desc",
     };
 
-    // Validate ObjectIds if provided
     if (queryParams.destination) {
       const { error } = objectIdSchema.validate(queryParams.destination);
       if (error) {
@@ -342,10 +335,9 @@ export const getJournalEntriesByDestination = async (
   res: Response
 ) => {
   try {
-    const userId = (req.user as any)?.id; // Optional for access control
+    const userId = (req.user as any)?.id;
     const { destinationId } = req.params;
 
-    // Validate destination ID format
     const { error } = objectIdSchema.validate(destinationId);
     if (error) {
       return res.status(400).json({
@@ -388,10 +380,9 @@ export const getJournalEntriesByAuthor = async (
   res: Response
 ) => {
   try {
-    const currentUserId = (req.user as any)?.id; // Optional for privacy control
+    const currentUserId = (req.user as any)?.id;
     const { authorId } = req.params;
 
-    // Validate author ID format
     const { error } = objectIdSchema.validate(authorId);
     if (error) {
       return res.status(400).json({
@@ -503,7 +494,7 @@ export const getRecentJournalEntries = async (req: Request, res: Response) => {
       });
     }
 
-    const limitNum = limit ? Math.min(Number(limit), 20) : 5; // Max 20 entries
+    const limitNum = limit ? Math.min(Number(limit), 20) : 5;
     const entries = await journalEntryService.getRecentJournalEntries(
       userId,
       limitNum
@@ -537,7 +528,6 @@ export const bulkUpdateJournalEntries = async (req: Request, res: Response) => {
       });
     }
 
-    // Validate request body
     if (!Array.isArray(entryIds) || entryIds.length === 0) {
       return res.status(400).json({
         success: false,
@@ -545,7 +535,6 @@ export const bulkUpdateJournalEntries = async (req: Request, res: Response) => {
       });
     }
 
-    // Validate each ID format
     for (const id of entryIds) {
       const { error } = objectIdSchema.validate(id);
       if (error) {
@@ -556,7 +545,6 @@ export const bulkUpdateJournalEntries = async (req: Request, res: Response) => {
       }
     }
 
-    // Validate update data
     const { error, value } = journalEntryUpdateSchema.validate(updateData);
     if (error) {
       return res.status(400).json({
@@ -620,7 +608,7 @@ export const getMyJournalEntries = async (req: Request, res: Response) => {
     const queryParams = {
       page: page ? Number(page) : undefined,
       limit: limit ? Number(limit) : undefined,
-      author: userId, // Filter by current user
+      author: userId,
       destination: destination as string,
       public:
         isPublic === "true" ? true : isPublic === "false" ? false : undefined,
@@ -629,7 +617,6 @@ export const getMyJournalEntries = async (req: Request, res: Response) => {
       order: (order as "asc" | "desc") || "desc",
     };
 
-    // Validate destination ID if provided
     if (queryParams.destination) {
       const { error } = objectIdSchema.validate(queryParams.destination);
       if (error) {

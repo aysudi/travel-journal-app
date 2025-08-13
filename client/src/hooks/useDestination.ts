@@ -3,7 +3,6 @@ import {
   destinationService,
   type CreateDestinationData,
   type Destination,
-  type PaginationParams,
 } from "../services";
 
 export const destinationKeys = {
@@ -12,19 +11,18 @@ export const destinationKeys = {
   list: (id: string) => [...destinationKeys.all, "list", id] as const,
   byTravelList: (travelListId: string) =>
     [...destinationKeys.all, "travelList", travelListId] as const,
-  search: (params: PaginationParams) =>
-    [...destinationKeys.all, "search", params] as const,
+  search: (params: any) => [...destinationKeys.all, "search", params] as const,
 };
 
 export const useDestinations = (
   travelListId?: string,
-  params?: PaginationParams
+  params?: { search?: string; sort?: string; status?: string }
 ) => {
   return useQuery({
     queryKey: destinationKeys.search({
       ...params,
       travelListId,
-    } as PaginationParams & { travelListId?: string }),
+    }),
     queryFn: () => destinationService.getDestinations(travelListId, params),
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
