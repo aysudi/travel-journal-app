@@ -15,40 +15,24 @@ export class DestinationService {
 
   async getDestinations(
     travelListId?: string,
-    params?: PaginationParams
-  ): Promise<PaginatedResponse<Destination>> {
-    // If travelListId is provided, use the specific endpoint for travel list destinations
+    params?: { search?: string; sort?: string; status?: string }
+  ): Promise<Destination[]> {
     if (travelListId) {
       const response = await apiConfig.request<Destination[]>(
         `/destinations/travel-list/${travelListId}`
       );
-
-      // Convert array response to paginated response format
-      return {
-        data: response,
-        pagination: {
-          page: 1,
-          limit: response.length,
-          total: response.length,
-          totalPages: 1,
-          hasNext: false,
-          hasPrev: false,
-        },
-      };
+      return response;
     }
 
-    // Otherwise, use the general destinations endpoint with query parameters
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.append("page", params.page.toString());
-    if (params?.limit) searchParams.append("limit", params.limit.toString());
     if (params?.search) searchParams.append("search", params.search);
     if (params?.sort) searchParams.append("sort", params.sort);
-    if (params?.order) searchParams.append("order", params.order);
+    if (params?.status) searchParams.append("status", params.status);
 
     const query = searchParams.toString();
     const url = query ? `${this.endpoint}?${query}` : this.endpoint;
 
-    return apiConfig.request<PaginatedResponse<Destination>>(url);
+    return apiConfig.request<Destination[]>(url);
   }
 
   async getDestinationById(id: string): Promise<Destination> {

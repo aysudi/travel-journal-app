@@ -25,7 +25,6 @@ export const createJournalEntry = async (
     throw new Error("Destination not found");
   }
 
-  // Check if user has access to the destination's travel list
   const travelList = destination.list as any;
   const hasAccess =
     travelList.owner.toString() === authorId ||
@@ -82,7 +81,6 @@ export const updateJournalEntry = async (
     throw new Error("Journal entry not found");
   }
 
-  // Check if user is the author
   if (journalEntry.author.toString() !== userId) {
     throw new Error("You don't have permission to update this journal entry");
   }
@@ -119,7 +117,6 @@ export const deleteJournalEntry = async (
     throw new Error("Journal entry not found");
   }
 
-  // Check if user is the author
   if (journalEntry.author.toString() !== userId) {
     throw new Error("You don't have permission to delete this journal entry");
   }
@@ -215,7 +212,6 @@ export const getJournalEntriesByDestination = async (
     throw new Error("Destination not found");
   }
 
-  // Build filter - show public entries or entries from lists user has access to
   const filter: any = { destination: destinationId };
 
   if (userId) {
@@ -225,13 +221,10 @@ export const getJournalEntriesByDestination = async (
       travelList.collaborators.includes(userId);
 
     if (hasAccess) {
-      // User has access to the list, show all entries for this destination
     } else {
-      // User doesn't have access, show only public entries
       filter.public = true;
     }
   } else {
-    // No user ID provided, show only public entries
     filter.public = true;
   }
 
@@ -254,7 +247,6 @@ export const getJournalEntriesByAuthor = async (
   authorId: string,
   currentUserId?: string
 ): Promise<any[]> => {
-  // Check if author exists
   const author = await UserModel.findById(authorId);
   if (!author) {
     throw new Error("Author not found");
@@ -262,7 +254,6 @@ export const getJournalEntriesByAuthor = async (
 
   const filter: any = { author: authorId };
 
-  // If current user is not the author, show only public entries
   if (!currentUserId || currentUserId !== authorId) {
     filter.public = true;
   }
@@ -299,10 +290,8 @@ export const getPublicJournalEntries = async (
 
   const skip = (page - 1) * limit;
 
-  // Build filter for public entries only
   const filter: any = { public: true };
 
-  // Add search functionality
   if (search) {
     filter.$or = [
       { title: { $regex: search, $options: "i" } },
@@ -394,7 +383,6 @@ export const bulkUpdateJournalEntries = async (
   updateData: JournalEntryUpdateData,
   userId: string
 ): Promise<any> => {
-  // Verify all entries belong to the user
   const entries = await JournalEntryModel.find({
     _id: { $in: entryIds },
     author: userId,
@@ -459,14 +447,12 @@ export const getJournalEntriesByTravelList = async (
 
   const skip = (page - 1) * limit;
 
-  // First, get all destinations in this travel list
   const destinations = await DestinationModel.find({
     list: travelListId,
   }).select("_id");
   const destinationIds = destinations.map((dest) => dest._id);
 
   if (destinationIds.length === 0) {
-    // No destinations in this travel list, return empty result
     return {
       data: [],
       pagination: {
