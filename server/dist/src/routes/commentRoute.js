@@ -1,9 +1,10 @@
 import express from "express";
 import { getAllComments, postComment, getCommentsByJournalEntry, removeComment, toggleCommentLike, } from "../controllers/commentController";
+import { authenticateToken } from "../middlewares/authMiddleware";
 const commentRouter = express.Router();
 commentRouter.get("/journal/:journalEntryId", getCommentsByJournalEntry);
 commentRouter.get("/", getAllComments);
-commentRouter.post("/", postComment);
-commentRouter.delete("/:commentId", removeComment);
-commentRouter.patch("/:commentId/like", toggleCommentLike);
+commentRouter.post("/", authenticateToken, postComment);
+commentRouter.delete("/:commentId", authenticateToken, removeComment);
+commentRouter.patch("/:commentId/like", authenticateToken, toggleCommentLike);
 export default commentRouter;

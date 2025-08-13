@@ -13,7 +13,13 @@ export const getByJournalEntry = async (journalEntryId: string) => {
     .sort({ createdAt: -1 });
 };
 
-export const post = async (payload: any) => await Comment.create(payload);
+export const post = async (payload: any) => {
+  const newComment = await Comment.create(payload);
+  return await Comment.findById(newComment._id).populate(
+    "author",
+    "fullName username profileImage"
+  );
+};
 
 export const deleteComment = async (commentId: string) => {
   return await Comment.findByIdAndDelete(commentId);
