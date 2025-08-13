@@ -49,13 +49,18 @@ export interface TravelList {
   description?: string;
   tags: string[];
   visibility: "public" | "private" | "friends";
-  owner: string;
+  owner: string | UserProfile;
   autoPermissions: {
     friends: "view" | "suggest" | "contribute";
     followers: "view" | "suggest" | "contribute";
     public: "view" | "suggest" | "contribute";
   };
-  customPermissions: string[];
+  customPermissions: {
+    user: string | UserProfile;
+    level: "view" | "suggest" | "contribute" | "co-owner";
+    grantedAt: string;
+    grantedBy: string | UserProfile;
+  }[];
   settings: {
     allowSuggestions: boolean;
     requireApprovalForSuggestions: boolean;
@@ -71,9 +76,14 @@ export interface TravelList {
 
 // Populated Travel List (when owner and collaborators are populated)
 export interface PopulatedTravelList
-  extends Omit<TravelList, "owner" | "collaborators" | "destinations"> {
+  extends Omit<TravelList, "owner" | "destinations"> {
   owner: UserProfile;
-  collaborators: UserProfile[];
+  customPermissions: {
+    user: UserProfile;
+    level: "view" | "suggest" | "contribute" | "co-owner";
+    grantedAt: string;
+    grantedBy: UserProfile;
+  }[];
   destinations: Destination[];
 }
 

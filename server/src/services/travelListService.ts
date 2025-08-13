@@ -15,9 +15,9 @@ export const getAll = async (params?: PaginationParams) => {
 
   const total = await TravelList.countDocuments(query);
   const lists = await TravelList.find(query)
-    .populate("owner", "fullName email profileImage")
+    .populate("owner", "fullName username email profileImage")
     .populate("destinations")
-    .populate("customPermissions.user", "fullName email profileImage")
+    .populate("customPermissions.user", "fullName username email profileImage")
     .sort({ [sort]: -1 })
     .skip((page - 1) * limit)
     .limit(limit);
@@ -32,15 +32,15 @@ export const getAll = async (params?: PaginationParams) => {
 
 export const getOne = async (id: string) =>
   await TravelList.findById(id)
-    .populate("owner", "firstName lastName email profileImage")
+    .populate("owner", "fullName username email profileImage")
     .populate("destinations")
-    .populate("customPermissions.user", "fullName email profileImage");
+    .populate("customPermissions.user", "fullName username email profileImage");
 
 export const getOwnedLists = async (userId: string) => {
   const userOwnedLists = await TravelList.find({ owner: userId })
-    .populate("owner", "fullName email profileImage")
+    .populate("owner", "fullName username email profileImage")
     .populate("destinations")
-    .populate("customPermissions.user", "fullName email profileImage")
+    .populate("customPermissions.user", "fullName username email profileImage")
     .sort({ createdAt: -1 });
 
   return userOwnedLists;
@@ -87,7 +87,7 @@ export const update = async (id: string, payload: any) =>
   await TravelList.findByIdAndUpdate(id, payload, { new: true })
     .populate("owner", "firstName lastName email profileImage")
     .populate("destinations")
-    .populate("customPermissions.user", "fullName email profileImage");
+    .populate("customPermissions.user", "fullName username email profileImage");
 
 export const post = async (payload: any) => {
   const newList = await TravelList.create(payload);
