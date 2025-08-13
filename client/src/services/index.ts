@@ -8,10 +8,8 @@ export {
   commentService,
 } from "./contentService";
 
-// Export all types
 export type * from "../types/api";
 
-// Import services for the main API object
 import { apiConfig } from "./apiConfig";
 import { authService, userService } from "./authService";
 import { travelListService } from "./travelListService";
@@ -21,7 +19,6 @@ import {
   commentService,
 } from "./contentService";
 
-// Create a main API object for easy access
 export const api = {
   auth: authService,
   user: userService,

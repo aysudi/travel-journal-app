@@ -18,6 +18,7 @@ import {
   Image,
   Smile,
   Reply,
+  Trash2,
 } from "lucide-react";
 import { useJournalEntry } from "../../hooks/useEntries";
 import { useUserProfile } from "../../hooks/useAuth";
@@ -31,6 +32,7 @@ import {
 } from "../../hooks/useComments";
 import type { Comment as CommentType } from "../../types/api";
 import Loading from "../../components/Common/Loading";
+import Swal from "sweetalert2";
 
 const JournalDetails = () => {
   const { journalId } = useParams<{ journalId: string }>();
@@ -117,7 +119,7 @@ const JournalDetails = () => {
       await createComment.mutateAsync({
         content: commentForm.content,
         journalEntry: journalId,
-        photos: [], // For now, no photos support
+        photos: [],
       });
       commentForm.reset();
     } catch (error) {
@@ -223,7 +225,7 @@ const JournalDetails = () => {
                   ) : (
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center ring-2 ring-indigo-100 group-hover:ring-indigo-200 transition-all duration-200">
                       <span className="text-white font-semibold">
-                        {journal.author.fullName.charAt(0).toUpperCase()}
+                        {journal.author.fullName[0].toUpperCase()}
                       </span>
                     </div>
                   )}
@@ -453,7 +455,7 @@ const JournalDetails = () => {
                     ) : (
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center ring-2 ring-indigo-100">
                         <span className="text-white font-semibold text-sm">
-                          {user.fullName.charAt(0).toUpperCase()}
+                          {user.fullName[0].toUpperCase()}
                         </span>
                       </div>
                     )}
@@ -487,7 +489,7 @@ const JournalDetails = () => {
                           !commentForm.isValid || commentForm.isSubmitting
                         }
                         onClick={handleSubmitComment}
-                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200"
+                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer"
                       >
                         <Send size={16} />
                         <span>Post</span>
@@ -500,9 +502,9 @@ const JournalDetails = () => {
 
             {/* Comments List */}
             <div className="divide-y divide-gray-100/80">
-              {comments.map((comment) => (
+              {comments.map((comment, idx) => (
                 <CommentItem
-                  key={comment._id}
+                  key={comment.id || `temp-${idx}`}
                   comment={comment}
                   currentUser={user}
                   formatTimeAgo={formatTimeAgo}
@@ -568,24 +570,38 @@ const CommentItem = ({
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyText, setReplyText] = useState("");
 
-  // Use the comment stats hook
   const { likeCount, isLikedByUser, isOwnComment } = useCommentStats(
     comment,
     currentUser?.id
   );
 
-  // Get mutation hooks
   const toggleLike = useToggleCommentLike();
   const deleteCommentMutation = useDeleteComment();
 
   const handleLikeToggle = () => {
-    toggleLike.mutate(comment._id);
+    toggleLike.mutate(comment.id);
   };
 
   const handleDeleteComment = () => {
-    if (window.confirm("Are you sure you want to delete this comment?")) {
-      deleteCommentMutation.mutate(comment._id);
-    }
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        deleteCommentMutation.mutate(comment.id);
+
+        Swal.fire({
+          title: "Deleted!",
+          text: "Your comment has been deleted.",
+          icon: "success",
+        });
+      }
+    });
   };
 
   return (
@@ -593,16 +609,16 @@ const CommentItem = ({
       <div className="flex gap-4">
         {/* Author Avatar */}
         <div className="flex-shrink-0">
-          {comment.author.profileImage ? (
+          {comment.author?.profileImage ? (
             <img
               src={comment.author.profileImage}
-              alt={comment.author.fullName}
+              alt={comment.author?.fullName || "User"}
               className="w-10 h-10 rounded-full object-cover ring-2 ring-gray-100"
             />
           ) : (
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center ring-2 ring-gray-100">
               <span className="text-white font-semibold text-sm">
-                {comment.author.fullName.charAt(0).toUpperCase()}
+                {comment.author?.fullName?.charAt(0)?.toUpperCase() || "?"}
               </span>
             </div>
           )}
@@ -613,14 +629,14 @@ const CommentItem = ({
           {/* Author Info */}
           <div className="flex items-center gap-2 mb-2">
             <Link
-              to={`/profile/${comment.author._id}`}
+              to={`/profile/${comment.author?._id}`}
               className="font-semibold text-gray-900 hover:text-indigo-600 transition-colors duration-200"
             >
-              {comment.author.fullName}
+              {comment.author?.fullName || "Anonymous"}
             </Link>
             <span className="text-gray-400">•</span>
             <span className="text-sm text-gray-500">
-              @{comment.author.username}
+              @{comment.author?.username || "unknown"}
             </span>
             <span className="text-gray-400">•</span>
             <div className="flex items-center gap-1 text-sm text-gray-500">
@@ -658,7 +674,7 @@ const CommentItem = ({
           <div className="flex items-center gap-4">
             <button
               onClick={handleLikeToggle}
-              className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm transition-all duration-200 ${
+              className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm transition-all duration-200 cursor-pointer ${
                 isLikedByUser
                   ? "text-red-500 bg-red-50"
                   : "text-gray-500 hover:text-red-500 hover:bg-red-50"
@@ -684,9 +700,10 @@ const CommentItem = ({
             {isOwnComment && (
               <button
                 onClick={handleDeleteComment}
-                className="text-gray-400 hover:text-red-600 text-sm transition-colors duration-200"
+                title="Delete comment"
+                className="text-gray-400 hover:text-red-600 text-sm transition-colors duration-200 p-1 rounded-full hover:bg-red-50 cursor-pointer"
               >
-                <MoreHorizontal size={16} />
+                <Trash2 size={14} />
               </button>
             )}
           </div>
@@ -705,7 +722,7 @@ const CommentItem = ({
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center ring-2 ring-indigo-100">
                       <span className="text-white font-semibold text-xs">
-                        {currentUser?.fullName.charAt(0).toUpperCase()}
+                        {currentUser?.fullName[0].toUpperCase()}
                       </span>
                     </div>
                   )}
@@ -715,7 +732,9 @@ const CommentItem = ({
                   <textarea
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
-                    placeholder={`Reply to ${comment.author.fullName}...`}
+                    placeholder={`Reply to ${
+                      comment.author?.fullName || "user"
+                    }...`}
                     className="w-full p-3 bg-gray-50 border border-gray-200/50 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all duration-200 placeholder-gray-400 text-sm"
                     rows={2}
                     maxLength={250}

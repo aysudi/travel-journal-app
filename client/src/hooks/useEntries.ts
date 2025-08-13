@@ -129,7 +129,7 @@ export const useCreateJournalEntry = () => {
         queryClient.invalidateQueries({ queryKey: journalEntryKeys.public() });
       }
 
-      queryClient.setQueryData(journalEntryKeys.list(newEntry._id), newEntry);
+      queryClient.setQueryData(journalEntryKeys.list(newEntry.id), newEntry);
 
       if (newEntry.travelList) {
         queryClient.invalidateQueries({
@@ -156,7 +156,7 @@ export const useUpdateJournalEntry = () => {
     }) => journalEntryService.updateJournalEntry(id, data),
     onSuccess: (updatedEntry: JournalEntry) => {
       queryClient.setQueryData(
-        journalEntryKeys.list(updatedEntry._id),
+        journalEntryKeys.list(updatedEntry.id),
         updatedEntry
       );
 
@@ -319,7 +319,7 @@ export const useToggleJournalEntryVisibility = () => {
       journalEntryService.updateJournalEntry(id, { isPublic }),
     onSuccess: (updatedEntry: JournalEntry) => {
       queryClient.setQueryData(
-        journalEntryKeys.list(updatedEntry._id),
+        journalEntryKeys.list(updatedEntry.id),
         updatedEntry
       );
 

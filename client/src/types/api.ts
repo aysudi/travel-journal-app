@@ -165,7 +165,7 @@ export interface CreateDestinationData {
 
 // Journal Entry Types
 export interface JournalEntry {
-  _id: string;
+  id: string;
   title: string;
   content: string;
   photos: string[];
@@ -195,7 +195,7 @@ export interface CreateJournalEntryData {
 
 // Comment Types
 export interface Comment {
-  _id: string;
+  id: string;
   author: {
     _id: string;
     fullName: string;
@@ -204,7 +204,7 @@ export interface Comment {
   };
   content: string;
   photos: string[];
-  likes: string[]; // Array of user IDs who liked
+  likes: string[];
   journalEntry: string;
   createdAt: string;
   updatedAt: string;
