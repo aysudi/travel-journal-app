@@ -1,4 +1,4 @@
-import { getAll, post, getByJournalEntry, deleteComment, likeComment, unlikeComment } from "../services/commentService";
+import { getAll, post, getByJournalEntry, deleteComment, likeComment, unlikeComment, } from "../services/commentService";
 import Comment from "../models/Comment";
 import formatMongoData from "../utils/formatMongoData";
 export const getAllComments = async (req, res, next) => {
@@ -72,7 +72,6 @@ export const removeComment = async (req, res, next) => {
             });
             return;
         }
-        // First check if comment exists and user owns it
         const comment = await Comment.findById(commentId);
         if (!comment) {
             res.status(404).json({
@@ -110,7 +109,6 @@ export const toggleCommentLike = async (req, res, next) => {
             });
             return;
         }
-        // First check if comment exists
         const comment = await Comment.findById(commentId);
         if (!comment) {
             res.status(404).json({
@@ -119,20 +117,19 @@ export const toggleCommentLike = async (req, res, next) => {
             });
             return;
         }
-        // Check if user already liked this comment
         const isLiked = comment.likes.includes(userId);
         let updatedComment;
         if (isLiked) {
-            // Unlike the comment
             updatedComment = await unlikeComment(commentId, userId);
         }
         else {
-            // Like the comment
             updatedComment = await likeComment(commentId, userId);
         }
         res.status(200).json({
             success: true,
-            message: isLiked ? "Comment unliked successfully" : "Comment liked successfully",
+            message: isLiked
+                ? "Comment unliked successfully"
+                : "Comment liked successfully",
             data: formatMongoData(updatedComment),
         });
     }

@@ -2,7 +2,11 @@
 export { apiConfig } from "./apiConfig";
 export { authService, userService } from "./authService";
 export { travelListService } from "./travelListService";
-export { destinationService, journalEntryService } from "./contentService";
+export {
+  destinationService,
+  journalEntryService,
+  commentService,
+} from "./contentService";
 
 // Export all types
 export type * from "../types/api";
@@ -11,7 +15,11 @@ export type * from "../types/api";
 import { apiConfig } from "./apiConfig";
 import { authService, userService } from "./authService";
 import { travelListService } from "./travelListService";
-import { destinationService, journalEntryService } from "./contentService";
+import {
+  destinationService,
+  journalEntryService,
+  commentService,
+} from "./contentService";
 
 // Create a main API object for easy access
 export const api = {
@@ -20,5 +28,6 @@ export const api = {
   travelLists: travelListService,
   destinations: destinationService,
   journalEntries: journalEntryService,
+  comments: commentService,
   config: apiConfig,
 } as const;
