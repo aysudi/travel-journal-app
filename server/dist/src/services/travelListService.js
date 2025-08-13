@@ -128,8 +128,10 @@ export const duplicateList = async (listId, newOwnerId) => {
         .populate("destinations")
         .populate("customPermissions.user", "fullName email profileImage");
 };
-export const checkUserPermission = (list, userId) => {
-    if (list.owner.toString() === userId)
+export const canUserAccessList = (list, userId) => {
+    if (!list)
+        return false;
+    if (list.owner._id.toString() === userId)
         return true;
     const customPerm = list.customPermissions.find((p) => p.user.toString() === userId);
     if (customPerm)
@@ -139,4 +141,25 @@ export const checkUserPermission = (list, userId) => {
     if (list.visibility === "private")
         return false;
     return false;
+};
+export const getFriendsLists = async (userId, limit = 10) => {
+    const User = await import("../models/User.js");
+    const UserModel = User.default;
+    // Get current user with friends
+    const currentUser = await UserModel.findById(userId).populate('friends', '_id');
+    if (!currentUser || !currentUser.friends.length) {
+        return [];
+    }
+    // Get friend IDs
+    const friendIds = currentUser.friends.map((friend) => friend._id);
+    // Find lists created by friends with "friends" visibility only
+    const friendsLists = await TravelList.find({
+        owner: { $in: friendIds },
+        visibility: "friends", // Only lists with friends visibility
+    })
+        .populate("owner", "fullName username email profileImage")
+        .populate("destinations")
+        .sort({ createdAt: -1 })
+        .limit(limit);
+    return friendsLists;
 };
