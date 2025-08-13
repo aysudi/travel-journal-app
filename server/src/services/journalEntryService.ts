@@ -124,6 +124,58 @@ export const deleteJournalEntry = async (
   await JournalEntryModel.findByIdAndDelete(entryId);
 };
 
+// Like journal entry
+export const likeJournalEntry = async (
+  entryId: string,
+  userId: string
+): Promise<any> => {
+  const updatedEntry = await JournalEntryModel.findByIdAndUpdate(
+    entryId,
+    { $addToSet: { likes: userId } },
+    { new: true }
+  )
+    .populate({
+      path: "author",
+      select: "fullName username profileImage",
+    })
+    .populate({
+      path: "destination",
+      select: "name location list",
+      populate: {
+        path: "list",
+        select: "title owner collaborators",
+      },
+    });
+
+  return updatedEntry;
+};
+
+// Unlike journal entry
+export const unlikeJournalEntry = async (
+  entryId: string,
+  userId: string
+): Promise<any> => {
+  const updatedEntry = await JournalEntryModel.findByIdAndUpdate(
+    entryId,
+    { $pull: { likes: userId } },
+    { new: true }
+  )
+    .populate({
+      path: "author",
+      select: "fullName username profileImage",
+    })
+    .populate({
+      path: "destination",
+      select: "name location list",
+      populate: {
+        path: "list",
+        select: "title owner collaborators",
+      },
+    });
+
+  return updatedEntry;
+};
+
 // Get journal entries with filtering, pagination, and search
 export const getJournalEntries = async (
   query: JournalEntryQuery

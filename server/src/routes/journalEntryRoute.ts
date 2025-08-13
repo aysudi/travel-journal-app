@@ -12,6 +12,7 @@ import {
   getRecentJournalEntries,
   bulkUpdateJournalEntries,
   getMyJournalEntries,
+  toggleJournalEntryLike,
 } from "../controllers/journalEntryController";
 import { authenticateToken } from "../middlewares/authMiddleware";
 
@@ -39,6 +40,9 @@ journalEntryRouter.get("/my/recent", getRecentJournalEntries);
 journalEntryRouter.post("/", createJournalEntry);
 journalEntryRouter.put("/:id", updateJournalEntry);
 journalEntryRouter.delete("/:id", deleteJournalEntry);
+
+// Like/unlike operations
+journalEntryRouter.patch("/:id/like", toggleJournalEntryLike);
 
 // Bulk operations
 journalEntryRouter.patch("/bulk", bulkUpdateJournalEntries);
