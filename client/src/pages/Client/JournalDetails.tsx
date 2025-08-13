@@ -21,6 +21,15 @@ import {
 } from "lucide-react";
 import { useJournalEntry } from "../../hooks/useEntries";
 import { useUserProfile } from "../../hooks/useAuth";
+import {
+  useCommentsByJournal,
+  useCreateComment,
+  useDeleteComment,
+  useToggleCommentLike,
+  useCommentForm,
+  useCommentStats,
+} from "../../hooks/useComments";
+import type { Comment as CommentType } from "../../types/api";
 import Loading from "../../components/Common/Loading";
 
 const JournalDetails = () => {
@@ -29,65 +38,25 @@ const JournalDetails = () => {
   const { data: user } = useUserProfile();
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [isLiked, setIsLiked] = useState(false);
+  const [isLiked, setIsLiked] = useState(false); // TODO: Replace with real journal entry like functionality
   const [showShareModal, setShowShareModal] = useState(false);
   const [showAllPhotos, setShowAllPhotos] = useState(false);
-  const [newComment, setNewComment] = useState("");
   const [showComments, setShowComments] = useState(true);
 
-  const mockComments = [
-    {
-      _id: "1",
-      author: {
-        _id: "user1",
-        fullName: "Sarah Johnson",
-        username: "sarah_travels",
-        profileImage: "",
-      },
-      content:
-        "Amazing photos! This place looks incredible. I've added it to my bucket list 🌟",
-      photos: [],
-      likes: ["user2", "user3"],
-      createdAt: "2024-12-01T10:30:00Z",
-    },
-    {
-      _id: "2",
-      author: {
-        _id: "user2",
-        fullName: "Mike Chen",
-        username: "mike_explorer",
-        profileImage: "",
-      },
-      content:
-        "I was here last summer! The sunset views from the cliff are absolutely breathtaking. Did you try the local seafood restaurant nearby?",
-      photos: [
-        "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400",
-      ],
-      likes: ["user1"],
-      createdAt: "2024-12-01T11:15:00Z",
-    },
-    {
-      _id: "3",
-      author: {
-        _id: "user3",
-        fullName: "Elena Rodriguez",
-        username: "elena_wanderlust",
-        profileImage: "",
-      },
-      content:
-        "Your writing really captures the essence of the place. Thanks for sharing this beautiful story!",
-      photos: [],
-      likes: [],
-      createdAt: "2024-12-01T14:22:00Z",
-    },
-  ];
-
+  // Get journal entry data
   const {
     data: journal,
     isLoading,
     error,
     refetch,
   } = useJournalEntry(journalId || "");
+
+  // Get comments for this journal
+  const { data: comments = [] } = useCommentsByJournal(journalId || "");
+
+  // Comment form and mutations
+  const commentForm = useCommentForm();
+  const createComment = useCreateComment();
 
   const formatDate = useCallback((dateString: string) => {
     const date = new Date(dateString);
@@ -139,6 +108,24 @@ const JournalDetails = () => {
       console.error("Failed to copy link:", err);
     }
   }, []);
+
+  const handleSubmitComment = useCallback(async () => {
+    if (!commentForm.isValid || !journalId) return;
+
+    commentForm.setIsSubmitting(true);
+    try {
+      await createComment.mutateAsync({
+        content: commentForm.content,
+        journalEntry: journalId,
+        photos: [], // For now, no photos support
+      });
+      commentForm.reset();
+    } catch (error) {
+      console.error("Failed to submit comment:", error);
+    } finally {
+      commentForm.setIsSubmitting(false);
+    }
+  }, [commentForm, createComment, journalId]);
 
   if (isLoading) {
     return <Loading variant="page" />;
@@ -409,8 +396,8 @@ const JournalDetails = () => {
               >
                 <MessageSquare size={18} />
                 <span className="text-sm font-medium">
-                  {mockComments.length} Comment
-                  {mockComments.length !== 1 ? "s" : ""}
+                  {comments.length} Comment
+                  {comments.length !== 1 ? "s" : ""}
                 </span>
               </button>
 
@@ -441,7 +428,7 @@ const JournalDetails = () => {
             <div className="p-6 border-b border-gray-100/80">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-gray-900">
-                  Comments ({mockComments.length})
+                  Comments ({comments.length})
                 </h2>
                 <button
                   onClick={() => setShowComments(!showComments)}
@@ -474,8 +461,8 @@ const JournalDetails = () => {
 
                   <div className="flex-1">
                     <textarea
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
+                      value={commentForm.content}
+                      onChange={(e) => commentForm.setContent(e.target.value)}
                       placeholder="Share your thoughts about this journey..."
                       className="w-full p-4 bg-gray-50 border border-gray-200/50 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all duration-200 placeholder-gray-400"
                       rows={3}
@@ -491,12 +478,15 @@ const JournalDetails = () => {
                           <Smile size={18} />
                         </button>
                         <span className="text-xs text-gray-400 ml-2">
-                          {newComment.length}/500
+                          {commentForm.content.length}/500
                         </span>
                       </div>
 
                       <button
-                        disabled={!newComment.trim()}
+                        disabled={
+                          !commentForm.isValid || commentForm.isSubmitting
+                        }
+                        onClick={handleSubmitComment}
                         className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200"
                       >
                         <Send size={16} />
@@ -510,7 +500,7 @@ const JournalDetails = () => {
 
             {/* Comments List */}
             <div className="divide-y divide-gray-100/80">
-              {mockComments.map((comment) => (
+              {comments.map((comment) => (
                 <CommentItem
                   key={comment._id}
                   comment={comment}
@@ -521,7 +511,7 @@ const JournalDetails = () => {
             </div>
 
             {/* Load More Comments */}
-            {mockComments.length > 0 && (
+            {comments.length > 0 && (
               <div className="p-4 text-center border-t border-gray-100/80">
                 <button className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors duration-200">
                   Load more comments
@@ -571,15 +561,32 @@ const CommentItem = ({
   currentUser,
   formatTimeAgo,
 }: {
-  comment: any;
+  comment: CommentType;
   currentUser: any;
   formatTimeAgo: (date: string) => string;
 }) => {
-  const [isLiked, setIsLiked] = useState(
-    comment.likes.includes(currentUser?.id)
-  );
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyText, setReplyText] = useState("");
+
+  // Use the comment stats hook
+  const { likeCount, isLikedByUser, isOwnComment } = useCommentStats(
+    comment,
+    currentUser?.id
+  );
+
+  // Get mutation hooks
+  const toggleLike = useToggleCommentLike();
+  const deleteCommentMutation = useDeleteComment();
+
+  const handleLikeToggle = () => {
+    toggleLike.mutate(comment._id);
+  };
+
+  const handleDeleteComment = () => {
+    if (window.confirm("Are you sure you want to delete this comment?")) {
+      deleteCommentMutation.mutate(comment._id);
+    }
+  };
 
   return (
     <div className="p-6 hover:bg-gray-50/30 transition-colors duration-200">
@@ -650,9 +657,9 @@ const CommentItem = ({
           {/* Comment Actions */}
           <div className="flex items-center gap-4">
             <button
-              onClick={() => setIsLiked(!isLiked)}
+              onClick={handleLikeToggle}
               className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm transition-all duration-200 ${
-                isLiked
+                isLikedByUser
                   ? "text-red-500 bg-red-50"
                   : "text-gray-500 hover:text-red-500 hover:bg-red-50"
               }`}
@@ -660,13 +667,10 @@ const CommentItem = ({
               <Heart
                 size={14}
                 className={`transition-all duration-200 ${
-                  isLiked ? "fill-current" : ""
+                  isLikedByUser ? "fill-current" : ""
                 }`}
               />
-              <span className="font-medium">
-                {comment.likes.length +
-                  (isLiked && !comment.likes.includes(currentUser?.id) ? 1 : 0)}
-              </span>
+              <span className="font-medium">{likeCount}</span>
             </button>
 
             <button
@@ -677,8 +681,11 @@ const CommentItem = ({
               <span className="font-medium">Reply</span>
             </button>
 
-            {currentUser?.id === comment.author._id && (
-              <button className="text-gray-400 hover:text-gray-600 text-sm transition-colors duration-200">
+            {isOwnComment && (
+              <button
+                onClick={handleDeleteComment}
+                className="text-gray-400 hover:text-red-600 text-sm transition-colors duration-200"
+              >
                 <MoreHorizontal size={16} />
               </button>
             )}

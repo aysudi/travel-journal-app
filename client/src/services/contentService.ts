@@ -8,6 +8,8 @@ import type {
   PaginationParams,
   ListInvitation,
   CreateListInvitationData,
+  Comment,
+  CreateCommentData,
 } from "../types/api";
 
 export class DestinationService {
@@ -311,6 +313,66 @@ export class ListInvitationService {
   }
 }
 
+export class CommentService {
+  private readonly endpoint = "/comments";
+
+  // Get comments by journal entry ID
+  async getCommentsByJournalEntry(journalEntryId: string): Promise<Comment[]> {
+    const response = await apiConfig.request<Comment[]>(
+      `${this.endpoint}/journal/${journalEntryId}`
+    );
+    return response;
+  }
+
+  // Create a new comment
+  async createComment(data: CreateCommentData): Promise<Comment> {
+    return apiConfig.request<Comment>(this.endpoint, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Delete a comment
+  async deleteComment(commentId: string): Promise<{ message: string }> {
+    return apiConfig.request<{ message: string }>(
+      `${this.endpoint}/${commentId}`,
+      {
+        method: "DELETE",
+      }
+    );
+  }
+
+  // Toggle like/unlike on a comment
+  async toggleCommentLike(commentId: string): Promise<Comment> {
+    return apiConfig.request<Comment>(`${this.endpoint}/${commentId}/like`, {
+      method: "PATCH",
+    });
+  }
+
+  // Upload photos for comments (if needed)
+  async uploadCommentImages(
+    commentId: string,
+    files: File[]
+  ): Promise<{ images: string[] }> {
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append("images", file);
+    });
+
+    return apiConfig.request<{ images: string[] }>(
+      `${this.endpoint}/${commentId}/images`,
+      {
+        method: "POST",
+        body: formData,
+        headers: {
+          Authorization: `Bearer ${apiConfig.getToken()}`,
+        },
+      }
+    );
+  }
+}
+
 export const destinationService = new DestinationService();
 export const journalEntryService = new JournalEntryService();
 export const listInvitationService = new ListInvitationService();
+export const commentService = new CommentService();
