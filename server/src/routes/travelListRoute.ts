@@ -13,6 +13,7 @@ import {
   updateCustomPermission,
   uploadCoverImage,
   duplicateTravelList,
+  getFriendsLists,
 } from "../controllers/travelListController";
 import { authenticateToken } from "../middlewares/authMiddleware";
 import uploadMiddleware from "../middlewares/uploadMiddleware";
@@ -26,6 +27,7 @@ travelListRouter.use(authenticateToken);
 travelListRouter.get("/", getAllTravelLists);
 travelListRouter.get("/owned", getOwnedTravelLists);
 travelListRouter.get("/collaborating", getCollaboratingTravelLists);
+travelListRouter.get("/friends", getFriendsLists);
 travelListRouter.get("/:id", getTravelListById);
 
 travelListRouter.post("/", createTravelList);
