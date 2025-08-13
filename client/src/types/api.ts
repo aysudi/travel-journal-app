@@ -193,6 +193,29 @@ export interface CreateJournalEntryData {
   isPublic?: boolean;
 }
 
+// Comment Types
+export interface Comment {
+  _id: string;
+  author: {
+    _id: string;
+    fullName: string;
+    username: string;
+    profileImage: string;
+  };
+  content: string;
+  photos: string[];
+  likes: string[]; // Array of user IDs who liked
+  journalEntry: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCommentData {
+  content: string;
+  photos?: string[];
+  journalEntry: string;
+}
+
 // Auth Types
 export interface LoginData {
   email: string;
