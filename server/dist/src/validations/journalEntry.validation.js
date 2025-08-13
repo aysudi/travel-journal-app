@@ -5,6 +5,10 @@ const journalEntryCreateSchema = Joi.object({
         "string.empty": "Title is required",
         "string.max": "Title cannot exceed 200 characters",
     }),
+    author: objectIdSchema.required().messages({
+        "string.pattern.base": "Invalid author ID",
+        "any.required": "Author ID is required",
+    }),
     content: Joi.string().trim().min(1).max(5000).required().messages({
         "string.empty": "Content is required",
         "string.max": "Content cannot exceed 5000 characters",
@@ -12,6 +16,8 @@ const journalEntryCreateSchema = Joi.object({
     photos: Joi.array().items(Joi.string().uri()).max(10).optional().messages({
         "array.max": "Cannot upload more than 10 photos",
     }),
+    likes: Joi.array().items(objectIdSchema).optional(),
+    comments: Joi.array().items(objectIdSchema).optional(),
     destination: objectIdSchema.required().messages({
         "string.pattern.base": "Invalid destination ID",
         "any.required": "Destination ID is required",

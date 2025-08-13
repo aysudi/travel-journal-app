@@ -20,7 +20,7 @@ export const getAll = async () => {
   return await UserModel.find()
     .select("-password")
     .populate("ownedLists")
-    .populate("collaboratingLists");
+    .populate("friends", "fullName username profileImage isVerified");
 };
 
 export const getUserById = async (id: string) => {
@@ -28,7 +28,15 @@ export const getUserById = async (id: string) => {
     const user = await UserModel.findById(id)
       .select("-password")
       .populate("ownedLists")
-      .populate("collaboratingLists");
+      .populate("friends", "fullName username profileImage isVerified")
+      .populate(
+        "friendRequestsReceived.from",
+        "fullName username profileImage isVerified"
+      )
+      .populate(
+        "friendRequestsSent.to",
+        "fullName username profileImage isVerified"
+      );
     return user;
   } catch (error) {
     throw error;

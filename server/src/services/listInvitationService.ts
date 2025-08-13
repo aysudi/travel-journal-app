@@ -81,7 +81,7 @@ const createInvitation = async (invitationData: {
       if (!inviteeUser) {
         throw new Error("User with this email not found");
       }
-      inviteeId = inviteeUser._id.toString();
+      inviteeId = (inviteeUser._id as any).toString();
     }
 
     if (!inviteeId) {
