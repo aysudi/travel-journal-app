@@ -16,8 +16,8 @@ export const useCommentsByJournal = (journalEntryId: string) => {
   return useQuery({
     queryKey: commentKeys.byJournal(journalEntryId),
     queryFn: () => commentService.getCommentsByJournalEntry(journalEntryId),
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
     retry: 2,
     enabled: !!journalEntryId,
   });
@@ -30,16 +30,14 @@ export const useCreateComment = () => {
   return useMutation({
     mutationFn: (data: CreateCommentData) => commentService.createComment(data),
     onSuccess: (newComment) => {
-      // Update the comments list for the journal
       queryClient.setQueryData(
         commentKeys.byJournal(newComment.journalEntry),
         (oldComments: Comment[] | undefined) => {
           if (!oldComments) return [newComment];
-          return [newComment, ...oldComments]; // Add new comment at the beginning
+          return [newComment, ...oldComments];
         }
       );
 
-      // Invalidate to ensure fresh data
       queryClient.invalidateQueries({
         queryKey: commentKeys.byJournal(newComment.journalEntry),
       });
@@ -57,18 +55,16 @@ export const useDeleteComment = () => {
   return useMutation({
     mutationFn: (commentId: string) => commentService.deleteComment(commentId),
     onSuccess: (_, deletedCommentId) => {
-      // Remove comment from all journal comment lists
       queryClient.setQueriesData(
         { queryKey: commentKeys.all },
         (oldComments: Comment[] | undefined) => {
           if (!oldComments) return oldComments;
           return oldComments.filter(
-            (comment) => comment._id !== deletedCommentId
+            (comment) => comment.id !== deletedCommentId
           );
         }
       );
 
-      // Invalidate all comment queries to ensure consistency
       queryClient.invalidateQueries({
         queryKey: commentKeys.all,
       });
@@ -87,19 +83,17 @@ export const useToggleCommentLike = () => {
     mutationFn: (commentId: string) =>
       commentService.toggleCommentLike(commentId),
     onSuccess: (updatedComment) => {
-      // Update with server response
       queryClient.setQueryData(
         commentKeys.byJournal(updatedComment.journalEntry),
         (oldComments: Comment[] | undefined) => {
           if (!oldComments) return [updatedComment];
 
           return oldComments.map((comment) =>
-            comment._id === updatedComment._id ? updatedComment : comment
+            comment.id === updatedComment.id ? updatedComment : comment
           );
         }
       );
 
-      // Also invalidate to ensure consistency
       queryClient.invalidateQueries({
         queryKey: commentKeys.byJournal(updatedComment.journalEntry),
       });
