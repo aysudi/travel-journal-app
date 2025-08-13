@@ -238,13 +238,11 @@ export const deleteDestination = async (req: Request, res: Response) => {
 // Get destinations with filtering, pagination, and search
 export const getDestinations = async (req: Request, res: Response) => {
   try {
-    const userId = (req.user as any)?.id; // Optional for public access
+    const userId = (req.user as any)?.id;
 
-    const { page, limit, list, status, search, sort } = req.query;
+    const { list, status, search, sort } = req.query;
 
     const queryParams = {
-      page: page ? Number(page) : undefined,
-      limit: limit ? Number(limit) : undefined,
       list: list as string,
       status: status as "Wishlist" | "Planned" | "Visited",
       search: search as string,
@@ -252,7 +250,6 @@ export const getDestinations = async (req: Request, res: Response) => {
       userId: userId,
     };
 
-    // Validate ObjectIds if provided
     if (queryParams.list) {
       const { error } = objectIdSchema.validate(queryParams.list);
       if (error) {
@@ -263,13 +260,12 @@ export const getDestinations = async (req: Request, res: Response) => {
       }
     }
 
-    const result = await destinationService.getDestinations(queryParams);
+    const destinations = await destinationService.getDestinations(queryParams);
 
     res.status(200).json({
       success: true,
       message: "Destinations retrieved successfully",
-      data: formatMongoData(result.data),
-      pagination: result.pagination,
+      data: formatMongoData(destinations),
     });
   } catch (error: any) {
     console.error("Get destinations error:", error);
