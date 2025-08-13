@@ -400,27 +400,7 @@ export const uploadCoverImage = async (req, res) => {
 export const duplicateTravelList = async (req, res) => {
     try {
         const { id } = req.params;
-        const userId = req.user?.id;
-        if (!userId) {
-            return res.status(401).json({
-                success: false,
-                message: "User not authenticated",
-            });
-        }
-        const existingList = await travelListService.getOne(id);
-        if (!existingList) {
-            return res.status(404).json({
-                success: false,
-                message: "Travel list not found",
-            });
-        }
-        const hasViewPermission = travelListService.checkUserPermission(existingList, userId);
-        if (!hasViewPermission) {
-            return res.status(403).json({
-                success: false,
-                message: "You don't have permission to duplicate this travel list",
-            });
-        }
+        const userId = req.user.id;
         const duplicatedList = await travelListService.duplicateList(id, userId);
         res.status(201).json({
             success: true,
@@ -433,6 +413,26 @@ export const duplicateTravelList = async (req, res) => {
         res.status(500).json({
             success: false,
             message: "Failed to duplicate travel list",
+            error: error.message,
+        });
+    }
+};
+export const getFriendsLists = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { limit } = req.query;
+        const friendsLists = await travelListService.getFriendsLists(userId, limit ? Number(limit) : 10);
+        res.status(200).json({
+            success: true,
+            message: "Friends' travel lists retrieved successfully",
+            data: formatMongoData(friendsLists),
+        });
+    }
+    catch (error) {
+        console.error("Get friends' lists error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to retrieve friends' travel lists",
             error: error.message,
         });
     }

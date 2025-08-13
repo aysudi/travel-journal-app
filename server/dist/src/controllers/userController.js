@@ -51,9 +51,7 @@ export const getUserProfile = async (req, res, next) => {
                 data: null,
             });
         }
-        console.log("DEBUG USER CONTROLLER: Raw user from DB:", user);
         const formattedUser = formatMongoData(user);
-        console.log("DEBUG USER CONTROLLER: Formatted user:", formattedUser);
         res.status(200).json({
             message: "User profile retrieved successfully",
             data: formattedUser,
@@ -466,7 +464,7 @@ export const searchUsers = async (req, res, next) => {
             });
         }
         const users = await UserModel.find({
-            _id: { $ne: userId }, // Exclude current user
+            _id: { $ne: userId },
             $or: [
                 { fullName: { $regex: query, $options: "i" } },
                 { username: { $regex: query, $options: "i" } },
