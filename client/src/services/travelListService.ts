@@ -84,6 +84,11 @@ export class TravelListService {
     return apiConfig.request<TravelList[]>(`${this.endpoint}/collaborating`);
   }
 
+  async getFriendsLists(limit?: number): Promise<TravelList[]> {
+    const query = limit ? `?limit=${limit}` : "";
+    return apiConfig.request<TravelList[]>(`${this.endpoint}/friends${query}`);
+  }
+
   async getPublicLists(params?: PaginationParams): Promise<TravelList[]> {
     const searchParams = new URLSearchParams();
 

@@ -65,6 +65,17 @@ export const useCollaboratingTravelLists = () => {
   });
 };
 
+// Get friends' travel lists
+export const useFriendsTravelLists = (limit?: number) => {
+  return useQuery({
+    queryKey: ["travel-lists", "friends", limit],
+    queryFn: () => travelListService.getFriendsLists(limit),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    retry: 2,
+  });
+};
+
 // Get public travel lists
 export const usePublicTravelLists = (params?: PaginationParams) => {
   return useQuery({

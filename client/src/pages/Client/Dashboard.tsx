@@ -4,6 +4,7 @@ import { useUserProfile } from "../../hooks/useAuth";
 import {
   useOwnedTravelLists,
   useCollaboratingTravelLists,
+  useFriendsTravelLists,
 } from "../../hooks/useTravelList";
 import { useJournalEntriesByAuthor } from "../../hooks/useEntries";
 import formatDate from "../../utils/formatDate";
@@ -16,11 +17,14 @@ import RecentStories from "../../components/Client/Dashboard/RecentStories";
 import DiscoverLists from "../../components/Client/Dashboard/DiscoverLists";
 import CollaboratingLists from "../../components/Client/Dashboard/CollaboratingLists";
 import PendingInvitations from "../../components/Client/Dashboard/PendingInvitations";
+import FriendsLists from "../../components/Client/Dashboard/FriendsLists";
 
 const Dashboard = () => {
   const { data: user, isLoading: userLoading } = useUserProfile();
   const { data: ownedLists } = useOwnedTravelLists();
   const { data: collaboratingLists } = useCollaboratingTravelLists();
+  const { data: friendsLists, isLoading: friendsListsLoading } =
+    useFriendsTravelLists(5); // Show 5 friends' lists
 
   const { data: recentJournalsData, isLoading: journalsLoading } =
     useJournalEntriesByAuthor(user?.id || "");
@@ -125,6 +129,12 @@ const Dashboard = () => {
             {pendingInvitations && pendingInvitations.length > 0 && (
               <PendingInvitations pendingInvitations={pendingInvitations} />
             )}
+
+            {/* Friends Only Lists */}
+            <FriendsLists
+              friendsLists={friendsLists}
+              isLoading={friendsListsLoading}
+            />
 
             {/* Recent Travel Stories */}
             <RecentStories
