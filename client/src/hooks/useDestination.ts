@@ -57,22 +57,22 @@ export const useCreateDestination = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: CreateDestinationData) =>
+    mutationFn: (data: CreateDestinationData | FormData) =>
       destinationService.createDestination(data),
     onSuccess: (newDestination: Destination) => {
       queryClient.invalidateQueries({ queryKey: destinationKeys.lists() });
 
       queryClient.invalidateQueries({
-        queryKey: destinationKeys.byTravelList(newDestination.travelList),
+        queryKey: destinationKeys.byTravelList(newDestination.list),
       });
 
       queryClient.setQueryData(
-        destinationKeys.list(newDestination._id),
+        destinationKeys.list(newDestination.id),
         newDestination
       );
 
       queryClient.invalidateQueries({
-        queryKey: ["travelLists", "list", newDestination.travelList],
+        queryKey: ["travelLists", "list", newDestination.list],
       });
     },
     onError: (error) => {
@@ -90,22 +90,22 @@ export const useUpdateDestination = () => {
       data,
     }: {
       id: string;
-      data: Partial<CreateDestinationData>;
+      data: Partial<CreateDestinationData> | FormData;
     }) => destinationService.updateDestination(id, data),
     onSuccess: (updatedDestination: Destination) => {
       queryClient.setQueryData(
-        destinationKeys.list(updatedDestination._id),
+        destinationKeys.list(updatedDestination.id),
         updatedDestination
       );
 
       queryClient.invalidateQueries({ queryKey: destinationKeys.lists() });
 
       queryClient.invalidateQueries({
-        queryKey: destinationKeys.byTravelList(updatedDestination.travelList),
+        queryKey: destinationKeys.byTravelList(updatedDestination.list),
       });
 
       queryClient.invalidateQueries({
-        queryKey: ["travelLists", "list", updatedDestination.travelList],
+        queryKey: ["travelLists", "list", updatedDestination.list],
       });
     },
     onError: (error) => {
@@ -130,11 +130,11 @@ export const useDeleteDestination = () => {
 
       if (cachedDestination) {
         queryClient.invalidateQueries({
-          queryKey: destinationKeys.byTravelList(cachedDestination.travelList),
+          queryKey: destinationKeys.byTravelList(cachedDestination.list),
         });
 
         queryClient.invalidateQueries({
-          queryKey: ["travelLists", "list", cachedDestination.travelList],
+          queryKey: ["travelLists", "list", cachedDestination.list],
         });
       }
     },
@@ -144,41 +144,7 @@ export const useDeleteDestination = () => {
   });
 };
 
-export const useUploadDestinationImages = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({
-      destinationId,
-      files,
-    }: {
-      destinationId: string;
-      files: File[];
-    }) => destinationService.uploadDestinationImages(destinationId, files),
-    onSuccess: (result, variables) => {
-      queryClient.setQueryData(
-        destinationKeys.list(variables.destinationId),
-        (oldData: Destination | undefined) =>
-          oldData
-            ? { ...oldData, images: [...oldData.images, ...result.images] }
-            : oldData
-      );
-
-      const cachedDestination = queryClient.getQueryData<Destination>(
-        destinationKeys.list(variables.destinationId)
-      );
-
-      if (cachedDestination) {
-        queryClient.invalidateQueries({
-          queryKey: destinationKeys.byTravelList(cachedDestination.travelList),
-        });
-      }
-    },
-    onError: (error) => {
-      console.error("Failed to upload destination images:", error);
-    },
-  });
-};
+// Removed useUploadDestinationImages: image upload is handled in create/update
 
 export const useBulkDeleteDestinations = () => {
   const queryClient = useQueryClient();
