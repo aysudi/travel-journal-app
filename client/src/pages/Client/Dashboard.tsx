@@ -98,7 +98,7 @@ const Dashboard = () => {
                 </div>
               )}
               <Link
-                to="/my-lists"
+                to="/create-list"
                 className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl font-medium hover:shadow-lg transition-all duration-200 flex items-center space-x-2"
               >
                 <Plus size={16} />

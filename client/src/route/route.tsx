@@ -19,6 +19,7 @@ import PublicRoute from "./PublicRoute";
 import AuthCallback from "../pages/Auth/AuthCallback";
 import MyLists from "../pages/Client/MyLists";
 import JournalDetails from "../pages/Client/JournalDetails";
+import CreateList from "../pages/Client/CreateList";
 
 const ROUTES = [
   // Root redirect to login
@@ -58,6 +59,10 @@ const ROUTES = [
       {
         path: "journals/:journalId",
         element: <JournalDetails />,
+      },
+      {
+        path: "create-list",
+        element: <CreateList />,
       },
     ],
   },
