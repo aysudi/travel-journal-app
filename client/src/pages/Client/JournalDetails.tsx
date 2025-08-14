@@ -40,12 +40,11 @@ const JournalDetails = () => {
   const { data: user } = useUserProfile();
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [isLiked, setIsLiked] = useState(false); // TODO: Replace with real journal entry like functionality
+  const [isLiked, setIsLiked] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showAllPhotos, setShowAllPhotos] = useState(false);
   const [showComments, setShowComments] = useState(true);
 
-  // Get journal entry data
   const {
     data: journal,
     isLoading,
@@ -53,10 +52,8 @@ const JournalDetails = () => {
     refetch,
   } = useJournalEntry(journalId || "");
 
-  // Get comments for this journal
   const { data: comments = [] } = useCommentsByJournal(journalId || "");
 
-  // Comment form and mutations
   const commentForm = useCommentForm();
   const createComment = useCreateComment();
 

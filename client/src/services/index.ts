@@ -7,6 +7,7 @@ export {
   journalEntryService,
   commentService,
 } from "./contentService";
+export { imageUploadService } from "./imageUploadService";
 
 export type * from "../types/api";
 

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { useParams } from "react-router";
 import {
   MapPin,
@@ -23,9 +23,267 @@ import {
 import { useTravelList } from "../../hooks/useTravelList";
 import Loading from "../../components/Common/Loading";
 import { useJournalEntriesByTravelList } from "../../hooks/useEntries";
-import { useDestinationsByTravelList } from "../../hooks/useDestination";
+import {
+  useCreateDestination,
+  useDestinationsByTravelList,
+} from "../../hooks/useDestination";
 import type { Destination, JournalEntry } from "../../types/api";
 import formatDate, { formatDateInHours } from "../../utils/formatDate";
+
+// AddDestinationModal component using a single state object
+function AddDestinationModal({
+  onClose,
+  onSubmit,
+}: {
+  onClose: () => void;
+  onSubmit: (destination: any) => void;
+}) {
+  const [newDestination, setNewDestination] = useState<any>({
+    name: "",
+    location: "",
+    status: "Wishlist",
+    dateVisited: "",
+    datePlanned: "",
+    notes: "",
+    images: [] as File[],
+    imagePreviews: [] as string[],
+  });
+
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
+    const { name, value } = e.target;
+    setNewDestination((prev: any) => ({ ...prev, [name]: value }));
+  };
+
+  const handleDestinationImageUpload = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    setNewDestination((prev: any) => ({
+      ...prev,
+      images: [...prev.images, ...files],
+      imagePreviews: [
+        ...prev.imagePreviews,
+        ...files.map((file) => URL.createObjectURL(file)),
+      ],
+    }));
+  };
+
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const status = e.target.value;
+    if (status === "Visited") {
+      setNewDestination((prev: any) => ({
+        ...prev,
+        status,
+        dateVisited: status === "Visited" ? prev.dateVisited : "",
+        // datePlanned: status === "Planned" ? prev.datePlanned : "",
+      }));
+    } else if (status === "Planned") {
+      setNewDestination((prev: any) => ({
+        ...prev,
+        status,
+        datePlanned: status === "Planned" ? prev.datePlanned : "",
+      }));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // Upload images to server (Cloudinary)
+    let imageUrls: string[] = [];
+    if (newDestination.images && newDestination.images.length > 0) {
+      const formData = new FormData();
+      newDestination.images.forEach((file: File) => {
+        formData.append("images", file);
+      });
+      // POST to server endpoint for image upload (should return array of URLs)
+      const res = await fetch("/api/upload/destination-images", {
+        method: "POST",
+        body: formData,
+      });
+      if (res.ok) {
+        imageUrls = await res.json();
+      } else {
+        alert("Image upload failed");
+        return;
+      }
+    }
+    // Call onSubmit with all destination data and image URLs
+    onSubmit({
+      ...newDestination,
+      images: imageUrls,
+    });
+    setNewDestination({
+      name: "",
+      location: "",
+      status: "Wishlist",
+      dateVisited: "",
+      datePlanned: "",
+      notes: "",
+      images: [],
+      imagePreviews: [],
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+        <h2 className="text-xl font-semibold mb-4">Add New Destination</h2>
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Destination Name *
+            </label>
+            <input
+              type="text"
+              name="name"
+              value={newDestination.name}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="e.g., Eiffel Tower"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Location *
+            </label>
+            <input
+              type="text"
+              name="location"
+              value={newDestination.location}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="e.g., Paris, France"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Status
+            </label>
+            <select
+              name="status"
+              value={newDestination.status}
+              onChange={handleStatusChange}
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="Wishlist">Wishlist</option>
+              <option value="Planned">Planned</option>
+              <option value="Visited">Visited</option>
+            </select>
+          </div>
+          {/* Conditional date fields */}
+          {newDestination.status === "Visited" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Date Visited
+              </label>
+              <input
+                type="date"
+                name="dateVisited"
+                value={newDestination.dateVisited}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+          )}
+          {newDestination.status === "Planned" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Date Planned
+              </label>
+              <input
+                type="date"
+                name="datePlanned"
+                value={newDestination.datePlanned}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+          )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Notes (Optional)
+            </label>
+            <textarea
+              name="notes"
+              rows={3}
+              value={newDestination.notes}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+              placeholder="Add any notes about this destination..."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Images
+            </label>
+            <input
+              type="file"
+              name="images"
+              accept="image/*"
+              multiple
+              onChange={handleDestinationImageUpload}
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            {/* Image previews */}
+            {newDestination.imagePreviews.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-4">
+                {newDestination.imagePreviews.map(
+                  (src: string, idx: number) => (
+                    <div key={idx} className="relative w-16 h-16">
+                      <img
+                        src={src}
+                        alt={`Preview ${idx + 1}`}
+                        className="w-16 h-16 object-cover rounded-lg border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNewDestination((prev: any) => ({
+                            ...prev,
+                            images: prev.images.filter(
+                              (_: string, i: number) => i !== idx
+                            ),
+                            imagePreviews: prev.imagePreviews.filter(
+                              (_: string, i: number) => i !== idx
+                            ),
+                          }));
+                        }}
+                        className="absolute top-[-4px] right-[-4px] bg-black/50 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-black/70"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )
+                )}
+              </div>
+            )}
+          </div>
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 cursor-pointer"
+            >
+              Add Destination
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 const ListDetails = () => {
   const { listId } = useParams<{ listId: string }>();
@@ -58,24 +316,16 @@ const ListDetails = () => {
     isLoading: isLoadingJournals,
     error: errorJournals,
   } = useJournalEntriesByTravelList(listId || "");
+  const createDestination = useCreateDestination();
 
   const destinationsArray = destinations || [];
   const journalsArray = journals || [];
 
   const getDestinationStatus = (dest: Destination): string => {
-    if (dest.visitedDate) return "Visited";
+    if (dest.dateVisited) return "Visited";
     if (dest.notes?.toLowerCase().includes("planned")) return "Planned";
     return "Wishlist";
   };
-
-  // Helper function to get location string
-  // const getLocationString = (location: Destination["location"]): string => {
-  //   return (
-  //     [location.city, location.country].filter(Boolean).join(", ") ||
-  //     location.address ||
-  //     `${location.coordinates[0]}, ${location.coordinates[1]}`
-  //   );
-  // };
 
   if (isLoading || isLoadingDestinations || isLoadingJournals) {
     return <Loading variant="page" />;
@@ -107,11 +357,11 @@ const ListDetails = () => {
   const filteredDestinations = (destinationsArray as Destination[]).filter(
     (dest: Destination) => {
       if (filterStatus === "all") return true;
-      if (filterStatus === "Visited") return !!dest.visitedDate;
+      if (filterStatus === "Visited") return !!dest.dateVisited;
       if (filterStatus === "Planned")
-        return !dest.visitedDate && dest.notes?.includes("planned");
+        return !dest.dateVisited && dest.notes?.includes("planned");
       if (filterStatus === "Wishlist")
-        return !dest.visitedDate && !dest.notes?.includes("planned");
+        return !dest.dateVisited && !dest.notes?.includes("planned");
       return false;
     }
   );
@@ -240,7 +490,6 @@ const ListDetails = () => {
           )}
         </div>
       </div>
-
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Owner and Collaborators Section */}
@@ -423,7 +672,7 @@ const ListDetails = () => {
                 <div className="text-2xl font-bold text-gray-800">
                   {
                     (destinationsArray as Destination[]).filter(
-                      (d: Destination) => !!d.visitedDate
+                      (d: Destination) => !!d.dateVisited
                     ).length
                   }
                 </div>
@@ -618,13 +867,13 @@ const ListDetails = () => {
                             </div>
 
                             {/* Date Info */}
-                            {destination.visitedDate && (
+                            {destination.dateVisited && (
                               <div className="flex items-center gap-1 text-gray-600 mb-3">
                                 <Calendar size={16} />
                                 <span className="text-sm">
                                   Visited{" "}
                                   {new Date(
-                                    destination.visitedDate
+                                    destination.dateVisited
                                   ).toLocaleDateString()}
                                 </span>
                               </div>
@@ -980,7 +1229,6 @@ const ListDetails = () => {
           </div>
         </div>
       </div>
-
       {/* Hidden File Input */}
       <input
         ref={fileInputRef}
@@ -992,87 +1240,18 @@ const ListDetails = () => {
 
       {/* Add Destination Modal */}
       {showAddDestination && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-semibold mb-4">Add New Destination</h2>
-
-            <form className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Destination Name *
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder="e.g., Eiffel Tower"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Location *
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder="e.g., Paris, France"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Status
-                </label>
-                <select className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                  <option value="Wishlist">Wishlist</option>
-                  <option value="Planned">Planned</option>
-                  <option value="Visited">Visited</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Date (Optional)
-                </label>
-                <input
-                  type="date"
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Notes (Optional)
-                </label>
-                <textarea
-                  rows={3}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-                  placeholder="Add any notes about this destination..."
-                />
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowAddDestination(false)}
-                  className="flex-1 px-4 py-2 text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 cursor-pointer"
-                >
-                  Add Destination
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <AddDestinationModal
+          onClose={() => setShowAddDestination(false)}
+          onSubmit={async (destination) => {
+            // Post destination to server (with images already uploaded)
+            await createDestination.mutateAsync({
+              ...destination,
+              travelListId: listId,
+            });
+            setShowAddDestination(false);
+          }}
+        />
       )}
-
       {/* Invite Modal */}
       {showInviteModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -1143,7 +1322,6 @@ const ListDetails = () => {
           </div>
         </div>
       )}
-
       {/* Destination Detail Modal */}
       {showDestinationDetail && selectedDestination && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -1194,13 +1372,13 @@ const ListDetails = () => {
                 </div>
 
                 {/* Date Info */}
-                {selectedDestination.visitedDate && (
+                {selectedDestination.dateVisited && (
                   <div className="flex items-center gap-2 text-gray-600 mb-4">
                     <Calendar size={18} />
                     <span>
                       Visited on{" "}
                       {new Date(
-                        selectedDestination.visitedDate
+                        selectedDestination.dateVisited
                       ).toLocaleDateString()}
                     </span>
                   </div>
