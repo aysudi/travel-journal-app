@@ -1,3 +1,41 @@
+// Toggle like/unlike on a journal entry
+export const useToggleJournalEntryLike = (travelListId?: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (entryId: string) =>
+      journalEntryService.toggleJournalEntryLike(entryId),
+    onSuccess: (data: any) => {
+      const updatedEntry: JournalEntry = data.journalEntry || data;
+      queryClient.setQueryData(
+        journalEntryKeys.list(updatedEntry.id),
+        updatedEntry
+      );
+      if (travelListId) {
+        queryClient.invalidateQueries({
+          queryKey: journalEntryKeys.byTravelList(travelListId),
+        });
+      } else if (updatedEntry.travelList) {
+        queryClient.invalidateQueries({
+          queryKey: journalEntryKeys.byTravelList(updatedEntry.travelList),
+        });
+      }
+      if (updatedEntry.destination) {
+        queryClient.invalidateQueries({
+          queryKey: journalEntryKeys.byDestination(updatedEntry.destination),
+        });
+      }
+      queryClient.invalidateQueries({
+        queryKey: journalEntryKeys.byAuthor(updatedEntry.author._id),
+      });
+      if (updatedEntry.isPublic) {
+        queryClient.invalidateQueries({ queryKey: journalEntryKeys.public() });
+      }
+    },
+    onError: (error) => {
+      console.error("Failed to toggle journal entry like:", error);
+    },
+  });
+};
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   journalEntryService,
