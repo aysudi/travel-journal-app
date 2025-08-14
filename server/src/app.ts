@@ -20,6 +20,7 @@ import googleRouter from "./routes/googleRoute.js";
 import githubRouter from "./routes/githubRoute.js";
 import commentRouter from "./routes/commentRoute.js";
 import listInvitationRouter from "./routes/listInvitationRoutes.js";
+import uploadRouter from "./routes/uploadRoute.js";
 
 const app = express();
 
@@ -48,6 +49,7 @@ app.use("/journal-entries", journalEntryRouter);
 app.use("/messages", messageRouter);
 app.use("/comments", commentRouter);
 app.use("/list-invitations", listInvitationRouter);
+app.use("/api", uploadRouter);
 
 app.get("/", (_, res) => {
   res.send("Server is up and running!");

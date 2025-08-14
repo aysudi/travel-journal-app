@@ -38,6 +38,13 @@ export class TravelListService {
     });
   }
 
+  async createTravelListWithFormData(formData: FormData): Promise<TravelList> {
+    return apiConfig.request<TravelList>(this.endpoint, {
+      method: "POST",
+      body: formData,
+    });
+  }
+
   async updateTravelList(
     id: string,
     data: UpdateTravelListData
