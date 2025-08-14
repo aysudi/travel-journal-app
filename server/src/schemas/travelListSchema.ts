@@ -91,6 +91,7 @@ const travelListSchema = new mongoose.Schema(
     },
 
     coverImage: { type: String, required: true },
+    public_id: { type: String }, // Cloudinary public ID for image management
     destinations: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Destination" },
     ],

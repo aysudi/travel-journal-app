@@ -87,4 +87,10 @@ function uploadMiddleware(folderName: string) {
   return [upload.single("profileImage"), uploadToCloudinary(folderName)];
 }
 
+// Travel list cover image upload middleware
+function travelListUploadMiddleware(folderName: string = "travel-lists") {
+  return [upload.single("coverImage"), uploadToCloudinary(folderName)];
+}
+
 export default uploadMiddleware;
+export { travelListUploadMiddleware };

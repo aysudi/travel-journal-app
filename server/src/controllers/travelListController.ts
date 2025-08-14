@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import * as travelListService from "../services/travelListService";
-import uploadMiddleware from "../middlewares/uploadMiddleware";
+import uploadMiddleware, {
+  travelListUploadMiddleware,
+} from "../middlewares/uploadMiddleware";
 import formatMongoData from "../utils/formatMongoData";
 
 export const getAllTravelLists = async (req: Request, res: Response) => {
@@ -149,12 +151,25 @@ export const createTravelList = async (req: Request, res: Response) => {
       });
     }
 
+    // Check if cover image is required but not provided
+    if (!req.body.coverImage && !(req as any).cloudinaryResult) {
+      return res.status(400).json({
+        success: false,
+        message: "Cover image is required",
+      });
+    }
+
     const travelListData = {
       ...req.body,
       owner: userId,
     };
 
-    const newTravelList = await travelListService.post(travelListData);
+    const cloudinaryResult = (req as any).cloudinaryResult;
+    const newTravelList = await travelListService.post(
+      travelListData,
+      cloudinaryResult
+    );
+
     res.status(201).json({
       success: true,
       message: "Travel list created successfully",
@@ -199,7 +214,13 @@ export const updateTravelList = async (req: Request, res: Response) => {
       });
     }
 
-    const updatedTravelList = await travelListService.update(id, req.body);
+    const cloudinaryResult = (req as any).cloudinaryResult;
+    const updatedTravelList = await travelListService.update(
+      id,
+      req.body,
+      cloudinaryResult
+    );
+
     res.status(200).json({
       success: true,
       message: "Travel list updated successfully",
@@ -508,3 +529,6 @@ export const getFriendsLists = async (req: any, res: Response) => {
     });
   }
 };
+
+// Export middleware for routes
+export { travelListUploadMiddleware };
