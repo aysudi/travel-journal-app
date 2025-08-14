@@ -151,8 +151,22 @@ export const createTravelList = async (req: Request, res: Response) => {
       });
     }
 
-    // Check if cover image is required but not provided
-    if (!req.body.coverImage && !(req as any).cloudinaryResult) {
+    if (req.body.tags && typeof req.body.tags === "string") {
+      try {
+        req.body.tags = JSON.parse(req.body.tags);
+      } catch (e) {
+        req.body.tags = [];
+      }
+    }
+
+    if (req.body.isPublic && typeof req.body.isPublic === "string") {
+      req.body.isPublic = req.body.isPublic === "true";
+    }
+
+    const hasFile = !!(req as any).cloudinaryResult;
+    const hasCoverImageUrl = !!req.body.coverImage;
+
+    if (!hasFile && !hasCoverImageUrl) {
       return res.status(400).json({
         success: false,
         message: "Cover image is required",
@@ -165,6 +179,7 @@ export const createTravelList = async (req: Request, res: Response) => {
     };
 
     const cloudinaryResult = (req as any).cloudinaryResult;
+
     const newTravelList = await travelListService.post(
       travelListData,
       cloudinaryResult
@@ -173,14 +188,14 @@ export const createTravelList = async (req: Request, res: Response) => {
     res.status(201).json({
       success: true,
       message: "Travel list created successfully",
-      data: newTravelList,
+      data: formatMongoData(newTravelList),
     });
   } catch (error: any) {
-    console.error("Create travel list error:", error);
     res.status(500).json({
       success: false,
       message: "Failed to create travel list",
       error: error.message,
+      details: process.env.NODE_ENV === "development" ? error.stack : undefined,
     });
   }
 };
@@ -190,7 +205,6 @@ export const updateTravelList = async (req: Request, res: Response) => {
     const { id } = req.params;
     const userId = (req.user as any)?.id;
 
-    // Check if travel list exists
     const existingList = await travelListService.getOne(id);
     if (!existingList) {
       return res.status(404).json({
@@ -199,7 +213,6 @@ export const updateTravelList = async (req: Request, res: Response) => {
       });
     }
 
-    // Check if user is owner or has custom permission
     const isOwner = existingList.owner._id.toString() === userId;
     const hasCustomPermission = existingList.customPermissions.some(
       (perm: any) =>
@@ -378,7 +391,6 @@ export const removeCustomPermission = async (req: Request, res: Response) => {
   }
 };
 
-// Update custom permission level
 export const updateCustomPermission = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -530,5 +542,4 @@ export const getFriendsLists = async (req: any, res: Response) => {
   }
 };
 
-// Export middleware for routes
 export { travelListUploadMiddleware };
