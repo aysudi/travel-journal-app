@@ -135,20 +135,20 @@ export interface Destination {
   status: "Wishlist" | "Planned" | "Visited";
   dateVisited?: string;
   datePlanned?: string;
-  list: string; // Changed from travelList to list to match server schema
+  list: string;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateDestinationData {
   name: string;
-  location: string; // Changed to string to match server schema
+  location: string;
   notes?: string;
   images?: string[];
   status?: "Wishlist" | "Planned" | "Visited";
   dateVisited?: string;
   datePlanned?: string;
-  list: string; // Changed from travelList to list to match server schema
+  list: string;
 }
 
 // Journal Entry Types
@@ -169,6 +169,10 @@ export interface JournalEntry {
   isPublic: boolean;
   createdAt: string;
   updatedAt: string;
+  likes: [
+    { _id: string; fullName: string; username: string; profileImage: string }
+  ];
+  comments: Comment[];
 }
 
 export interface CreateJournalEntryData {

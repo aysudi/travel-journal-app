@@ -1,3 +1,4 @@
+// ...existing code...
 import { apiConfig } from "./apiConfig";
 import type {
   Destination,
@@ -108,6 +109,13 @@ export class DestinationService {
 
 export class JournalEntryService {
   private readonly endpoint = "/journal-entries";
+
+  // Toggle like/unlike on a journal entry
+  async toggleJournalEntryLike(entryId: string): Promise<JournalEntry> {
+    return apiConfig.request<JournalEntry>(`${this.endpoint}/${entryId}/like`, {
+      method: "PATCH",
+    });
+  }
 
   async getJournalEntries(
     params?: PaginationParams & {
