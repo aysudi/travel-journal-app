@@ -10,7 +10,6 @@ import {
 } from "../validations/destination.validation";
 import formatMongoData from "../utils/formatMongoData";
 
-// Multer setup for multi-image upload
 const upload = multer({ storage: multer.memoryStorage() });
 
 // Create a new destination
@@ -105,7 +104,6 @@ export const getDestinationById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    // Validate ID format
     const { error } = objectIdSchema.validate(id);
     if (error) {
       return res.status(400).json({
@@ -171,16 +169,13 @@ export const updateDestination = [
         });
       }
 
-      // Convert "country" to "location" if the validation schema uses "country"
       const updateData = { ...value };
       if (updateData.country) {
         updateData.location = updateData.country;
         delete updateData.country;
       }
 
-      // Get old destination for image cleanup
       const oldDestination = await destinationService.getDestinationById(id);
-      // Remove old images from Cloudinary if new images are provided
       if (
         req.files &&
         Array.isArray(req.files) &&
@@ -188,7 +183,6 @@ export const updateDestination = [
         oldDestination.images.length > 0
       ) {
         for (const url of oldDestination.images) {
-          // Extract public_id from URL
           const parts = url.split("/");
           const folder = parts[parts.length - 2];
           const filename = parts[parts.length - 1].split(".")[0];
@@ -198,7 +192,6 @@ export const updateDestination = [
           } catch {}
         }
       }
-      // Upload new images
       let imageUrls: string[] = [];
       if (req.files && Array.isArray(req.files)) {
         for (const file of req.files as Express.Multer.File[]) {
@@ -277,7 +270,6 @@ export const deleteDestination = async (req: Request, res: Response) => {
       });
     }
 
-    // Remove all images from Cloudinary
     const oldDestination = await destinationService.getDestinationById(id);
     if (oldDestination.images && oldDestination.images.length > 0) {
       for (const url of oldDestination.images) {
@@ -369,10 +361,9 @@ export const getDestinationsByTravelList = async (
   res: Response
 ) => {
   try {
-    const userId = (req.user as any)?.id; // Optional for access control
+    const userId = (req.user as any)?.id;
     const { listId } = req.params;
 
-    // Validate list ID format
     const { error } = objectIdSchema.validate(listId);
     if (error) {
       return res.status(400).json({
@@ -429,7 +420,6 @@ export const getDestinationsByStatus = async (req: Request, res: Response) => {
       });
     }
 
-    // Validate status
     if (!["Wishlist", "Planned", "Visited"].includes(status)) {
       return res.status(400).json({
         success: false,
@@ -499,7 +489,6 @@ export const updateDestinationStatus = async (req: Request, res: Response) => {
       });
     }
 
-    // Validate ID format
     const { error: idError } = objectIdSchema.validate(id);
     if (idError) {
       return res.status(400).json({
@@ -508,7 +497,6 @@ export const updateDestinationStatus = async (req: Request, res: Response) => {
       });
     }
 
-    // Validate request body
     const { error, value } = destinationStatusSchema.validate(req.body);
     if (error) {
       return res.status(400).json({
@@ -570,7 +558,6 @@ export const bulkUpdateDestinationStatus = async (
       });
     }
 
-    // Validate request body
     if (!Array.isArray(destinationIds) || destinationIds.length === 0) {
       return res.status(400).json({
         success: false,
@@ -585,7 +572,6 @@ export const bulkUpdateDestinationStatus = async (
       });
     }
 
-    // Validate each ID format
     for (const id of destinationIds) {
       const { error } = objectIdSchema.validate(id);
       if (error) {
@@ -645,7 +631,7 @@ export const getRecentDestinations = async (req: Request, res: Response) => {
       });
     }
 
-    const limitNum = limit ? Math.min(Number(limit), 20) : 5; // Max 20 destinations
+    const limitNum = limit ? Math.min(Number(limit), 20) : 5;
     const destinations = await destinationService.getRecentDestinations(
       userId,
       limitNum
@@ -686,7 +672,6 @@ export const searchDestinations = async (req: Request, res: Response) => {
       });
     }
 
-    // Validate status if provided
     if (
       status &&
       !["Wishlist", "Planned", "Visited"].includes(status as string)
@@ -699,7 +684,7 @@ export const searchDestinations = async (req: Request, res: Response) => {
 
     const options = {
       status: status as "Wishlist" | "Planned" | "Visited" | undefined,
-      limit: limit ? Math.min(Number(limit), 100) : 50, // Max 100 results
+      limit: limit ? Math.min(Number(limit), 100) : 50,
     };
 
     const destinations = await destinationService.searchDestinations(
