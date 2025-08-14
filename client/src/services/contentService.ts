@@ -41,20 +41,40 @@ export class DestinationService {
     return apiConfig.request<Destination>(`${this.endpoint}/${id}`);
   }
 
-  async createDestination(data: CreateDestinationData): Promise<Destination> {
+  async createDestination(
+    data: CreateDestinationData | FormData
+  ): Promise<Destination> {
+    let body: BodyInit;
+    let headers: Record<string, string> = {};
+    if (data instanceof FormData) {
+      body = data;
+    } else {
+      body = JSON.stringify(data);
+      headers["Content-Type"] = "application/json";
+    }
     return apiConfig.request<Destination>(this.endpoint, {
       method: "POST",
-      body: JSON.stringify(data),
+      body,
+      headers,
     });
   }
 
   async updateDestination(
     id: string,
-    data: Partial<CreateDestinationData>
+    data: Partial<CreateDestinationData> | FormData
   ): Promise<Destination> {
+    let body: BodyInit;
+    let headers: Record<string, string> = {};
+    if (data instanceof FormData) {
+      body = data;
+    } else {
+      body = JSON.stringify(data);
+      headers["Content-Type"] = "application/json";
+    }
     return apiConfig.request<Destination>(`${this.endpoint}/${id}`, {
       method: "PUT",
-      body: JSON.stringify(data),
+      body,
+      headers,
     });
   }
 
@@ -64,26 +84,7 @@ export class DestinationService {
     });
   }
 
-  async uploadDestinationImages(
-    destinationId: string,
-    files: File[]
-  ): Promise<{ images: string[] }> {
-    const formData = new FormData();
-    files.forEach((file) => {
-      formData.append(`images`, file);
-    });
-
-    return apiConfig.request<{ images: string[] }>(
-      `${this.endpoint}/${destinationId}/images`,
-      {
-        method: "POST",
-        body: formData,
-        headers: {
-          Authorization: `Bearer ${apiConfig.getToken()}`,
-        },
-      }
-    );
-  }
+  // Removed uploadDestinationImages; handled in create/update
 
   async removeDestinationImage(
     destinationId: string,
