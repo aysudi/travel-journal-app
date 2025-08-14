@@ -12,10 +12,6 @@ import {
   BookOpen,
   Globe,
   Lock,
-  Heart,
-  MessageSquare,
-  Filter,
-  SortAsc,
   MoreVertical,
   UserCheck,
   Eye,
@@ -26,256 +22,16 @@ import { useJournalEntriesByTravelList } from "../../hooks/useEntries";
 import {
   useCreateDestination,
   useDestinationsByTravelList,
+  destinationKeys,
 } from "../../hooks/useDestination";
+import { useQueryClient } from "@tanstack/react-query";
 import type { Destination, JournalEntry } from "../../types/api";
-import formatDate, { formatDateInHours } from "../../utils/formatDate";
-
-// AddDestinationModal component using a single state object
-function AddDestinationModal({
-  onClose,
-  onSubmit,
-}: {
-  onClose: () => void;
-  onSubmit: (destination: any) => void;
-}) {
-  const [newDestination, setNewDestination] = useState<any>({
-    name: "",
-    location: "",
-    status: "Wishlist",
-    dateVisited: "",
-    datePlanned: "",
-    notes: "",
-    images: [] as File[],
-    imagePreviews: [] as string[],
-  });
-
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
-  ) => {
-    const { name, value } = e.target;
-    setNewDestination((prev: any) => ({ ...prev, [name]: value }));
-  };
-
-  const handleDestinationImageUpload = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const files = e.target.files ? Array.from(e.target.files) : [];
-    setNewDestination((prev: any) => ({
-      ...prev,
-      images: [...prev.images, ...files],
-      imagePreviews: [
-        ...prev.imagePreviews,
-        ...files.map((file) => URL.createObjectURL(file)),
-      ],
-    }));
-  };
-
-  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const status = e.target.value;
-    if (status === "Visited") {
-      setNewDestination((prev: any) => ({
-        ...prev,
-        status,
-        dateVisited: status === "Visited" ? prev.dateVisited : "",
-        // datePlanned: status === "Planned" ? prev.datePlanned : "",
-      }));
-    } else if (status === "Planned") {
-      setNewDestination((prev: any) => ({
-        ...prev,
-        status,
-        datePlanned: status === "Planned" ? prev.datePlanned : "",
-      }));
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // Build FormData with all fields and images
-    const formData = new FormData();
-    formData.append("name", newDestination.name);
-    formData.append("location", newDestination.location);
-    formData.append("status", newDestination.status);
-    if (newDestination.dateVisited)
-      formData.append("dateVisited", newDestination.dateVisited);
-    if (newDestination.datePlanned)
-      formData.append("datePlanned", newDestination.datePlanned);
-    if (newDestination.notes) formData.append("notes", newDestination.notes);
-    if (newDestination.images && newDestination.images.length > 0) {
-      newDestination.images.forEach((file: File) => {
-        formData.append("images", file);
-      });
-    }
-    onSubmit(formData);
-    setNewDestination({
-      name: "",
-      location: "",
-      status: "Wishlist",
-      dateVisited: "",
-      datePlanned: "",
-      notes: "",
-      images: [],
-      imagePreviews: [],
-    });
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
-        <h2 className="text-xl font-semibold mb-4">Add New Destination</h2>
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Destination Name *
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={newDestination.name}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="e.g., Eiffel Tower"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Location *
-            </label>
-            <input
-              type="text"
-              name="location"
-              value={newDestination.location}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="e.g., Paris, France"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Status
-            </label>
-            <select
-              name="status"
-              value={newDestination.status}
-              onChange={handleStatusChange}
-              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="Wishlist">Wishlist</option>
-              <option value="Planned">Planned</option>
-              <option value="Visited">Visited</option>
-            </select>
-          </div>
-          {/* Conditional date fields */}
-          {newDestination.status === "Visited" && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Date Visited
-              </label>
-              <input
-                type="date"
-                name="dateVisited"
-                value={newDestination.dateVisited}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-          )}
-          {newDestination.status === "Planned" && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Date Planned
-              </label>
-              <input
-                type="date"
-                name="datePlanned"
-                value={newDestination.datePlanned}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-          )}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Notes (Optional)
-            </label>
-            <textarea
-              name="notes"
-              rows={3}
-              value={newDestination.notes}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-              placeholder="Add any notes about this destination..."
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Images
-            </label>
-            <input
-              type="file"
-              name="images"
-              accept="image/*"
-              multiple
-              onChange={handleDestinationImageUpload}
-              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-            {/* Image previews */}
-            {newDestination.imagePreviews.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-4">
-                {newDestination.imagePreviews.map(
-                  (src: string, idx: number) => (
-                    <div key={idx} className="relative w-16 h-16">
-                      <img
-                        src={src}
-                        alt={`Preview ${idx + 1}`}
-                        className="w-16 h-16 object-cover rounded-lg border"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setNewDestination((prev: any) => ({
-                            ...prev,
-                            images: prev.images.filter(
-                              (_: string, i: number) => i !== idx
-                            ),
-                            imagePreviews: prev.imagePreviews.filter(
-                              (_: string, i: number) => i !== idx
-                            ),
-                          }));
-                        }}
-                        className="absolute top-[-4px] right-[-4px] bg-black/50 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-black/70"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  )
-                )}
-              </div>
-            )}
-          </div>
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2 text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="flex-1 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 cursor-pointer"
-            >
-              Add Destination
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
+import Swal from "sweetalert2";
+import AddDestinationModal from "../../components/Client/ListDetails/AddDestinationModal";
+import NavigationTabs from "../../components/Client/ListDetails/NavigationTabs";
+import DestinationsTabs from "../../components/Client/ListDetails/DestinationsTabs";
+import JournalsTabs from "../../components/Client/ListDetails/JournalsTabs";
+import PhotosTab from "../../components/Client/ListDetails/PhotosTab";
 
 const ListDetails = () => {
   const { listId } = useParams<{ listId: string }>();
@@ -290,12 +46,6 @@ const ListDetails = () => {
   const [selectedDestination, setSelectedDestination] =
     useState<Destination | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [filterStatus, setFilterStatus] = useState<
-    "all" | "Wishlist" | "Planned" | "Visited"
-  >("all");
-  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "alphabetical">(
-    "newest"
-  );
 
   const { data: travelList, isLoading, error } = useTravelList(listId || "");
   const {
@@ -309,15 +59,12 @@ const ListDetails = () => {
     error: errorJournals,
   } = useJournalEntriesByTravelList(listId || "");
   const createDestination = useCreateDestination();
+  const queryClient = useQueryClient();
 
   const destinationsArray = destinations || [];
   const journalsArray = journals || [];
 
-  const getDestinationStatus = (dest: Destination): string => {
-    if (dest.dateVisited) return "Visited";
-    if (dest.notes?.toLowerCase().includes("planned")) return "Planned";
-    return "Wishlist";
-  };
+  const getDestinationStatus = (dest: Destination): string => dest.status;
 
   if (isLoading || isLoadingDestinations || isLoadingJournals) {
     return <Loading variant="page" />;
@@ -345,37 +92,6 @@ const ListDetails = () => {
       </div>
     );
   }
-
-  const filteredDestinations = (destinationsArray as Destination[]).filter(
-    (dest: Destination) => {
-      if (filterStatus === "all") return true;
-      if (filterStatus === "Visited") return !!dest.dateVisited;
-      if (filterStatus === "Planned")
-        return !dest.dateVisited && dest.notes?.includes("planned");
-      if (filterStatus === "Wishlist")
-        return !dest.dateVisited && !dest.notes?.includes("planned");
-      return false;
-    }
-  );
-
-  const sortedDestinations = filteredDestinations.sort(
-    (a: Destination, b: Destination) => {
-      switch (sortBy) {
-        case "newest":
-          return (
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
-        case "oldest":
-          return (
-            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-          );
-        case "alphabetical":
-          return a.name.localeCompare(b.name);
-        default:
-          return 0;
-      }
-    }
-  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -697,226 +413,24 @@ const ListDetails = () => {
 
         {/* Navigation Tabs */}
         <div className="bg-white rounded-2xl shadow-xl mb-8">
-          <div className="border-b border-gray-200">
-            <nav className="flex">
-              <button
-                onClick={() => setActiveTab("destinations")}
-                className={`px-6 py-4 font-medium text-sm transition-colors duration-200 ${
-                  activeTab === "destinations"
-                    ? "text-indigo-600 border-b-2 border-indigo-600"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                <div className="flex items-center gap-2 cursor-pointer">
-                  <MapPin size={18} />
-                  <span>
-                    Destinations ({(destinationsArray as Destination[]).length})
-                  </span>
-                </div>
-              </button>
-              <button
-                onClick={() => setActiveTab("journals")}
-                className={`px-6 py-4 font-medium text-sm transition-colors duration-200 ${
-                  activeTab === "journals"
-                    ? "text-indigo-600 border-b-2 border-indigo-600"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                <div className="flex items-center gap-2 cursor-pointer">
-                  <BookOpen size={18} />
-                  <span>
-                    Journals ({(journalsArray as JournalEntry[]).length})
-                  </span>
-                </div>
-              </button>
-              <button
-                onClick={() => setActiveTab("photos")}
-                className={`px-6 py-4 font-medium text-sm transition-colors duration-200 ${
-                  activeTab === "photos"
-                    ? "text-indigo-600 border-b-2 border-indigo-600"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                <div className="flex items-center gap-2 cursor-pointer">
-                  <Camera size={18} />
-                  <span>
-                    Photos (
-                    {
-                      (destinationsArray as Destination[])
-                        .flatMap((d: Destination) => d.images)
-                        .concat(
-                          (journalsArray as JournalEntry[]).flatMap(
-                            (j: JournalEntry) => j.photos
-                          )
-                        ).length
-                    }
-                    )
-                  </span>
-                </div>
-              </button>
-            </nav>
-          </div>
+          <NavigationTabs
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            destinationsArray={destinationsArray}
+            journalsArray={journalsArray}
+          />
 
           {/* Tab Content */}
           <div className="p-6">
             {/* Destinations Tab */}
             {activeTab === "destinations" && (
-              <div>
-                {/* Filters and Sort */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <Filter size={16} className="text-gray-500" />
-                      <select
-                        value={filterStatus}
-                        onChange={(e) => setFilterStatus(e.target.value as any)}
-                        className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
-                      >
-                        <option value="all">All Status</option>
-                        <option value="Wishlist">Wishlist</option>
-                        <option value="Planned">Planned</option>
-                        <option value="Visited">Visited</option>
-                      </select>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <SortAsc size={16} className="text-gray-500" />
-                      <select
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value as any)}
-                        className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
-                      >
-                        <option value="newest">Newest First</option>
-                        <option value="oldest">Oldest First</option>
-                        <option value="alphabetical">Alphabetical</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="text-sm text-gray-500">
-                    Showing {sortedDestinations.length} destinations
-                  </div>
-                </div>
-
-                {/* Destinations Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {sortedDestinations.map(
-                    (destination: Destination, idx: number) => {
-                      const status = getDestinationStatus(destination);
-                      return (
-                        <div
-                          key={idx}
-                          onClick={() => handleDestinationClick(destination)}
-                          className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer"
-                        >
-                          {/* Destination Image */}
-                          <div className="relative h-48 bg-gray-200 overflow-hidden">
-                            {destination.images[0] ? (
-                              <img
-                                src={destination.images[0]}
-                                alt={destination.name}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center">
-                                <MapPin size={48} className="text-indigo-400" />
-                              </div>
-                            )}
-
-                            {/* Status Badge */}
-                            <div className="absolute top-3 left-3">
-                              <span
-                                className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
-                                  status
-                                )}`}
-                              >
-                                {status}
-                              </span>
-                            </div>
-
-                            {/* Action Buttons */}
-                            <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                              <div className="flex gap-2">
-                                <button className="bg-white/90 hover:bg-white text-gray-700 p-2 rounded-full shadow-lg transition-colors duration-200 cursor-pointer">
-                                  <Edit3 size={14} />
-                                </button>
-                                <button className="bg-white/90 hover:bg-white text-red-600 p-2 rounded-full shadow-lg transition-colors duration-200 cursor-pointer">
-                                  <Trash2 size={14} />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Destination Info */}
-                          <div className="p-5">
-                            <h3 className="font-semibold text-lg text-gray-800 mb-2 group-hover:text-indigo-600 transition-colors duration-200">
-                              {destination.name}
-                            </h3>
-                            <div className="flex items-center gap-1 text-gray-600 mb-3">
-                              <MapPin size={16} />
-                              <span className="text-sm">
-                                {destination.location}
-                              </span>
-                            </div>
-
-                            {/* Date Info */}
-                            {destination.dateVisited && (
-                              <div className="flex items-center gap-1 text-gray-600 mb-3">
-                                <Calendar size={16} />
-                                <span className="text-sm">
-                                  Visited{" "}
-                                  {new Date(
-                                    destination.dateVisited
-                                  ).toLocaleDateString()}
-                                </span>
-                              </div>
-                            )}
-
-                            {/* Notes Preview */}
-                            {destination.notes && (
-                              <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                                {destination.notes}
-                              </p>
-                            )}
-
-                            {/* Action Buttons */}
-                            <div className="flex items-center justify-between">
-                              <button className="text-indigo-600 hover:text-indigo-700 text-sm font-medium flex items-center gap-1 transition-colors duration-200">
-                                <BookOpen size={16} />
-                                <span>Add Journal</span>
-                              </button>
-                              <button className="text-gray-500 hover:text-gray-700 transition-colors duration-200">
-                                <Heart size={18} />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    }
-                  )}
-                </div>
-
-                {/* Empty State */}
-                {sortedDestinations.length === 0 && (
-                  <div className="text-center py-12">
-                    <MapPin size={64} className="text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-xl font-medium text-gray-600 mb-2">
-                      No destinations found
-                    </h3>
-                    <p className="text-gray-500 mb-6">
-                      {filterStatus === "all"
-                        ? "Start building your travel list by adding your first destination"
-                        : `No destinations with status "${filterStatus}"`}
-                    </p>
-                    <button
-                      onClick={() => setShowAddDestination(true)}
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
-                    >
-                      <Plus size={20} />
-                      <span>Add Your First Destination</span>
-                    </button>
-                  </div>
-                )}
-              </div>
+              <DestinationsTabs
+                setShowAddDestination={setShowAddDestination}
+                getStatusColor={getStatusColor}
+                getDestinationStatus={getDestinationStatus}
+                handleDestinationClick={handleDestinationClick}
+                destinationsArray={destinationsArray}
+              />
             )}
 
             {/* Journals Tab */}
@@ -926,223 +440,11 @@ const ListDetails = () => {
                   {(journalsArray as JournalEntry[]).map(
                     (journal: JournalEntry, idx: number) => {
                       return (
-                        <div
+                        <JournalsTabs
                           key={idx}
-                          className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
-                        >
-                          <div className="p-6">
-                            {/* Author Info with enhanced design */}
-                            <div className="flex items-center justify-between mb-6">
-                              <div className="flex items-center gap-3">
-                                {/* Profile Image */}
-                                <div className="relative">
-                                  {journal.author.profileImage ? (
-                                    <img
-                                      src={journal.author.profileImage}
-                                      alt={journal.author.fullName}
-                                      className="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-lg"
-                                    />
-                                  ) : (
-                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center ring-2 ring-white shadow-lg">
-                                      <span className="text-white font-semibold text-lg">
-                                        {journal.author.fullName
-                                          .charAt(0)
-                                          .toUpperCase()}
-                                      </span>
-                                    </div>
-                                  )}
-                                  {/* Online indicator */}
-                                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white"></div>
-                                </div>
-
-                                <div className="flex flex-col">
-                                  <p className="font-semibold text-gray-900 hover:text-indigo-600 transition-colors duration-200 cursor-pointer">
-                                    {journal.author.fullName}
-                                  </p>
-                                  <div className="flex items-center gap-2">
-                                    <p className="text-sm text-gray-500">
-                                      @{journal.author.username}
-                                    </p>
-                                    <span className="text-gray-300">•</span>
-                                    <div
-                                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                                        journal.isPublic
-                                          ? "bg-green-50 text-green-700 border border-green-200"
-                                          : "bg-gray-50 text-gray-600 border border-gray-200"
-                                      }`}
-                                    >
-                                      {journal.isPublic ? (
-                                        <>
-                                          <Globe size={10} />
-                                          <span>Public</span>
-                                        </>
-                                      ) : (
-                                        <>
-                                          <Lock size={10} />
-                                          <span>Private</span>
-                                        </>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Date with improved formatting */}
-                              <div className="text-right">
-                                <p className="text-sm font-medium text-gray-600">
-                                  {formatDate(journal.createdAt)}
-                                </p>
-                                <p className="text-xs text-gray-400">
-                                  {formatDateInHours(journal.createdAt)}
-                                </p>
-                              </div>
-                            </div>
-
-                            {/* Journal Content with enhanced design */}
-                            <div className="mb-6">
-                              <h3 className="text-xl font-bold text-gray-900 mb-3 leading-tight hover:text-indigo-600 transition-colors duration-200 cursor-pointer">
-                                {journal.title}
-                              </h3>
-                              <div className="prose prose-gray max-w-none">
-                                <p className="text-gray-700 leading-relaxed text-base line-clamp-4">
-                                  {journal.content}
-                                </p>
-                              </div>
-
-                              {/* Read more button for long content */}
-                              {journal.content.length > 200 && (
-                                <button className="text-indigo-600 hover:text-indigo-700 text-sm font-medium mt-2 transition-colors duration-200">
-                                  Read more
-                                </button>
-                              )}
-                            </div>
-
-                            {/* Tags with improved styling */}
-                            {journal.tags && journal.tags.length > 0 && (
-                              <div className="flex flex-wrap gap-2 mb-6">
-                                {journal.tags.map(
-                                  (tag: string, index: number) => (
-                                    <span
-                                      key={index}
-                                      className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 border border-indigo-100 hover:from-indigo-100 hover:to-purple-100 transition-all duration-200 cursor-pointer"
-                                    >
-                                      #{tag}
-                                    </span>
-                                  )
-                                )}
-                              </div>
-                            )}
-
-                            {/* Journal Images with enhanced gallery */}
-                            {journal.photos.length > 0 && (
-                              <div className="mb-6">
-                                <div
-                                  className={`grid gap-3 ${
-                                    journal.photos.length === 1
-                                      ? "grid-cols-1 max-w-md"
-                                      : journal.photos.length === 2
-                                      ? "grid-cols-2"
-                                      : journal.photos.length === 3
-                                      ? "grid-cols-3"
-                                      : "grid-cols-2 md:grid-cols-4"
-                                  }`}
-                                >
-                                  {journal.photos
-                                    .slice(0, 4)
-                                    .map((image: string, index: number) => (
-                                      <div
-                                        key={index}
-                                        className="relative group cursor-pointer overflow-hidden rounded-xl shadow-md hover:shadow-xl transition-all duration-300"
-                                      >
-                                        <img
-                                          src={image}
-                                          alt={`Journal photo ${index + 1}`}
-                                          className={`w-full object-cover transition-transform duration-300 group-hover:scale-105 ${
-                                            journal.photos.length === 1
-                                              ? "h-64"
-                                              : "h-32 md:h-24"
-                                          }`}
-                                        />
-                                        {/* Hover overlay */}
-                                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                                        {/* Photo indicator for multiple photos */}
-                                        {journal.photos.length > 4 &&
-                                          index === 3 && (
-                                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                                              <span className="text-white font-semibold text-lg">
-                                                +{journal.photos.length - 4}
-                                              </span>
-                                            </div>
-                                          )}
-                                      </div>
-                                    ))}
-                                </div>
-
-                                {/* View all photos link */}
-                                {journal.photos.length > 4 && (
-                                  <button className="text-indigo-600 hover:text-indigo-700 text-sm font-medium mt-3 transition-colors duration-200">
-                                    View all {journal.photos.length} photos
-                                  </button>
-                                )}
-                              </div>
-                            )}
-
-                            {/* Actions with enhanced design */}
-                            <div className="flex items-center justify-between pt-5 border-t border-gray-100">
-                              <div className="flex items-center gap-6">
-                                <button className="group flex items-center gap-2 text-gray-500 hover:text-red-500 transition-all duration-200">
-                                  <div className="p-2 rounded-full group-hover:bg-red-50 transition-colors duration-200">
-                                    <Heart
-                                      size={18}
-                                      className="group-hover:scale-110 transition-transform duration-200"
-                                    />
-                                  </div>
-                                  <span className="text-sm font-medium">
-                                    Like
-                                  </span>
-                                  <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full group-hover:bg-red-100 group-hover:text-red-600 transition-colors duration-200">
-                                    0
-                                  </span>
-                                </button>
-
-                                <button className="group flex items-center gap-2 text-gray-500 hover:text-indigo-500 transition-all duration-200">
-                                  <div className="p-2 rounded-full group-hover:bg-indigo-50 transition-colors duration-200">
-                                    <MessageSquare
-                                      size={18}
-                                      className="group-hover:scale-110 transition-transform duration-200"
-                                    />
-                                  </div>
-                                  <span className="text-sm font-medium">
-                                    Comment
-                                  </span>
-                                  <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors duration-200">
-                                    0
-                                  </span>
-                                </button>
-
-                                <button className="group flex items-center gap-2 text-gray-500 hover:text-blue-500 transition-all duration-200">
-                                  <div className="p-2 rounded-full group-hover:bg-blue-50 transition-colors duration-200">
-                                    <Share2
-                                      size={18}
-                                      className="group-hover:scale-110 transition-transform duration-200"
-                                    />
-                                  </div>
-                                  <span className="text-sm font-medium">
-                                    Share
-                                  </span>
-                                </button>
-                              </div>
-
-                              {/* Additional actions menu */}
-                              <div className="relative">
-                                <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all duration-200">
-                                  <MoreVertical size={16} />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                          journal={journal}
+                          listId={listId}
+                        />
                       );
                     }
                   )}
@@ -1173,50 +475,10 @@ const ListDetails = () => {
 
             {/* Photos Tab */}
             {activeTab === "photos" && (
-              <div>
-                {/* Photo Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {(destinationsArray as Destination[])
-                    .flatMap((d: Destination) => d.images)
-                    .concat(
-                      (journalsArray as JournalEntry[]).flatMap(
-                        (j: JournalEntry) => j.photos
-                      )
-                    )
-                    .map((photo: string, index: number) => (
-                      <div
-                        key={index}
-                        className="aspect-square bg-gray-200 rounded-lg overflow-hidden group cursor-pointer"
-                      >
-                        <img
-                          src={photo}
-                          alt={`Photo ${index + 1}`}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-                    ))}
-                </div>
-
-                {/* Empty State for Photos */}
-                {(destinationsArray as Destination[])
-                  .flatMap((d: Destination) => d.images)
-                  .concat(
-                    (journalsArray as JournalEntry[]).flatMap(
-                      (j: JournalEntry) => j.photos
-                    )
-                  ).length === 0 && (
-                  <div className="text-center py-12">
-                    <Camera size={64} className="text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-xl font-medium text-gray-600 mb-2">
-                      No photos yet
-                    </h3>
-                    <p className="text-gray-500 mb-6">
-                      Add photos to your destinations and journals to see them
-                      here
-                    </p>
-                  </div>
-                )}
-              </div>
+              <PhotosTab
+                destinationsArray={destinationsArray}
+                journalsArray={journalsArray}
+              />
             )}
           </div>
         </div>
@@ -1238,8 +500,21 @@ const ListDetails = () => {
             if (listId) {
               formData.append("list", listId);
             }
-            await createDestination.mutateAsync(formData);
             setShowAddDestination(false);
+            await createDestination.mutateAsync(formData, {
+              onSuccess: () => {
+                if (listId) {
+                  queryClient.invalidateQueries({
+                    queryKey: destinationKeys.byTravelList(listId),
+                  });
+                }
+                Swal.fire({
+                  title: "Destination created successfully!",
+                  icon: "success",
+                  draggable: true,
+                });
+              },
+            });
           }}
         />
       )}
