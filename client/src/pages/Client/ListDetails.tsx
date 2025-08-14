@@ -92,30 +92,22 @@ function AddDestinationModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Upload images to server (Cloudinary)
-    let imageUrls: string[] = [];
+    // Build FormData with all fields and images
+    const formData = new FormData();
+    formData.append("name", newDestination.name);
+    formData.append("location", newDestination.location);
+    formData.append("status", newDestination.status);
+    if (newDestination.dateVisited)
+      formData.append("dateVisited", newDestination.dateVisited);
+    if (newDestination.datePlanned)
+      formData.append("datePlanned", newDestination.datePlanned);
+    if (newDestination.notes) formData.append("notes", newDestination.notes);
     if (newDestination.images && newDestination.images.length > 0) {
-      const formData = new FormData();
       newDestination.images.forEach((file: File) => {
         formData.append("images", file);
       });
-      // POST to server endpoint for image upload (should return array of URLs)
-      const res = await fetch("/api/upload/destination-images", {
-        method: "POST",
-        body: formData,
-      });
-      if (res.ok) {
-        imageUrls = await res.json();
-      } else {
-        alert("Image upload failed");
-        return;
-      }
     }
-    // Call onSubmit with all destination data and image URLs
-    onSubmit({
-      ...newDestination,
-      images: imageUrls,
-    });
+    onSubmit(formData);
     setNewDestination({
       name: "",
       location: "",
@@ -1242,12 +1234,11 @@ const ListDetails = () => {
       {showAddDestination && (
         <AddDestinationModal
           onClose={() => setShowAddDestination(false)}
-          onSubmit={async (destination) => {
-            // Post destination to server (with images already uploaded)
-            await createDestination.mutateAsync({
-              ...destination,
-              travelListId: listId,
-            });
+          onSubmit={async (formData: FormData) => {
+            if (listId) {
+              formData.append("list", listId);
+            }
+            await createDestination.mutateAsync(formData);
             setShowAddDestination(false);
           }}
         />
