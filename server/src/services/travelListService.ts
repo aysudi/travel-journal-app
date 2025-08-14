@@ -1,4 +1,5 @@
 import TravelList from "../models/TravelList";
+import { v2 as cloudinary } from "cloudinary";
 
 interface PaginationParams {
   page?: number;
@@ -90,13 +91,46 @@ export const getPublicLists = async (params: PaginationParams) => {
   };
 };
 
-export const update = async (id: string, payload: any) =>
-  await TravelList.findByIdAndUpdate(id, payload, { new: true })
+export const update = async (
+  id: string,
+  payload: any,
+  cloudinaryResult?: any
+) => {
+  const existingList = await TravelList.findById(id);
+
+  if (!existingList) {
+    throw new Error("Travel list not found");
+  }
+
+  // Handle cover image update with Cloudinary
+  if (cloudinaryResult) {
+    // Delete old image from Cloudinary if it exists
+    if (existingList.public_id) {
+      try {
+        await cloudinary.uploader.destroy(existingList.public_id);
+      } catch (error) {
+        console.error("Error deleting old cover image from Cloudinary:", error);
+      }
+    }
+
+    // Set new image data
+    payload.coverImage = cloudinaryResult.secure_url;
+    payload.public_id = cloudinaryResult.public_id;
+  }
+
+  return await TravelList.findByIdAndUpdate(id, payload, { new: true })
     .populate("owner", "firstName lastName email profileImage")
     .populate("destinations")
     .populate("customPermissions.user", "fullName username email profileImage");
+};
 
-export const post = async (payload: any) => {
+export const post = async (payload: any, cloudinaryResult?: any) => {
+  // Handle cover image upload with Cloudinary
+  if (cloudinaryResult) {
+    payload.coverImage = cloudinaryResult.secure_url;
+    payload.public_id = cloudinaryResult.public_id;
+  }
+
   const newList = await TravelList.create(payload);
   return await TravelList.findById(newList._id)
     .populate("owner", "firstName lastName email profileImage")
@@ -104,8 +138,24 @@ export const post = async (payload: any) => {
     .populate("customPermissions.user", "fullName email profileImage");
 };
 
-export const deleteOne = async (id: string) =>
-  await TravelList.findByIdAndDelete(id);
+export const deleteOne = async (id: string) => {
+  const existingList = await TravelList.findById(id);
+
+  if (!existingList) {
+    throw new Error("Travel list not found");
+  }
+
+  // Delete cover image from Cloudinary if it exists
+  if (existingList.public_id) {
+    try {
+      await cloudinary.uploader.destroy(existingList.public_id);
+    } catch (error) {
+      console.error("Error deleting cover image from Cloudinary:", error);
+    }
+  }
+
+  return await TravelList.findByIdAndDelete(id);
+};
 
 export const addCustomPermission = async (
   listId: string,
