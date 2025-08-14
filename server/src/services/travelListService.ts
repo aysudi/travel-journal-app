@@ -102,9 +102,7 @@ export const update = async (
     throw new Error("Travel list not found");
   }
 
-  // Handle cover image update with Cloudinary
   if (cloudinaryResult) {
-    // Delete old image from Cloudinary if it exists
     if (existingList.public_id) {
       try {
         await cloudinary.uploader.destroy(existingList.public_id);
@@ -113,7 +111,6 @@ export const update = async (
       }
     }
 
-    // Set new image data
     payload.coverImage = cloudinaryResult.secure_url;
     payload.public_id = cloudinaryResult.public_id;
   }
@@ -125,17 +122,24 @@ export const update = async (
 };
 
 export const post = async (payload: any, cloudinaryResult?: any) => {
-  // Handle cover image upload with Cloudinary
-  if (cloudinaryResult) {
-    payload.coverImage = cloudinaryResult.secure_url;
-    payload.public_id = cloudinaryResult.public_id;
-  }
+  try {
+    if (cloudinaryResult) {
+      payload.coverImage = cloudinaryResult.secure_url;
+      payload.public_id = cloudinaryResult.public_id;
+    }
 
-  const newList = await TravelList.create(payload);
-  return await TravelList.findById(newList._id)
-    .populate("owner", "firstName lastName email profileImage")
-    .populate("destinations")
-    .populate("customPermissions.user", "fullName email profileImage");
+    const newList = await TravelList.create(payload);
+
+    const populatedList = await TravelList.findById(newList._id)
+      .populate("owner", "firstName lastName email profileImage")
+      .populate("destinations")
+      .populate("customPermissions.user", "fullName email profileImage");
+
+    return populatedList;
+  } catch (error) {
+    console.error("❌ Error in travelListService.post:", error);
+    throw error;
+  }
 };
 
 export const deleteOne = async (id: string) => {
@@ -145,7 +149,6 @@ export const deleteOne = async (id: string) => {
     throw new Error("Travel list not found");
   }
 
-  // Delete cover image from Cloudinary if it exists
   if (existingList.public_id) {
     try {
       await cloudinary.uploader.destroy(existingList.public_id);
@@ -270,7 +273,6 @@ export const getFriendsLists = async (userId: string, limit: number = 10) => {
   const User = await import("../models/User.js");
   const UserModel = User.default;
 
-  // Get current user with friends
   const currentUser = await UserModel.findById(userId).populate(
     "friends",
     "_id"
@@ -279,13 +281,11 @@ export const getFriendsLists = async (userId: string, limit: number = 10) => {
     return [];
   }
 
-  // Get friend IDs
   const friendIds = currentUser.friends.map((friend: any) => friend._id);
 
-  // Find lists created by friends with "friends" visibility only
   const friendsLists = await TravelList.find({
     owner: { $in: friendIds },
-    visibility: "friends", // Only lists with friends visibility
+    visibility: "friends",
   })
     .populate("owner", "fullName username email profileImage")
     .populate("destinations")

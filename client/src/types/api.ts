@@ -127,40 +127,28 @@ export interface CreateListInvitationData {
 
 // Destination Types
 export interface Destination {
-  _id: string;
+  id: string; // Changed from _id to id (formatted by server)
   name: string;
-  description?: string;
-  //   location: {
-  //     coordinates: [number, number];
-  //     address?: string;
-  //     city?: string;
-  //     country?: string;
-  //   };
   location: string;
-  images: string[];
-  visitedDate?: string;
-  rating?: number;
   notes?: string;
-  travelList: string;
-  createdBy: string;
+  images: string[];
+  status: "Wishlist" | "Planned" | "Visited";
+  dateVisited?: string;
+  datePlanned?: string;
+  list: string; // Changed from travelList to list to match server schema
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateDestinationData {
   name: string;
-  description?: string;
-  location: {
-    coordinates: [number, number];
-    address?: string;
-    city?: string;
-    country?: string;
-  };
-  images?: string[];
-  visitedDate?: string;
-  rating?: number;
+  location: string; // Changed to string to match server schema
   notes?: string;
-  travelList: string;
+  images?: string[];
+  status?: "Wishlist" | "Planned" | "Visited";
+  dateVisited?: string;
+  datePlanned?: string;
+  list: string; // Changed from travelList to list to match server schema
 }
 
 // Journal Entry Types

@@ -18,9 +18,16 @@ import { useFormik } from "formik";
 import { useNavigate } from "react-router";
 import { enqueueSnackbar } from "notistack";
 import createListValidation from "../../validations/createListValidation";
-import { useCreateTravelList } from "../../hooks/useTravelList";
-import { destinationService } from "../../services";
-import type { CreateDestinationData } from "../../types/api";
+import {
+  travelListService,
+  imageUploadService,
+  destinationService,
+} from "../../services";
+import type {
+  CreateTravelListData,
+  TravelList,
+  CreateDestinationData,
+} from "../../types/api";
 
 interface DestinationFormData {
   name: string;
@@ -34,7 +41,6 @@ interface DestinationFormData {
 
 const CreateList = () => {
   const navigate = useNavigate();
-  const createTravelListMutation = useCreateTravelList();
 
   const [currentStep, setCurrentStep] = useState<"list" | "destination">(
     "list"
@@ -53,21 +59,28 @@ const CreateList = () => {
       images: [],
     });
 
-  const uploadFile = async (file: File): Promise<string> => {
+  const createTravelListWithImage = async (
+    listData: CreateTravelListData,
+    coverImage: File | null
+  ): Promise<TravelList> => {
     const formData = new FormData();
-    formData.append("file", file);
 
-    const response = await fetch("/api/upload", {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to upload file");
+    formData.append("title", listData.title);
+    if (listData.description) {
+      formData.append("description", listData.description);
+    }
+    if (listData.tags && listData.tags.length > 0) {
+      formData.append("tags", JSON.stringify(listData.tags));
+    }
+    if (listData.isPublic !== undefined) {
+      formData.append("isPublic", listData.isPublic.toString());
     }
 
-    const data = await response.json();
-    return data.url;
+    if (coverImage) {
+      formData.append("coverImage", coverImage);
+    }
+
+    return travelListService.createTravelListWithFormData(formData);
   };
 
   const createDestinations = async (travelListId: string) => {
@@ -77,23 +90,30 @@ const CreateList = () => {
       try {
         const uploadedImages = [];
         for (const image of dest.images) {
-          const imageUrl = await uploadFile(image);
+          const imageUrl = await imageUploadService.uploadImage(image);
           uploadedImages.push(imageUrl);
         }
 
         const destinationData: CreateDestinationData = {
           name: dest.name,
-          description: dest.notes || undefined,
-          location: {
-            coordinates: [0, 0],
-            address: dest.location,
-            city: dest.location,
-            country: dest.location,
-          },
+          location: dest.location,
+          notes: dest.notes || undefined,
           images: uploadedImages,
-          visitedDate: dest.status === "visited" ? dest.dateVisited : undefined,
-          notes: dest.notes,
-          travelList: travelListId,
+          status:
+            dest.status === "visited"
+              ? "Visited"
+              : dest.status === "planned"
+              ? "Planned"
+              : "Wishlist",
+          dateVisited:
+            dest.status === "visited" && dest.dateVisited
+              ? new Date(dest.dateVisited).toISOString()
+              : undefined,
+          datePlanned:
+            dest.status === "planned" && dest.datePlanned
+              ? new Date(dest.datePlanned).toISOString()
+              : undefined,
+          list: travelListId,
         };
 
         const createdDestination = await destinationService.createDestination(
@@ -124,8 +144,6 @@ const CreateList = () => {
       coverImage: null as File | null,
     },
     onSubmit: async (values) => {
-      console.log("Form values:", values);
-
       if (currentStep === "list") {
         if (values.title.trim() && values.coverImage) {
           setCurrentStep("destination");
@@ -136,27 +154,19 @@ const CreateList = () => {
       try {
         setIsSubmitting(true);
 
-        let coverImageUrl = "";
-        if (values.coverImage) {
-          coverImageUrl = await uploadFile(values.coverImage);
-        }
-
         const travelListData = {
           title: values.title,
           description: values.description || undefined,
           tags: values.tags.length > 0 ? values.tags : undefined,
           isPublic: values.visibility === "public",
-          coverImage: coverImageUrl || undefined,
         };
 
-        console.log("Creating travel list with data:", travelListData);
-
-        const createdList = await createTravelListMutation.mutateAsync(
-          travelListData
+        const createdList = await createTravelListWithImage(
+          travelListData,
+          values.coverImage
         );
 
         if (destinations.length > 0) {
-          console.log("Creating destinations for list:", createdList.id);
           await createDestinations(createdList.id);
         }
 
@@ -165,7 +175,6 @@ const CreateList = () => {
           autoHideDuration: 3000,
         });
 
-        console.log("Travel list created successfully:", createdList);
         navigate(`/lists/${createdList.id}`);
       } catch (error) {
         console.error("Failed to create travel list:", error);
@@ -202,7 +211,6 @@ const CreateList = () => {
         images: [...currentDestination.images, ...files],
       });
 
-      // Create previews
       files.forEach((file) => {
         const reader = new FileReader();
         reader.onloadend = () => {
