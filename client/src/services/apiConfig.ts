@@ -68,7 +68,6 @@ export class ApiConfig {
 
   public async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
-      console.log("hello");
       let errorData: ApiError;
       try {
         errorData = await response.json();

@@ -10,6 +10,31 @@ export const useToggleJournalEntryLike = (travelListId?: string) => {
         journalEntryKeys.list(updatedEntry.id),
         updatedEntry
       );
+
+      queryClient.setQueriesData(
+        {
+          queryKey: journalEntryKeys.public(),
+          exact: false,
+        },
+        (oldData: any) => {
+          if (!oldData) return oldData;
+          if (oldData.data && Array.isArray(oldData.data)) {
+            return {
+              ...oldData,
+              data: oldData.data.map((j: any) =>
+                j.id === updatedEntry.id ? { ...j, ...updatedEntry } : j
+              ),
+            };
+          }
+          if (Array.isArray(oldData)) {
+            return oldData.map((j: any) =>
+              j.id === updatedEntry.id ? { ...j, ...updatedEntry } : j
+            );
+          }
+          return oldData;
+        }
+      );
+
       if (travelListId) {
         queryClient.invalidateQueries({
           queryKey: journalEntryKeys.byTravelList(travelListId),

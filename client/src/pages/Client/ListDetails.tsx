@@ -306,7 +306,6 @@ const ListDetails = () => {
           destination={selectedDestination}
           onClose={() => setShowEditDestination(false)}
           onSubmit={async (formData: any) => {
-            // Do NOT append 'list' for edit
             setShowEditDestination(false);
             const id = formData.get("id");
             await editDestination.mutateAsync(
