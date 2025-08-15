@@ -20,13 +20,15 @@ export interface UserProfile {
   profileImage: string;
   provider: "local" | "google" | "github";
   premium: boolean;
-  profileVisibility: "public" | "private";
+  profileVisibility: "public" | "private" | "friends";
   isVerified: boolean;
   lastLogin: string;
   createdAt: string;
   updatedAt: string;
   ownedLists: string[];
-  collaboratingLists: string[];
+  friendRequestsReceived: string[];
+  friendRequestsSent: string[];
+  friends: string[];
 }
 
 export interface UpdateProfileData {
@@ -120,9 +122,7 @@ export interface CreateListInvitationData {
   list: string;
   inviter?: string;
   invitee?: string;
-  inviteeEmail?: string;
   permissionLevel: "view" | "suggest" | "contribute" | "co-owner";
-  expiresAt?: string;
 }
 
 // Destination Types

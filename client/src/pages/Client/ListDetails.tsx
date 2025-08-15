@@ -32,6 +32,7 @@ import PhotosTab from "../../components/Client/ListDetails/PhotosTab";
 import OwnersSection from "../../components/Client/ListDetails/OwnersSection";
 import CoverImage from "../../components/Client/ListDetails/CoverImage";
 import EditDestinationModal from "../../components/Client/ListDetails/EditDestinationModal";
+import InvitationModal from "../../components/Client/ListDetails/InvitationModal";
 
 const ListDetails = () => {
   const { listId } = useParams<{ listId: string }>();
@@ -330,73 +331,77 @@ const ListDetails = () => {
       )}
       {/* Invite Modal */}
       {showInviteModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-lg w-full">
-            <h2 className="text-xl font-semibold mb-2">
-              Invite Users to Private List
-            </h2>
-            <p className="text-gray-600 text-sm mb-4">
-              Give others access to your private travel list and set their
-              permission level.
-            </p>
+        <InvitationModal
+          list={travelList}
+          setShowInviteModal={setShowInviteModal}
+        />
+        // <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        //   <div className="bg-white rounded-2xl p-6 max-w-lg w-full">
+        //     <h2 className="text-xl font-semibold mb-2">
+        //       Invite Users to Private List
+        //     </h2>
+        //     <p className="text-gray-600 text-sm mb-4">
+        //       Give others access to your private travel list and set their
+        //       permission level.
+        //     </p>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email or Username
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder="Enter email or username to invite"
-                />
-              </div>
+        //     <div className="space-y-4">
+        //       <div>
+        //         <label className="block text-sm font-medium text-gray-700 mb-1">
+        //           Email or Username
+        //         </label>
+        //         <input
+        //           type="text"
+        //           className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        //           placeholder="Enter email or username to invite"
+        //         />
+        //       </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Permission Level
-                </label>
-                <select className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                  <option value="view">
-                    View Only - Can view destinations and journals
-                  </option>
-                  <option value="suggest">
-                    Suggest - Can suggest destinations
-                  </option>
-                  <option value="contribute">
-                    Contribute - Can add destinations and journals
-                  </option>
-                  <option value="co-owner">
-                    Co-owner - Full access except deletion
-                  </option>
-                </select>
-              </div>
+        //       <div>
+        //         <label className="block text-sm font-medium text-gray-700 mb-1">
+        //           Permission Level
+        //         </label>
+        //         <select className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        //           <option value="view">
+        //             View Only - Can view destinations and journals
+        //           </option>
+        //           <option value="suggest">
+        //             Suggest - Can suggest destinations
+        //           </option>
+        //           <option value="contribute">
+        //             Contribute - Can add destinations and journals
+        //           </option>
+        //           <option value="co-owner">
+        //             Co-owner - Full access except deletion
+        //           </option>
+        //         </select>
+        //       </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Message (Optional)
-                </label>
-                <textarea
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-                  placeholder="Add a personal message to your invitation..."
-                />
-              </div>
+        //       <div>
+        //         <label className="block text-sm font-medium text-gray-700 mb-1">
+        //           Message (Optional)
+        //         </label>
+        //         <textarea
+        //           rows={3}
+        //           className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+        //           placeholder="Add a personal message to your invitation..."
+        //         />
+        //       </div>
 
-              <div className="flex gap-3 pt-4">
-                <button
-                  onClick={() => setShowInviteModal(false)}
-                  className="flex-1 px-4 py-2 text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button className="flex-1 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 cursor-pointer">
-                  Send Invitation
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        //       <div className="flex gap-3 pt-4">
+        //         <button
+        //           onClick={() => setShowInviteModal(false)}
+        //           className="flex-1 px-4 py-2 text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
+        //         >
+        //           Cancel
+        //         </button>
+        //         <button className="flex-1 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 cursor-pointer">
+        //           Send Invitation
+        //         </button>
+        //       </div>
+        //     </div>
+        //   </div>
+        // </div>
       )}
       {/* Destination Detail Modal */}
       {showDestinationDetail && selectedDestination && (
