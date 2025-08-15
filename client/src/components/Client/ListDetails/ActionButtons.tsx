@@ -25,8 +25,7 @@ const ActionButtons = ({ listId, journal }: Props) => {
           onClick={() =>
             user &&
             !toggleJournalEntryLike.isPending &&
-            toggleJournalEntryLike.mutate(journal.id) &&
-            console.log(user)
+            toggleJournalEntryLike.mutate(journal.id)
           }
           disabled={toggleJournalEntryLike.isPending || !user}
         >

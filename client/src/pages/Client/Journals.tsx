@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { Search, BookOpen, Globe, Sparkles, TrendingUp } from "lucide-react";
 import { usePublicJournalEntries } from "../../hooks/useEntries";
 import Loading from "../../components/Common/Loading";
-import type { JournalEntry } from "../../types/api";
+import type { JournalEntry, JournalEntryCard } from "../../types/api";
 import JournalCard from "../../components/Client/Journals/JournalCard";
 import EmptyState from "../../components/Client/Journals/EmptyState";
 
@@ -243,7 +243,7 @@ const Journals = () => {
         {sortedJournals.length > 0 ? (
           <>
             <div className="max-w-2xl mx-auto space-y-6">
-              {sortedJournals.map((journal: JournalEntry, idx: number) => (
+              {sortedJournals.map((journal: JournalEntryCard, idx: number) => (
                 <JournalCard key={idx} journal={journal} />
               ))}
             </div>
