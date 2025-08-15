@@ -139,6 +139,10 @@ export const likeJournalEntry = async (
       select: "fullName username profileImage",
     })
     .populate({
+      path: "likes",
+      select: "fullName username profileImage",
+    })
+    .populate({
       path: "destination",
       select: "name location list",
       populate: {
@@ -162,6 +166,10 @@ export const unlikeJournalEntry = async (
   )
     .populate({
       path: "author",
+      select: "fullName username profileImage",
+    })
+    .populate({
+      path: "likes",
       select: "fullName username profileImage",
     })
     .populate({

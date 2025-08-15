@@ -1,18 +1,34 @@
 import {
   Camera,
-  Eye,
   Heart,
   MessageSquare,
   MoreVertical,
   Share2,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useUserProfile } from "../../../hooks/useAuth";
+import { useToggleJournalEntryLike } from "../../../hooks/useEntries";
 import { Link } from "react-router";
-import type { JournalEntry } from "../../../services";
+import type { JournalEntryCard } from "../../../services";
+import Loading from "../../Common/Loading";
 
-const JournalCard = ({ journal }: { journal: JournalEntry }) => {
-  const [isLiked, setIsLiked] = useState(false);
+const JournalCard = ({ journal }: { journal: JournalEntryCard }) => {
+  const { data: user, isLoading: isLoadingUser } = useUserProfile();
+  const listId = journal.destination?.list?._id;
+  const toggleLike = useToggleJournalEntryLike(listId);
+  const [likes, setLikes] = useState<typeof journal.likes>(journal.likes);
+  const [likeCount, setLikeCount] = useState(journal.likes.length);
   const [showFullContent, setShowFullContent] = useState(false);
+
+  useEffect(() => {
+    setLikes(journal.likes);
+    setLikeCount(journal.likes.length);
+  }, [journal.likes]);
+
+  if (!listId) return null;
+  if (isLoadingUser) {
+    return <Loading variant="page" />;
+  }
 
   const formatTimeAgo = (dateString: string) => {
     const now = new Date();
@@ -30,11 +46,9 @@ const JournalCard = ({ journal }: { journal: JournalEntry }) => {
       year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
     });
   };
+
   return (
-    <Link
-      to={`/journals/${journal.id}`}
-      className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl border border-white/30 overflow-hidden transition-all duration-300 hover:scale-[1.01]"
-    >
+    <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl border border-white/30 overflow-hidden transition-all duration-300 hover:scale-[1.01]">
       {/* Header - Author Info */}
       <div className="flex items-center justify-between p-4 pb-3">
         <div className="flex items-center gap-3">
@@ -74,9 +88,12 @@ const JournalCard = ({ journal }: { journal: JournalEntry }) => {
 
       {/* Title and Content */}
       <div className="px-4 pb-3">
-        <h2 className="text-xl font-bold text-gray-900 mb-2 hover:text-indigo-600 transition-colors cursor-pointer">
+        <Link
+          to={`/journals/${journal.id}`}
+          className="text-xl font-bold text-gray-900 mb-2 hover:text-indigo-600 transition-colors cursor-pointer"
+        >
           {journal.title}
-        </h2>
+        </Link>
         <div className="text-gray-700 leading-relaxed">
           <p className={showFullContent ? "" : "line-clamp-3"}>
             {journal.content}
@@ -174,38 +191,66 @@ const JournalCard = ({ journal }: { journal: JournalEntry }) => {
       <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100/80">
         <div className="flex items-center gap-1">
           <button
-            onClick={() => setIsLiked(!isLiked)}
-            className={`group flex items-center gap-2 px-3 py-2 rounded-full transition-all duration-200 ${
-              isLiked
+            onClick={() => {
+              if (!user || toggleLike.isPending) return;
+              const hasLiked = likes.includes(user.id);
+              let newLikes;
+              if (hasLiked) {
+                newLikes = likes.filter((id) => id !== user.id);
+              } else {
+                newLikes = [...likes, user.id];
+              }
+              setLikes(newLikes);
+              setLikeCount(newLikes.length);
+              toggleLike.mutate(journal.id, {
+                onSuccess: (data: any) => {
+                  if (
+                    data &&
+                    data.journalEntry &&
+                    Array.isArray(data.journalEntry.likes)
+                  ) {
+                    setLikes(data.journalEntry.likes);
+                    setLikeCount(data.journalEntry.likes.length);
+                  }
+                },
+                onError: () => {
+                  setLikes(journal.likes);
+                  setLikeCount(journal.likes.length);
+                },
+              });
+            }}
+            disabled={toggleLike.isPending}
+            className={`group flex items-center gap-2 px-3 py-2 rounded-full transition-all duration-200 cursor-pointer ${
+              user && likes.includes(user.id)
                 ? "text-red-500 bg-red-50"
                 : "text-gray-500 hover:text-red-500 hover:bg-red-50"
-            }`}
+            } ${toggleLike.isPending ? "opacity-60 cursor-not-allowed" : ""}`}
           >
             <Heart
               size={18}
               className={`transition-all duration-200 ${
-                isLiked ? "fill-current" : ""
+                user && likes.includes(user.id) ? "fill-current" : ""
               }`}
             />
-            <span className="text-sm font-medium">0</span>
+            <span className="text-sm font-medium">{likeCount}</span>
           </button>
 
-          <button className="group flex items-center gap-2 px-3 py-2 rounded-full text-gray-500 hover:text-indigo-500 hover:bg-indigo-50 transition-all duration-200">
+          <Link
+            to={`/journals/${journal.id}`}
+            className="group flex items-center gap-2 px-3 py-2 rounded-full text-gray-500 hover:text-indigo-500 hover:bg-indigo-50 transition-all duration-200"
+          >
             <MessageSquare size={18} />
-            <span className="text-sm font-medium">0</span>
-          </button>
+            <span className="text-sm font-medium">
+              {journal.comments.length}
+            </span>
+          </Link>
 
-          <button className="group flex items-center gap-2 px-3 py-2 rounded-full text-gray-500 hover:text-blue-500 hover:bg-blue-50 transition-all duration-200">
+          <button className="group flex items-center gap-2 px-3 py-2 rounded-full text-gray-500 hover:text-blue-500 hover:bg-blue-50 transition-all duration-200 cursor-pointer">
             <Share2 size={18} />
           </button>
         </div>
-
-        <div className="flex items-center gap-2 text-gray-400 text-sm">
-          <Eye size={16} />
-          <span>42 views</span>
-        </div>
       </div>
-    </Link>
+    </div>
   );
 };
 
