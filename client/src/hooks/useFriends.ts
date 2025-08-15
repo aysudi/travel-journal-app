@@ -11,7 +11,7 @@ export const useFriends = () => {
   return useQuery({
     queryKey: FRIENDS_QUERY_KEYS.friends,
     queryFn: () => friendsService.getUserFriends(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 };
 
