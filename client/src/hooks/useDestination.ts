@@ -129,6 +129,12 @@ export const useDeleteDestination = () => {
       queryClient.invalidateQueries({ queryKey: destinationKeys.lists() });
 
       if (cachedDestination) {
+        queryClient.setQueryData(
+          destinationKeys.byTravelList(cachedDestination.list),
+          (old: Destination[] | undefined) =>
+            old?.filter((d) => d.id !== deletedId)
+        );
+
         queryClient.invalidateQueries({
           queryKey: destinationKeys.byTravelList(cachedDestination.list),
         });
@@ -143,8 +149,6 @@ export const useDeleteDestination = () => {
     },
   });
 };
-
-// Removed useUploadDestinationImages: image upload is handled in create/update
 
 export const useBulkDeleteDestinations = () => {
   const queryClient = useQueryClient();
