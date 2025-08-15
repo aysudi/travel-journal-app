@@ -9,6 +9,7 @@ import EmptyLists from "../../components/Client/Lists/EmptyLists";
 import SortLists from "../../components/Client/Lists/SortLists";
 import Loading from "../../components/Common/Loading";
 import type { SortOption, SortOrder } from "../../types/sortType";
+import { Link } from "react-router";
 
 type ViewMode = "grid" | "list";
 
@@ -122,10 +123,13 @@ const Lists = () => {
               Discover and organize your dream destinations
             </p>
           </div>
-          <button className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5 mt-4 lg:mt-0 cursor-pointer">
+          <Link
+            to={`/create-list`}
+            className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5 mt-4 lg:mt-0 cursor-pointer"
+          >
             <Plus size={20} />
             Create New List
-          </button>
+          </Link>
         </div>
 
         {/* Search and Filters Bar */}
