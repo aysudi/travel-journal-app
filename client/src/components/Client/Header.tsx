@@ -1,13 +1,16 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router";
+import { useLogout, useUserProfile } from "../../hooks/useAuth";
 
 const Header = () => {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const location = useLocation();
+  const { data: user } = useUserProfile();
 
   const notificationRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+  const logOut = useLogout();
 
   const notifications = [
     {
@@ -32,13 +35,6 @@ const Header = () => {
       unread: false,
     },
   ];
-
-  const user = {
-    name: "John Doe",
-    email: "john@example.com",
-    avatar:
-      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face&auto=format",
-  };
 
   const unreadCount = notifications.filter((n) => n.unread).length;
 
@@ -86,8 +82,9 @@ const Header = () => {
     }
   };
 
-  const handleLogout = () => {
-    console.log("Logging out...");
+  const handleLogout = async () => {
+    await logOut.mutate();
+    window.location.reload();
   };
 
   return (
@@ -207,8 +204,8 @@ const Header = () => {
                 className="flex items-center space-x-2 p-1 rounded-xl hover:bg-slate-50 transition-all duration-200 group cursor-pointer"
               >
                 <img
-                  src={user.avatar}
-                  alt={user.name}
+                  src={user?.profileImage}
+                  alt={user?.fullName}
                   className="w-8 h-8 rounded-lg object-cover ring-2 ring-white group-hover:ring-blue-200 transition-all"
                 />
                 <svg
@@ -232,15 +229,15 @@ const Header = () => {
                   <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-slate-200/50">
                     <div className="flex items-center space-x-3">
                       <img
-                        src={user.avatar}
-                        alt={user.name}
+                        src={user?.profileImage}
+                        alt={user?.fullName}
                         className="w-12 h-12 rounded-xl object-cover"
                       />
                       <div>
                         <h3 className="font-semibold text-slate-800">
-                          {user.name}
+                          {user?.fullName}
                         </h3>
-                        <p className="text-sm text-slate-600">{user.email}</p>
+                        <p className="text-sm text-slate-600">{user?.email}</p>
                       </div>
                     </div>
                   </div>
@@ -297,7 +294,7 @@ const Header = () => {
                     <div className="border-t border-slate-200 mt-2">
                       <button
                         onClick={handleLogout}
-                        className="flex items-center space-x-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors w-full"
+                        className="flex items-center space-x-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors w-full cursor-pointer"
                       >
                         <svg
                           className="w-5 h-5"

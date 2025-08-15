@@ -5,7 +5,6 @@ import {
   Calendar,
   Globe,
   Lock,
-  Heart,
   Share2,
   MoreVertical,
   Eye,
@@ -60,13 +59,6 @@ const TravelListCard: React.FC<{ list: TravelList }> = ({ list }) => (
             ? "Friends"
             : "Private"}
         </div>
-      </div>
-
-      {/* Actions */}
-      <div className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-all duration-300">
-        <button className="p-2 bg-white/20 backdrop-blur-sm rounded-lg hover:bg-white/30 transition-colors">
-          <Heart size={16} className="text-white" />
-        </button>
       </div>
     </div>
 
