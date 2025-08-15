@@ -35,14 +35,12 @@ export const createDestination = [
         });
       }
 
-      // Convert "country" to "location" if the validation schema uses "country"
       const destinationData = { ...value };
       if (destinationData.country) {
         destinationData.location = destinationData.country;
         delete destinationData.country;
       }
 
-      // Handle image upload to Cloudinary
       let imageUrls: string[] = [];
       if (req.files && Array.isArray(req.files)) {
         for (const file of req.files as Express.Multer.File[]) {
@@ -139,9 +137,20 @@ export const getDestinationById = async (req: Request, res: Response) => {
 
 // Update destination
 export const updateDestination = [
-  upload.array("images", 10),
+  upload.fields([
+    { name: "images", maxCount: 10 },
+    { name: "newImages", maxCount: 10 },
+  ]),
   async (req: Request, res: Response) => {
     try {
+      if (req.body.images && typeof req.body.images === "string") {
+        try {
+          req.body.images = JSON.parse(req.body.images);
+        } catch {
+          req.body.images = [];
+        }
+      }
+
       const userId = (req.user as any)?.id;
       const { id } = req.params;
 
@@ -160,7 +169,12 @@ export const updateDestination = [
         });
       }
 
+      if ("id" in req.body) {
+        delete req.body.id;
+      }
+
       const { error, value } = destinationUpdateSchema.validate(req.body);
+      console.log(error);
       if (error) {
         return res.status(400).json({
           success: false,
@@ -170,31 +184,27 @@ export const updateDestination = [
       }
 
       const updateData = { ...value };
+      console.log("update data: ", updateData);
       if (updateData.country) {
         updateData.location = updateData.country;
         delete updateData.country;
       }
 
-      const oldDestination = await destinationService.getDestinationById(id);
-      if (
-        req.files &&
-        Array.isArray(req.files) &&
-        oldDestination.images &&
-        oldDestination.images.length > 0
-      ) {
-        for (const url of oldDestination.images) {
-          const parts = url.split("/");
-          const folder = parts[parts.length - 2];
-          const filename = parts[parts.length - 1].split(".")[0];
-          const publicId = `destinations/${filename}`;
-          try {
-            await cloudinary.uploader.destroy(publicId);
-          } catch {}
-        }
+      if ("id" in req.body) {
+        delete req.body.id;
       }
+      if ("list" in req.body) {
+        delete req.body.list;
+      }
+
+      let imagesFromClient: string[] = Array.isArray(req.body.images)
+        ? req.body.images
+        : [];
+
       let imageUrls: string[] = [];
-      if (req.files && Array.isArray(req.files)) {
-        for (const file of req.files as Express.Multer.File[]) {
+      if (req.files && (req.files as any)["newImages"]) {
+        const newImages = (req.files as any)["newImages"];
+        for (const file of newImages) {
           await new Promise((resolve, reject) => {
             const stream = cloudinary.uploader.upload_stream(
               { folder: "destinations" },
@@ -210,7 +220,8 @@ export const updateDestination = [
           });
         }
       }
-      if (imageUrls.length > 0) updateData.images = imageUrls;
+
+      updateData.images = [...imagesFromClient, ...imageUrls];
 
       const updatedDestination = await destinationService.updateDestination(
         id,

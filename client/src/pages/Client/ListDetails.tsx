@@ -18,6 +18,8 @@ import {
   useCreateDestination,
   useDestinationsByTravelList,
   destinationKeys,
+  useDeleteDestination,
+  useUpdateDestination,
 } from "../../hooks/useDestination";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Destination, JournalEntry } from "../../types/api";
@@ -29,6 +31,7 @@ import JournalsTabs from "../../components/Client/ListDetails/JournalsTabs";
 import PhotosTab from "../../components/Client/ListDetails/PhotosTab";
 import OwnersSection from "../../components/Client/ListDetails/OwnersSection";
 import CoverImage from "../../components/Client/ListDetails/CoverImage";
+import EditDestinationModal from "../../components/Client/ListDetails/EditDestinationModal";
 
 const ListDetails = () => {
   const { listId } = useParams<{ listId: string }>();
@@ -40,6 +43,7 @@ const ListDetails = () => {
   const [showAddDestination, setShowAddDestination] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showDestinationDetail, setShowDestinationDetail] = useState(false);
+  const [showEditDestination, setShowEditDestination] = useState(false);
   const [selectedDestination, setSelectedDestination] =
     useState<Destination | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -57,6 +61,8 @@ const ListDetails = () => {
   } = useJournalEntriesByTravelList(listId || "");
   const createDestination = useCreateDestination();
   const queryClient = useQueryClient();
+  const deleteDestination = useDeleteDestination();
+  const editDestination = useUpdateDestination();
 
   const destinationsArray = destinations || [];
   const journalsArray = journals || [];
@@ -295,6 +301,34 @@ const ListDetails = () => {
           }}
         />
       )}
+      {showEditDestination && (
+        <EditDestinationModal
+          destination={selectedDestination}
+          onClose={() => setShowEditDestination(false)}
+          onSubmit={async (formData: any) => {
+            // Do NOT append 'list' for edit
+            setShowEditDestination(false);
+            const id = formData.get("id");
+            await editDestination.mutateAsync(
+              { id, data: formData },
+              {
+                onSuccess: () => {
+                  if (listId) {
+                    queryClient.invalidateQueries({
+                      queryKey: destinationKeys.byTravelList(listId),
+                    });
+                  }
+                  Swal.fire({
+                    title: "Destination updated successfully!",
+                    icon: "success",
+                    draggable: true,
+                  });
+                },
+              }
+            );
+          }}
+        />
+      )}
       {/* Invite Modal */}
       {showInviteModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -477,7 +511,13 @@ const ListDetails = () => {
 
               {/* Action Buttons */}
               <div className="flex gap-3 pt-4 border-t border-gray-100">
-                <button className="flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors duration-200 cursor-pointer">
+                <button
+                  onClick={() => {
+                    setShowEditDestination(true);
+                    setShowDestinationDetail(false);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors duration-200 cursor-pointer"
+                >
                   <Edit3 size={18} />
                   <span>Edit</span>
                 </button>
@@ -489,7 +529,40 @@ const ListDetails = () => {
                   <Camera size={18} />
                   <span>Add Photos</span>
                 </button>
-                <button className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200 ml-auto cursor-pointer">
+                <button
+                  onClick={() => {
+                    Swal.fire({
+                      title: "Are you sure?",
+                      text: "You won't be able to revert this!",
+                      icon: "warning",
+                      showCancelButton: true,
+                      confirmButtonColor: "#3085d6",
+                      cancelButtonColor: "#d33",
+                      confirmButtonText: "Yes, delete it!",
+                    }).then(async (result) => {
+                      if (result.isConfirmed) {
+                        await deleteDestination.mutateAsync(
+                          selectedDestination.id
+                        );
+                        queryClient.setQueryData(
+                          destinationKeys.byTravelList(
+                            selectedDestination.list
+                          ),
+                          (old: Destination[] | undefined) =>
+                            old?.filter((d) => d.id !== selectedDestination.id)
+                        );
+                        setShowDestinationDetail(false);
+
+                        Swal.fire({
+                          title: "Deleted!",
+                          text: "Your destination has been deleted.",
+                          icon: "success",
+                        });
+                      }
+                    });
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200 ml-auto cursor-pointer"
+                >
                   <Trash2 size={18} />
                   <span>Delete</span>
                 </button>
