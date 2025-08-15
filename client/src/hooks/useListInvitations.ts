@@ -48,7 +48,7 @@ export const useInvitationsByInvitee = (inviteeId: string, status?: string) => {
       : listInvitationKeys.byInvitee(inviteeId),
     queryFn: () =>
       listInvitationService.getInvitationsByInvitee(inviteeId, status),
-    enabled: !!inviteeId, // Only run when inviteeId is truthy
+    enabled: !!inviteeId,
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
     retry: 2,
@@ -134,7 +134,6 @@ export const useAcceptInvitation = () => {
         });
       }
 
-      // Invalidate travel list related queries to update collaborating lists
       queryClient.invalidateQueries({ queryKey: ["travelLists"] });
       queryClient.invalidateQueries({ queryKey: ["ownedTravelLists"] });
       queryClient.invalidateQueries({ queryKey: ["collaboratingTravelLists"] });
@@ -246,9 +245,7 @@ export const useSendInvitation = () => {
     }) => {
       const invitationData: CreateListInvitationData = {
         list: data.listId,
-        inviteeEmail: data.inviteeEmail,
         permissionLevel: data.permissionLevel,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       };
 
       return createInvitation.mutateAsync(invitationData);
