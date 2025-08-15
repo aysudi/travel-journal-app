@@ -18,9 +18,9 @@ const TravelStatistics = ({ user }: { user: any }) => {
           <Users size={32} className="text-purple-600" />
         </div>
         <h3 className="text-2xl font-bold text-gray-800 mb-2">
-          {user.collaboratingLists?.length || 0}
+          {user.friends?.length || 0}
         </h3>
-        <p className="text-gray-600">Collaborating Lists</p>
+        <p className="text-gray-600">Friends</p>
       </div>
 
       <div className="bg-white rounded-xl shadow-lg p-6 text-center">
@@ -28,9 +28,9 @@ const TravelStatistics = ({ user }: { user: any }) => {
           <BookOpen size={32} className="text-green-600" />
         </div>
         <h3 className="text-2xl font-bold text-gray-800 mb-2">
-          {user.journalEntries?.length || 0}
+          {user.friendsRequests?.length || 0}
         </h3>
-        <p className="text-gray-600">Journal Entries</p>
+        <p className="text-gray-600">Friend Requests</p>
       </div>
     </div>
   );
