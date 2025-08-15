@@ -45,6 +45,7 @@ export interface ChangePasswordData {
 // Travel List Types
 export interface TravelList {
   id: string;
+  _id?: string;
   title: string;
   description?: string;
   tags: string[];
@@ -74,7 +75,6 @@ export interface TravelList {
   updatedAt: string;
 }
 
-// Populated Travel List (when owner and collaborators are populated)
 export interface PopulatedTravelList
   extends Omit<TravelList, "owner" | "destinations"> {
   owner: UserProfile;
@@ -127,7 +127,7 @@ export interface CreateListInvitationData {
 
 // Destination Types
 export interface Destination {
-  id: string; // Changed from _id to id (formatted by server)
+  id: string;
   name: string;
   location: string;
   notes?: string;
@@ -172,6 +172,35 @@ export interface JournalEntry {
   likes: [
     { _id: string; fullName: string; username: string; profileImage: string }
   ];
+  comments: Comment[];
+}
+
+export interface JournalEntryCard {
+  id: string;
+  title: string;
+  content: string;
+  photos: string[];
+  tags: string[];
+  destination?: {
+    _id: string;
+    name: string;
+    location: string;
+    list: {
+      _id: string;
+      title: string;
+    };
+  };
+  travelList?: string;
+  author: {
+    _id: string;
+    fullName: string;
+    username: string;
+    profileImage: string;
+  };
+  isPublic: boolean;
+  createdAt: string;
+  updatedAt: string;
+  likes: string[];
   comments: Comment[];
 }
 

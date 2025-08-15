@@ -16,7 +16,7 @@ import { Link } from "react-router";
 
 const TravelListCard: React.FC<{ list: TravelList }> = ({ list }) => (
   <Link
-    to={`/lists/${list.id}`}
+    to={`/lists/${list.id || list?._id}`}
     className="group bg-white rounded-2xl shadow-lg border border-slate-200/50 overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
   >
     {/* Cover Image */}
