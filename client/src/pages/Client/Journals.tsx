@@ -87,6 +87,10 @@ const Journals = () => {
     }
   );
 
+  const publicJournals = sortedJournals.filter(
+    (journal: any) => journal.destination.list.visibility === "public"
+  );
+
   if (isLoading && page === 1) {
     return <Loading variant="page" />;
   }
@@ -223,7 +227,7 @@ const Journals = () => {
                 <p className="text-sm text-gray-600">
                   Found{" "}
                   <span className="font-semibold text-indigo-600">
-                    {sortedJournals.length}
+                    {publicJournals.length}
                   </span>{" "}
                   stories
                   {searchQuery && (
@@ -240,10 +244,10 @@ const Journals = () => {
         </div>
 
         {/* Journals Feed */}
-        {sortedJournals.length > 0 ? (
+        {publicJournals.length > 0 ? (
           <>
             <div className="max-w-2xl mx-auto space-y-6">
-              {sortedJournals.map((journal: JournalEntryCard, idx: number) => (
+              {publicJournals.map((journal: JournalEntryCard, idx: number) => (
                 <JournalCard key={idx} journal={journal} />
               ))}
             </div>

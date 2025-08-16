@@ -5,7 +5,7 @@ import {
   MoreVertical,
   Share2,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useUserProfile } from "../../../hooks/useAuth";
 import { useToggleJournalEntryLike } from "../../../hooks/useEntries";
 import { Link } from "react-router";
@@ -16,14 +16,9 @@ const JournalCard = ({ journal }: { journal: JournalEntryCard }) => {
   const { data: user, isLoading: isLoadingUser } = useUserProfile();
   const listId = journal.destination?.list?._id;
   const toggleLike = useToggleJournalEntryLike(listId);
-  const [likes, setLikes] = useState<typeof journal.likes>(journal.likes);
-  const [likeCount, setLikeCount] = useState(journal.likes.length);
   const [showFullContent, setShowFullContent] = useState(false);
-
-  useEffect(() => {
-    setLikes(journal.likes);
-    setLikeCount(journal.likes.length);
-  }, [journal.likes]);
+  const [likes, setLikes] = useState<string[]>(journal.likes);
+  const hasLiked = user ? likes.includes(user.id) : false;
 
   if (!listId) return null;
   if (isLoadingUser) {
@@ -85,6 +80,73 @@ const JournalCard = ({ journal }: { journal: JournalEntryCard }) => {
           <MoreVertical size={18} />
         </button>
       </div>
+
+      {/* Destination Info & Go to List Button */}
+      {(journal.destination || listId) && (
+        <div className="px-4 pb-1 flex items-center gap-2 text-sm text-indigo-700 font-medium">
+          {journal.destination && (
+            <span className="inline-flex items-center gap-1 bg-indigo-50 border border-indigo-100 rounded px-2 py-1">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 text-indigo-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+              {typeof journal.destination === "object" &&
+              journal.destination !== null ? (
+                <>
+                  <span>{(journal.destination as any).name}</span>
+                  {(journal.destination as any).location && (
+                    <span className="text-gray-500">{`(${
+                      (journal.destination as any).location
+                    })`}</span>
+                  )}
+                </>
+              ) : (
+                <span>Destination</span>
+              )}
+            </span>
+          )}
+          {/* Go to List Button */}
+          {listId && (
+            <Link
+              to={`/lists/${listId}`}
+              className="ml-auto inline-flex items-center gap-1 px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200 hover:bg-indigo-200 hover:text-indigo-900 transition-colors duration-200 text-xs font-semibold shadow-sm"
+              title="Go to List"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+              Go to List
+            </Link>
+          )}
+        </div>
+      )}
 
       {/* Title and Content */}
       <div className="px-4 pb-3">
@@ -193,35 +255,22 @@ const JournalCard = ({ journal }: { journal: JournalEntryCard }) => {
           <button
             onClick={() => {
               if (!user || toggleLike.isPending) return;
-              const hasLiked = likes.includes(user.id);
-              let newLikes;
-              if (hasLiked) {
-                newLikes = likes.filter((id) => id !== user.id);
-              } else {
-                newLikes = [...likes, user.id];
-              }
-              setLikes(newLikes);
-              setLikeCount(newLikes.length);
+              setLikes((prev) => {
+                if (prev.includes(user.id)) {
+                  return prev.filter((id) => id !== user.id);
+                } else {
+                  return [...prev, user.id];
+                }
+              });
               toggleLike.mutate(journal.id, {
-                onSuccess: (data: any) => {
-                  if (
-                    data &&
-                    data.journalEntry &&
-                    Array.isArray(data.journalEntry.likes)
-                  ) {
-                    setLikes(data.journalEntry.likes);
-                    setLikeCount(data.journalEntry.likes.length);
-                  }
-                },
                 onError: () => {
                   setLikes(journal.likes);
-                  setLikeCount(journal.likes.length);
                 },
               });
             }}
-            disabled={toggleLike.isPending}
+            disabled={toggleLike.isPending || !user}
             className={`group flex items-center gap-2 px-3 py-2 rounded-full transition-all duration-200 cursor-pointer ${
-              user && likes.includes(user.id)
+              user && hasLiked
                 ? "text-red-500 bg-red-50"
                 : "text-gray-500 hover:text-red-500 hover:bg-red-50"
             } ${toggleLike.isPending ? "opacity-60 cursor-not-allowed" : ""}`}
@@ -229,10 +278,10 @@ const JournalCard = ({ journal }: { journal: JournalEntryCard }) => {
             <Heart
               size={18}
               className={`transition-all duration-200 ${
-                user && likes.includes(user.id) ? "fill-current" : ""
+                user && hasLiked ? "fill-current" : ""
               }`}
             />
-            <span className="text-sm font-medium">{likeCount}</span>
+            <span className="text-sm font-medium">{likes.length}</span>
           </button>
 
           <Link
