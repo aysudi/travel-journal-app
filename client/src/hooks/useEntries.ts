@@ -170,6 +170,22 @@ export const useCreateJournalEntry = () => {
     mutationFn: (data: CreateJournalEntryData) =>
       journalEntryService.createJournalEntry(data),
     onSuccess: (newEntry: JournalEntry) => {
+      if (newEntry.travelList) {
+        queryClient.setQueryData(
+          journalEntryKeys.byTravelList(newEntry.travelList),
+          (old: any) => {
+            if (!old) return [newEntry];
+            if (Array.isArray(old)) {
+              return [newEntry, ...old];
+            }
+            if (old.data && Array.isArray(old.data)) {
+              return { ...old, data: [newEntry, ...old.data] };
+            }
+            return old;
+          }
+        );
+      }
+
       queryClient.invalidateQueries({ queryKey: journalEntryKeys.lists() });
 
       if (newEntry.travelList) {
@@ -379,7 +395,7 @@ export const useToggleJournalEntryVisibility = () => {
 
   return useMutation({
     mutationFn: ({ id, isPublic }: { id: string; isPublic: boolean }) =>
-      journalEntryService.updateJournalEntry(id, { isPublic }),
+      journalEntryService.updateJournalEntry(id, { public: isPublic }),
     onSuccess: (updatedEntry: JournalEntry) => {
       queryClient.setQueryData(
         journalEntryKeys.list(updatedEntry.id),
