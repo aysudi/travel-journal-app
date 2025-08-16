@@ -28,6 +28,8 @@ import AddDestinationModal from "../../components/Client/ListDetails/AddDestinat
 import NavigationTabs from "../../components/Client/ListDetails/NavigationTabs";
 import DestinationsTabs from "../../components/Client/ListDetails/DestinationsTabs";
 import JournalsTabs from "../../components/Client/ListDetails/JournalsTabs";
+import CreateJournalModal from "../../components/Client/Journals/CreateJournalModal";
+import { useCreateJournalEntry } from "../../hooks/useEntries";
 import PhotosTab from "../../components/Client/ListDetails/PhotosTab";
 import OwnersSection from "../../components/Client/ListDetails/OwnersSection";
 import CoverImage from "../../components/Client/ListDetails/CoverImage";
@@ -48,6 +50,8 @@ const ListDetails = () => {
   const [selectedDestination, setSelectedDestination] =
     useState<Destination | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [showCreateJournal, setShowCreateJournal] = useState(false);
+  const createJournal = useCreateJournalEntry();
 
   const { data: travelList, isLoading, error } = useTravelList(listId || "");
   const {
@@ -66,8 +70,14 @@ const ListDetails = () => {
   const editDestination = useUpdateDestination();
 
   const destinationsArray = destinations || [];
-  const journalsArray = journals || [];
-
+  const [journalsArrayState, setJournalsArrayState] = useState<any>([]);
+  const journalsArray =
+    journalsArrayState.length > 0 ? journalsArrayState : journals || [];
+  React.useEffect(() => {
+    if (journals) {
+      setJournalsArrayState([]);
+    }
+  }, [journals]);
   const getDestinationStatus = (dest: Destination): string => dest.status;
 
   if (isLoading || isLoadingDestinations || isLoadingJournals) {
@@ -248,11 +258,51 @@ const ListDetails = () => {
                       Start documenting your travel experiences by creating your
                       first journal entry
                     </p>
-                    <button className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                    <button
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl cursor-pointer"
+                      onClick={() => setShowCreateJournal(true)}
+                    >
                       <Plus size={20} />
                       <span>Write Your First Journal</span>
                     </button>
                   </div>
+                )}
+                {(journalsArray as JournalEntry[]).length > 0 && (
+                  <div className="text-center py-12">
+                    <button
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl cursor-pointer"
+                      onClick={() => setShowCreateJournal(true)}
+                    >
+                      <Plus size={20} />
+                      <span>Add Journal</span>
+                    </button>
+                  </div>
+                )}
+                {/* Create Journal Modal */}
+                {showCreateJournal && (
+                  <CreateJournalModal
+                    open={showCreateJournal}
+                    onClose={() => setShowCreateJournal(false)}
+                    destinations={destinationsArray}
+                    loading={createJournal.isPending}
+                    onSubmit={async (data) => {
+                      await createJournal.mutateAsync(data, {
+                        onSuccess: (newEntry) => {
+                          setShowCreateJournal(false);
+                          setJournalsArrayState((prev: any) => [
+                            newEntry,
+                            ...(prev.length > 0 ? prev : journals || []),
+                          ]);
+                          Swal.fire({
+                            title: "Journal created successfully!",
+                            icon: "success",
+                            timer: 1500,
+                            showConfirmButton: false,
+                          });
+                        },
+                      });
+                    }}
+                  />
                 )}
               </div>
             )}

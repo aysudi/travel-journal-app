@@ -205,13 +205,12 @@ export interface JournalEntryCard {
 }
 
 export interface CreateJournalEntryData {
+  author: string;
   title: string;
   content: string;
   images?: string[];
-  tags?: string[];
   destination?: string;
-  travelList?: string;
-  isPublic?: boolean;
+  public?: boolean;
 }
 
 // Comment Types
