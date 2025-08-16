@@ -265,6 +265,7 @@ export const getJournalEntries = async (req: Request, res: Response) => {
         });
       }
 
+      const userId = (req.user as any)?.id;
       const queryParams = {
         page: page ? Number(page) : undefined,
         limit: limit ? Number(limit) : undefined,
@@ -274,6 +275,7 @@ export const getJournalEntries = async (req: Request, res: Response) => {
         search: search as string,
         sort: sort as string,
         order: (order as "asc" | "desc") || "desc",
+        userId,
       };
 
       if (queryParams.author) {
