@@ -18,16 +18,8 @@ import { useFormik } from "formik";
 import { useNavigate } from "react-router";
 import { enqueueSnackbar } from "notistack";
 import createListValidation from "../../validations/createListValidation";
-import {
-  travelListService,
-  imageUploadService,
-  destinationService,
-} from "../../services";
-import type {
-  CreateTravelListData,
-  TravelList,
-  CreateDestinationData,
-} from "../../types/api";
+import { travelListService, destinationService } from "../../services";
+import type { CreateTravelListData, TravelList } from "../../types/api";
 
 interface DestinationFormData {
   name: string;
@@ -72,8 +64,8 @@ const CreateList = () => {
     if (listData.tags && listData.tags.length > 0) {
       formData.append("tags", JSON.stringify(listData.tags));
     }
-    if (listData.isPublic !== undefined) {
-      formData.append("isPublic", listData.isPublic.toString());
+    if (listData.visibility !== undefined) {
+      formData.append("visibility", listData.visibility);
     }
 
     if (coverImage) {
@@ -88,36 +80,39 @@ const CreateList = () => {
 
     for (const dest of destinations) {
       try {
-        const uploadedImages = [];
-        for (const image of dest.images) {
-          const imageUrl = await imageUploadService.uploadImage(image);
-          uploadedImages.push(imageUrl);
+        const formData = new FormData();
+        formData.append("name", dest.name);
+        formData.append("location", dest.location);
+        if (dest.notes) formData.append("notes", dest.notes);
+        formData.append(
+          "status",
+          dest.status === "visited"
+            ? "Visited"
+            : dest.status === "planned"
+            ? "Planned"
+            : "Wishlist"
+        );
+        if (dest.status === "visited" && dest.dateVisited) {
+          formData.append(
+            "dateVisited",
+            new Date(dest.dateVisited).toISOString()
+          );
+        }
+        if (dest.status === "planned" && dest.datePlanned) {
+          formData.append(
+            "datePlanned",
+            new Date(dest.datePlanned).toISOString()
+          );
+        }
+        formData.append("list", travelListId);
+        if (dest.images && dest.images.length > 0) {
+          dest.images.forEach((file) => {
+            formData.append("images", file);
+          });
         }
 
-        const destinationData: CreateDestinationData = {
-          name: dest.name,
-          location: dest.location,
-          notes: dest.notes || undefined,
-          images: uploadedImages,
-          status:
-            dest.status === "visited"
-              ? "Visited"
-              : dest.status === "planned"
-              ? "Planned"
-              : "Wishlist",
-          dateVisited:
-            dest.status === "visited" && dest.dateVisited
-              ? new Date(dest.dateVisited).toISOString()
-              : undefined,
-          datePlanned:
-            dest.status === "planned" && dest.datePlanned
-              ? new Date(dest.datePlanned).toISOString()
-              : undefined,
-          list: travelListId,
-        };
-
         const createdDestination = await destinationService.createDestination(
-          destinationData
+          formData
         );
         createdDestinations.push(createdDestination);
       } catch (error) {
@@ -140,7 +135,7 @@ const CreateList = () => {
       title: "",
       description: "",
       tags: [] as string[],
-      visibility: "private",
+      visibility: "",
       coverImage: null as File | null,
     },
     onSubmit: async (values) => {
@@ -156,9 +151,9 @@ const CreateList = () => {
 
         const travelListData = {
           title: values.title,
-          description: values.description || undefined,
-          tags: values.tags.length > 0 ? values.tags : undefined,
-          isPublic: values.visibility === "public",
+          description: values.description || "",
+          tags: values.tags.length > 0 ? values.tags : [],
+          visibility: values.visibility,
         };
 
         const createdList = await createTravelListWithImage(
@@ -169,6 +164,8 @@ const CreateList = () => {
         if (destinations.length > 0) {
           await createDestinations(createdList.id);
         }
+
+        console.log(createdList);
 
         enqueueSnackbar("Travel list created successfully!", {
           variant: "success",
@@ -427,9 +424,9 @@ const CreateList = () => {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <button
                       type="button"
-                      onClick={() =>
-                        createListFormik.setFieldValue("visibility", "private")
-                      }
+                      onClick={() => {
+                        createListFormik.setFieldValue("visibility", "private");
+                      }}
                       className={`p-4 rounded-xl border-2 transition-all duration-200 ${
                         createListFormik.values.visibility === "private"
                           ? "border-indigo-500 bg-indigo-50 text-indigo-700"
@@ -442,9 +439,9 @@ const CreateList = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() =>
-                        createListFormik.setFieldValue("visibility", "friends")
-                      }
+                      onClick={() => {
+                        createListFormik.setFieldValue("visibility", "friends");
+                      }}
                       className={`p-4 rounded-xl border-2 transition-all duration-200 ${
                         createListFormik.values.visibility === "friends"
                           ? "border-indigo-500 bg-indigo-50 text-indigo-700"
@@ -459,9 +456,9 @@ const CreateList = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() =>
-                        createListFormik.setFieldValue("visibility", "public")
-                      }
+                      onClick={() => {
+                        createListFormik.setFieldValue("visibility", "public");
+                      }}
                       className={`p-4 rounded-xl border-2 transition-all duration-200 ${
                         createListFormik.values.visibility === "public"
                           ? "border-indigo-500 bg-indigo-50 text-indigo-700"
