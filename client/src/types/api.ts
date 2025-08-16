@@ -93,7 +93,7 @@ export interface CreateTravelListData {
   title: string;
   description?: string;
   tags?: string[];
-  isPublic?: boolean;
+  visibility?: string;
   coverImage?: string;
 }
 

@@ -22,7 +22,7 @@ const travelListSchema = new mongoose.Schema(
     visibility: {
       type: String,
       enum: ["private", "friends", "public"],
-      default: "private",
+      required: true,
     },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
@@ -91,7 +91,7 @@ const travelListSchema = new mongoose.Schema(
     },
 
     coverImage: { type: String, required: true },
-    public_id: { type: String }, // Cloudinary public ID for image management
+    public_id: { type: String },
     destinations: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Destination" },
     ],
