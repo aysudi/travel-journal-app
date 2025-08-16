@@ -1,17 +1,23 @@
-import { Heart, MessageSquare, MoreVertical, Share2 } from "lucide-react";
+import { Heart, MessageSquare, Share2, Trash2 } from "lucide-react";
 import { Link } from "react-router";
 import { useUserProfile } from "../../../hooks/useAuth";
-import { useToggleJournalEntryLike } from "../../../hooks/useEntries";
+import {
+  useDeleteJournalEntry,
+  useToggleJournalEntryLike,
+} from "../../../hooks/useEntries";
 import Loading from "../../Common/Loading";
+import Swal from "sweetalert2";
 
 type Props = {
   listId: string | undefined;
   journal: any;
+  onDelete?: (id: string) => void;
 };
 
-const ActionButtons = ({ listId, journal }: Props) => {
+const ActionButtons = ({ listId, journal, onDelete }: Props) => {
   const toggleJournalEntryLike = useToggleJournalEntryLike(listId);
   const { data: user, isLoading: isLoadingUser } = useUserProfile();
+  const deleteJournalEntry = useDeleteJournalEntry();
 
   if (isLoadingUser) {
     return <Loading variant="page" />;
@@ -84,12 +90,40 @@ const ActionButtons = ({ listId, journal }: Props) => {
           <span className="text-sm font-medium">Share</span>
         </button>
       </div>
-
       {/* Additional actions menu */}
       <div className="relative">
-        <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all duration-200">
-          <MoreVertical size={16} />
-        </button>
+        {journal.author._id === user?.id && (
+          <button
+            onClick={() => {
+              Swal.fire({
+                title: "Are you sure?",
+                text: "You won't be able to revert this!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Yes, delete it!",
+              }).then(async (result) => {
+                if (result.isConfirmed) {
+                  await deleteJournalEntry.mutateAsync(journal.id);
+                  if (onDelete) onDelete(journal.id);
+
+                  Swal.fire({
+                    title: "Deleted!",
+                    text: "Your journal entry has been deleted.",
+                    icon: "success",
+                  });
+                }
+              });
+            }}
+            className="p-2 text-red-400 hover:bg-gray-100 rounded-full transition-all duration-200 group cursor-pointer"
+          >
+            <Trash2
+              size={20}
+              className="transition-transform duration-200 text-red-500"
+            />
+          </button>
+        )}
       </div>
     </div>
   );
