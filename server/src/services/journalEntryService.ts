@@ -18,22 +18,11 @@ export const createJournalEntry = async (
     entryData.destination
   ).populate({
     path: "list",
-    select: "owner collaborators",
+    select: "owner customPermissions visibility",
   });
 
   if (!destination) {
     throw new Error("Destination not found");
-  }
-
-  const travelList = destination.list as any;
-  const hasAccess =
-    travelList.owner.toString() === authorId ||
-    travelList.collaborators.includes(authorId);
-
-  if (!hasAccess) {
-    throw new Error(
-      "You don't have permission to add journal entries to this destination"
-    );
   }
 
   const journalEntry = new JournalEntryModel({
@@ -58,7 +47,7 @@ export const getJournalEntryById = async (entryId: string): Promise<any> => {
       select: "name location list",
       populate: {
         path: "list",
-        select: "title owner collaborators",
+        select: "title owner visibility customPermissions",
       },
     });
 
@@ -99,7 +88,7 @@ export const updateJournalEntry = async (
       select: "name location list",
       populate: {
         path: "list",
-        select: "title owner collaborators",
+        select: "title owner customPermissions visibility",
       },
     });
 
@@ -147,7 +136,7 @@ export const likeJournalEntry = async (
       select: "name location list",
       populate: {
         path: "list",
-        select: "title owner collaborators",
+        select: "title owner customPermissions visibility",
       },
     });
 
@@ -177,7 +166,7 @@ export const unlikeJournalEntry = async (
       select: "name location list",
       populate: {
         path: "list",
-        select: "title owner collaborators",
+        select: "title owner customPermissions visibility",
       },
     });
 
@@ -228,7 +217,7 @@ export const getJournalEntries = async (
         select: "name location list",
         populate: {
           path: "list",
-          select: "title owner collaborators",
+          select: "title owner customPermissions visibility",
         },
       })
       .populate({
@@ -265,7 +254,7 @@ export const getJournalEntriesByDestination = async (
 ): Promise<any[]> => {
   const destination = await DestinationModel.findById(destinationId).populate({
     path: "list",
-    select: "owner collaborators",
+    select: "owner customPermissions visibility",
   });
 
   if (!destination) {
@@ -328,7 +317,7 @@ export const getJournalEntriesByAuthor = async (
       select: "name location list",
       populate: {
         path: "list",
-        select: "title",
+        select: "title visibility",
       },
     })
     .sort({ createdAt: -1 });
@@ -374,7 +363,7 @@ export const getPublicJournalEntries = async (
         select: "name location list",
         populate: {
           path: "list",
-          select: "title",
+          select: "title visibility",
         },
       })
       .sort(sortObj)
@@ -479,7 +468,7 @@ export const getRecentJournalEntries = async (
       select: "name location list",
       populate: {
         path: "list",
-        select: "title",
+        select: "title visibility",
       },
     })
     .sort({ createdAt: -1 })
@@ -493,7 +482,7 @@ export const getRecentJournalEntries = async (
 // Get journal entries by travel list ID
 export const getJournalEntriesByTravelList = async (
   travelListId: string,
-  query: Omit<JournalEntryQuery, "destination"> = {}
+  query: Omit<JournalEntryQuery, "destination"> & { userId?: string } = {}
 ): Promise<PaginatedJournalEntries> => {
   const {
     page = 1,
@@ -503,13 +492,14 @@ export const getJournalEntriesByTravelList = async (
     search,
     sort = "createdAt",
     order = "desc",
+    userId,
   } = query;
 
   const skip = (page - 1) * limit;
 
   const destinations = await DestinationModel.find({
     list: travelListId,
-  }).select("_id");
+  }).select("_id visibility");
   const destinationIds = destinations.map((dest) => dest._id);
 
   if (destinationIds.length === 0) {
@@ -528,6 +518,7 @@ export const getJournalEntriesByTravelList = async (
 
   const filter: any = {
     destination: { $in: destinationIds },
+    $or: [{ public: true }, userId ? { author: userId } : {}],
   };
 
   if (author) filter.author = author;
@@ -554,12 +545,11 @@ export const getJournalEntriesByTravelList = async (
         select: "name location list",
         populate: {
           path: "list",
-          select: "title owner customPermissions",
+          select: "title owner visibility customPermissions",
         },
       })
       .populate({
         path: "comments",
-        select: "author content likes",
       })
       .populate({ path: "likes", select: "fullName username profileImage" })
       .sort(sortObj)

@@ -194,13 +194,15 @@ const ListDetails = () => {
                   <span>Invite</span>
                 </button>
               )}
-              <button
-                onClick={() => setShowAddDestination(true)}
-                className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl cursor-pointer"
-              >
-                <Plus size={18} />
-                <span>Add Destination</span>
-              </button>
+              {travelList.visibility !== "friends" && (
+                <button
+                  onClick={() => setShowAddDestination(true)}
+                  className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl cursor-pointer"
+                >
+                  <Plus size={18} />
+                  <span>Add Destination</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -238,6 +240,11 @@ const ListDetails = () => {
                           key={idx}
                           journal={journal}
                           listId={listId}
+                          onDelete={(id: string) => {
+                            setJournalsArrayState((prev: any[]) =>
+                              prev.filter((j) => j.id !== id)
+                            );
+                          }}
                         />
                       );
                     }
@@ -508,11 +515,13 @@ const ListDetails = () => {
                   <Edit3 size={18} />
                   <span>Edit</span>
                 </button>
-                <button className="flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors duration-200 cursor-pointer">
-                  <BookOpen size={18} />
-                  <span>Add Journal</span>
-                </button>
-                <button className="flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors duration-200 cursor-pointer">
+                <button
+                  onClick={() => {
+                    setShowDestinationDetail(false);
+                    setShowEditDestination(true);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors duration-200 cursor-pointer"
+                >
                   <Camera size={18} />
                   <span>Add Photos</span>
                 </button>
