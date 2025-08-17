@@ -17,8 +17,7 @@ const JournalCard = ({ journal }: { journal: JournalEntryCard }) => {
   const listId = journal.destination?.list?._id;
   const toggleLike = useToggleJournalEntryLike(listId);
   const [showFullContent, setShowFullContent] = useState(false);
-  const [likes, setLikes] = useState<string[]>(journal.likes);
-  const hasLiked = user ? likes.includes(user.id) : false;
+  const hasLiked = user ? journal.likes.includes(user.id) : false;
 
   if (!listId) return null;
   if (isLoadingUser) {
@@ -255,18 +254,7 @@ const JournalCard = ({ journal }: { journal: JournalEntryCard }) => {
           <button
             onClick={() => {
               if (!user || toggleLike.isPending) return;
-              setLikes((prev) => {
-                if (prev.includes(user.id)) {
-                  return prev.filter((id) => id !== user.id);
-                } else {
-                  return [...prev, user.id];
-                }
-              });
-              toggleLike.mutate(journal.id, {
-                onError: () => {
-                  setLikes(journal.likes);
-                },
-              });
+              toggleLike.mutate(journal.id);
             }}
             disabled={toggleLike.isPending || !user}
             className={`group flex items-center gap-2 px-3 py-2 rounded-full transition-all duration-200 cursor-pointer ${
@@ -281,7 +269,7 @@ const JournalCard = ({ journal }: { journal: JournalEntryCard }) => {
                 user && hasLiked ? "fill-current" : ""
               }`}
             />
-            <span className="text-sm font-medium">{likes.length}</span>
+            <span className="text-sm font-medium">{journal.likes.length}</span>
           </button>
 
           <Link
