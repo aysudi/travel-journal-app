@@ -52,9 +52,10 @@ export const useToggleJournalEntryLike = (travelListId?: string) => {
       queryClient.invalidateQueries({
         queryKey: journalEntryKeys.byAuthor(updatedEntry.author._id),
       });
-      if (updatedEntry.isPublic) {
-        queryClient.invalidateQueries({ queryKey: journalEntryKeys.public() });
-      }
+      queryClient.invalidateQueries({ queryKey: journalEntryKeys.public() });
+      queryClient.invalidateQueries({
+        queryKey: journalEntryKeys.list(updatedEntry.id),
+      });
     },
     onError: (error) => {
       console.error("Failed to toggle journal entry like:", error);
@@ -110,10 +111,12 @@ export const useJournalEntry = (id: string) => {
   return useQuery({
     queryKey: journalEntryKeys.list(id),
     queryFn: () => journalEntryService.getJournalEntryById(id),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
     gcTime: 10 * 60 * 1000,
     retry: 2,
     enabled: !!id,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 };
 
