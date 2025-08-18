@@ -5,6 +5,7 @@ import {
   getAllMessages,
   updateMessage,
   deleteMessage,
+  markMessageAsRead,
 } from "../services/messageService";
 import { AuthenticatedRequest } from "../types/authType";
 
@@ -146,6 +147,34 @@ export const removeMessage = async (
     }
 
     const response = await deleteMessage(messageId, userId);
+
+    if (!response.success) {
+      return res.status(400).json(response);
+    }
+
+    res.status(200).json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const markAsRead = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.body.id;
+    const { messageId } = req.params;
+
+    if (!messageId) {
+      return res.status(400).json({
+        success: false,
+        message: "Message ID is required",
+      });
+    }
+
+    const response = await markMessageAsRead(messageId, userId);
 
     if (!response.success) {
       return res.status(400).json(response);
