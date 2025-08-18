@@ -7,6 +7,7 @@ import {
 import {
   createMessage,
   deleteMessage,
+  markMessageAsRead,
   updateMessage,
 } from "../services/messageService.js";
 
@@ -130,4 +131,23 @@ export const registerMessageHandlers = (
       chatId: data.chatId,
     });
   });
+
+  socket.on(
+    "message:markAsRead",
+    async (data: { messageId: string; chatId: string }) => {
+      try {
+        const result = await markMessageAsRead(data.messageId, socket.user.id);
+
+        if (result.success) {
+          io.to(`chat:${data.chatId}`).emit("message:read", {
+            messageId: data.messageId,
+            chatId: data.chatId,
+            userId: socket.user.id,
+          });
+        }
+      } catch (error) {
+        console.error("Error marking message as read:", error);
+      }
+    }
+  );
 };
