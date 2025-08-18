@@ -106,9 +106,8 @@ export const editMessage = async (
 ) => {
   try {
     const userId: any = req.query.id;
-    const { messageId } = req.params;
+    const { id: messageId } = req.params;
     const { content } = req.body;
-    console.log(messageId);
 
     if (!messageId || !content) {
       return res.status(400).json({
@@ -137,7 +136,7 @@ export const removeMessage = async (
   try {
     console.log(req.query.id);
     const userId: any = req.query.id;
-    const { messageId } = req.params;
+    const { id: messageId } = req.params;
 
     if (!messageId) {
       return res.status(400).json({

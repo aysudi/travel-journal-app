@@ -228,3 +228,52 @@ export const deleteMessage = async (messageId: string, userId: string) => {
     };
   }
 };
+
+export const markMessageAsRead = async (messageId: string, userId: string) => {
+  try {
+    const message = await MessageModel.findById(messageId);
+
+    if (!message) {
+      return {
+        success: false,
+        message: "Message not found",
+      };
+    }
+
+    const alreadyRead = message.seenBy.some(
+      (seen: any) => seen.user.toString() === userId
+    );
+
+    if (alreadyRead) {
+      return {
+        success: true,
+        message: "Message already marked as read",
+      };
+    }
+
+    const updatedMessage = await MessageModel.findByIdAndUpdate(
+      messageId,
+      {
+        $push: {
+          seenBy: {
+            user: new Types.ObjectId(userId),
+            seenAt: new Date(),
+          },
+        },
+        $set: { status: "read" },
+      },
+      { new: true }
+    ).populate("seenBy.user", "username email fullName profileImage");
+
+    return {
+      success: true,
+      data: updatedMessage,
+      message: "Message marked as read",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.message || "Failed to mark message as read",
+    };
+  }
+};
