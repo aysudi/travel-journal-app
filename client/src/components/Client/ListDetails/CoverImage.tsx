@@ -3,9 +3,11 @@ import {
   Globe,
   Lock,
   MoreVertical,
-  Share2,
   UserCheck,
+  MessageCircle,
 } from "lucide-react";
+import { useState } from "react";
+import ChatCard from "../../Chat/ChatCard";
 
 type Props = {
   travelList: any;
@@ -13,6 +15,7 @@ type Props = {
 };
 
 const CoverImage = ({ travelList, handleCoverImageUpload }: Props) => {
+  const [chatOpen, setChatOpen] = useState(false);
   return (
     <div className="relative h-140 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 overflow-hidden">
       {travelList?.coverImage ? (
@@ -36,13 +39,25 @@ const CoverImage = ({ travelList, handleCoverImageUpload }: Props) => {
         >
           <Camera size={20} />
         </button>
-        <button className="bg-white/20 backdrop-blur-sm text-white p-3 rounded-full hover:bg-white/30 transition-all duration-200">
-          <Share2 size={20} />
+        <button
+          className="bg-white/20 backdrop-blur-sm text-white p-3 rounded-full hover:bg-white/30 transition-all duration-200 cursor-pointer"
+          onClick={() => setChatOpen(true)}
+        >
+          <MessageCircle size={20} />
         </button>
         <button className="bg-white/20 backdrop-blur-sm text-white p-3 rounded-full hover:bg-white/30 transition-all duration-200">
           <MoreVertical size={20} />
         </button>
       </div>
+
+      {/* ChatCard Modal Overlay */}
+      {chatOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="relative">
+            <ChatCard setChatOpen={setChatOpen} />
+          </div>
+        </div>
+      )}
 
       {/* List Info Overlay */}
       <div className="absolute bottom-6 left-6 right-6">
