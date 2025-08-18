@@ -39,12 +39,6 @@ export const createMessage = async (data: any) => {
       sender: new Types.ObjectId(data.sender),
       content: data.content,
       list: new Types.ObjectId(data.list),
-      seenBy: [
-        {
-          user: new Types.ObjectId(data.sender),
-          seenAt: new Date(),
-        },
-      ],
       status: "sent",
     });
 
