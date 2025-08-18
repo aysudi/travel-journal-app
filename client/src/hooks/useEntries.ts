@@ -1,4 +1,3 @@
-// Toggle like/unlike on a journal entry
 export const useToggleJournalEntryLike = (travelListId?: string) => {
   const queryClient = useQueryClient();
   return useMutation({
