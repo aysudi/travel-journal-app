@@ -1,7 +1,15 @@
 import { useUserProfile } from "../../../hooks/useAuth";
 import { useMessagesByChat } from "../../../hooks/useMessages";
 import { useEffect, useRef, useState } from "react";
-import { Send, X, Sticker } from "lucide-react";
+import {
+  Send,
+  X,
+  Sticker,
+  Edit2,
+  Trash2,
+  Camera,
+  MoreHorizontal,
+} from "lucide-react";
 import connectSocket from "../../../services/socket";
 import GifPicker from "../GifPicker";
 
@@ -13,6 +21,12 @@ interface Message {
 }
 
 const ChatCard = ({ setChatOpen, chat, listId }: any) => {
+  const [showGroupEdit, setShowGroupEdit] = useState(false);
+  const [groupName, setGroupName] = useState(chat.name || "");
+  const [groupDesc, setGroupDesc] = useState(chat.description || "");
+  const [groupAvatar, setGroupAvatar] = useState(chat.avatar || "");
+  const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
+  const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
   const { data: user } = useUserProfile();
   const {
     data: messagesData,
@@ -31,12 +45,30 @@ const ChatCard = ({ setChatOpen, chat, listId }: any) => {
     const handleNewMessage = (msg: any) => {
       const msgChatId = msg.chatId || msg.chat;
       if (msgChatId === chat.id) {
-        refetch().then();
+        refetch();
+      }
+    };
+    const handleUpdatedMessage = (msg: any) => {
+      const msgChatId = msg.chatId || msg.chat;
+      if (msgChatId === chat.id) {
+        setEditingMsgId(null);
+        setMessage("");
+        refetch();
+      }
+    };
+    const handleDeletedMessage = (msg: any) => {
+      const msgChatId = msg.chatId || msg.chat;
+      if (msgChatId === chat.id) {
+        refetch();
       }
     };
     socket.on("message:new", handleNewMessage);
+    socket.on("message:updated", handleUpdatedMessage);
+    socket.on("message:deleted", handleDeletedMessage);
     return () => {
       socket.off("message:new", handleNewMessage);
+      socket.off("message:updated", handleUpdatedMessage);
+      socket.off("message:deleted", handleDeletedMessage);
     };
   }, [chat.id, socket]);
 
@@ -47,13 +79,29 @@ const ChatCard = ({ setChatOpen, chat, listId }: any) => {
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim() || !user) return;
-    socket.emit("message:send", {
-      chat: chat.id,
-      content: message,
-      list: listId,
-      tempId: Date.now().toString(),
-    });
-    setMessage("");
+    if (editingMsgId) {
+      socket.emit("message:edit", {
+        messageId: editingMsgId,
+        content: message,
+      });
+    } else {
+      socket.emit("message:send", {
+        chat: chat.id,
+        content: message,
+        list: listId,
+        tempId: Date.now().toString(),
+      });
+      setMessage("");
+    }
+  };
+  const handleEditMessage = (msg: Message) => {
+    setEditingMsgId(msg._id || "");
+    setMessage(msg.content);
+  };
+
+  const handleDeleteMessage = (msg: Message) => {
+    if (!msg._id) return;
+    socket.emit("message:delete", { messageId: msg._id });
   };
 
   const sendGifMessage = (gifUrl: string) => {
@@ -82,31 +130,33 @@ const ChatCard = ({ setChatOpen, chat, listId }: any) => {
         <X size={22} />
       </button>
       {/* Header */}
-      <div className="flex items-center gap-3 px-8 py-6 border-b border-white/30 bg-white/40 backdrop-blur-md">
-        {chat.avatar && chat.avatar.length > 0 ? (
+      <div className="flex items-center gap-3 px-8 py-6 border-b border-white/30 bg-white/40 backdrop-blur-md relative">
+        {groupAvatar ? (
           <img
-            className="w-11 h-11 rounded-full"
-            src={chat.avatar}
-            alt={chat.description}
+            className="w-11 h-11 rounded-full object-cover border border-indigo-200"
+            src={groupAvatar}
+            alt={groupDesc}
           />
         ) : (
           <div className="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-400 to-pink-400 flex items-center justify-center text-white font-bold text-xl shadow-md">
             💬
           </div>
         )}
-
-        <div>
-          {chat.description && chat.description.length > 0 ? (
-            <div className="font-bold text-lg text-gray-900">
-              {chat.description}
-            </div>
-          ) : (
-            <div className="font-bold text-lg text-gray-900">Group Chat</div>
-          )}
+        <div className="flex flex-col">
+          <div className="font-bold text-lg text-gray-900">
+            {groupName || "Group Chat"}
+          </div>
           <div className="text-xs text-gray-500">
-            Connect & share with your friends
+            {groupDesc || "Connect & share with your friends"}
           </div>
         </div>
+        <button
+          className="absolute right-16 top-[35px] -translate-y-1/2 p-2 rounded-full hover:bg-indigo-100 text-indigo-600 transition shadow cursor-pointer"
+          onClick={() => setShowGroupEdit(true)}
+          aria-label="Edit group"
+        >
+          <Edit2 size={20} />
+        </button>
       </div>
 
       {/* Messages */}
@@ -125,14 +175,15 @@ const ChatCard = ({ setChatOpen, chat, listId }: any) => {
             return (
               <div
                 key={msg._id || idx}
-                className={`flex mb-2 ${
+                className={`flex mb-2 group ${
                   isSelf ? "justify-end" : "justify-start"
                 }`}
               >
                 <div
-                  className={`flex items-end gap-2 max-w-[70%] ${
+                  className={`flex items-end max-w-[70%] ${
                     isSelf ? "flex-row-reverse" : ""
                   }`}
+                  style={{ gap: isSelf ? 32 : 8 }}
                 >
                   <img
                     src={
@@ -149,16 +200,70 @@ const ChatCard = ({ setChatOpen, chat, listId }: any) => {
                     }}
                   />
                   <div
-                    className={`px-4 py-2 rounded-2xl shadow-md text-base break-words
-                        ${
-                          isSelf
-                            ? "bg-indigo-500 text-white rounded-br-md"
-                            : "bg-white/90 text-gray-900 border border-indigo-100 rounded-bl-md"
-                        }
-                      `}
+                    className={`relative px-4 py-2 rounded-2xl shadow-md text-base break-words ${
+                      isSelf
+                        ? "bg-indigo-500 text-white rounded-br-md"
+                        : "bg-white/90 text-gray-900 border border-indigo-100 rounded-bl-md"
+                    }`}
                   >
+                    {/* Edit/Delete options for own messages */}
+                    {isSelf && (
+                      <div className="absolute top-1 right-[-28px] z-10">
+                        <button
+                          className="p-1 rounded-full hover:bg-indigo-100 focus:outline-none cursor-pointer"
+                          onClick={() =>
+                            setActionMenuOpen(
+                              actionMenuOpen === msg._id ? null : msg._id || ""
+                            )
+                          }
+                          aria-label="Message actions"
+                        >
+                          <MoreHorizontal size={18} />
+                        </button>
+                        {actionMenuOpen === msg._id && (
+                          <div className="absolute z-10 right-0 mt-2 w-36 bg-white border border-gray-200 rounded-lg shadow-lg py-1 animate-fade-in">
+                            {msg.content.match(
+                              /https?:\/\/.*\.(gif)(\?.*)?$/i
+                            ) ? (
+                              <button
+                                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded cursor-pointer"
+                                onClick={() => {
+                                  handleDeleteMessage(msg);
+                                  setActionMenuOpen(null);
+                                }}
+                              >
+                                <Trash2 size={15} /> Delete
+                              </button>
+                            ) : (
+                              <>
+                                <button
+                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-indigo-600 hover:bg-indigo-50 rounded cursor-pointer"
+                                  onClick={() => {
+                                    handleEditMessage(msg);
+                                    setActionMenuOpen(null);
+                                  }}
+                                >
+                                  <Edit2 size={15} /> Edit
+                                </button>
+                                <button
+                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded cursor-pointer"
+                                  onClick={() => {
+                                    handleDeleteMessage(msg);
+                                    setActionMenuOpen(null);
+                                  }}
+                                >
+                                  <Trash2 size={15} /> Delete
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
                     {/* Render GIF if content is a gif url, else render text */}
-                    {msg.content.match(/https?:\/\/.*\.(gif)(\?.*)?$/i) ? (
+                    {editingMsgId === msg._id ? null : msg.content.match(
+                        /https?:\/\/.*\.(gif)(\?.*)?$/i
+                      ) ? (
                       <img
                         src={msg.content}
                         alt="GIF"
@@ -191,6 +296,79 @@ const ChatCard = ({ setChatOpen, chat, listId }: any) => {
             );
           })
         )}
+        {/* Group Edit Modal */}
+        {showGroupEdit && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+            <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md relative">
+              <button
+                className="absolute top-3 right-3 p-1 rounded-full hover:bg-gray-100"
+                onClick={() => setShowGroupEdit(false)}
+                aria-label="Close"
+              >
+                <X size={20} />
+              </button>
+              <h2 className="text-xl font-bold mb-4 text-indigo-700">
+                Edit Group Info
+              </h2>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col items-center gap-2">
+                  <label
+                    htmlFor="avatar-upload"
+                    className="cursor-pointer relative group"
+                  >
+                    {groupAvatar ? (
+                      <img
+                        src={groupAvatar}
+                        alt="Avatar"
+                        className="w-20 h-20 rounded-full object-cover border-2 border-indigo-300"
+                      />
+                    ) : (
+                      <div className="w-20 h-20 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-400">
+                        <Camera size={32} />
+                      </div>
+                    )}
+                    <input
+                      id="avatar-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (ev) =>
+                            setGroupAvatar(ev.target?.result as string);
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                    <span className="absolute bottom-0 right-0 bg-indigo-500 text-white rounded-full p-1 text-xs opacity-80 group-hover:opacity-100 transition">
+                      Edit
+                    </span>
+                  </label>
+                </div>
+                <input
+                  className="px-3 py-2 rounded border border-indigo-200"
+                  placeholder="Group Name"
+                  value={groupName}
+                  onChange={(e) => setGroupName(e.target.value)}
+                />
+                <textarea
+                  className="px-3 py-2 rounded border border-indigo-200 min-h-[60px]"
+                  placeholder="Description"
+                  value={groupDesc}
+                  onChange={(e) => setGroupDesc(e.target.value)}
+                />
+                <button
+                  className="mt-2 px-4 py-2 rounded bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition"
+                  onClick={() => setShowGroupEdit(false)}
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
@@ -202,6 +380,7 @@ const ChatCard = ({ setChatOpen, chat, listId }: any) => {
         <button
           onClick={() => setShowGifPicker(true)}
           className="px-2 py-2 rounded-xl hover:bg-gray-100 cursor-pointer"
+          type="button"
         >
           <Sticker className="w-5 h-5" />
         </button>
@@ -216,11 +395,25 @@ const ChatCard = ({ setChatOpen, chat, listId }: any) => {
         <input
           type="text"
           className="flex-1 px-4 py-3 rounded-full border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white text-gray-900 shadow"
-          placeholder="Type your message…"
+          placeholder={
+            editingMsgId ? "Edit your message…" : "Type your message…"
+          }
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           autoComplete="off"
         />
+        {editingMsgId && (
+          <button
+            type="button"
+            className="ml-2 px-4 py-2 rounded-full bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition shadow cursor-pointer"
+            onClick={() => {
+              setEditingMsgId(null);
+              setMessage("");
+            }}
+          >
+            Cancel
+          </button>
+        )}
         <button
           type="submit"
           className="ml-2 px-5 py-2 rounded-full bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition shadow cursor-pointer"

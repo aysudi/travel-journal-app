@@ -17,6 +17,8 @@ const chatSchema = new mongoose.Schema(
 
     description: { type: String, required: true },
 
+    name: { type: String, required: true },
+
     avatar: { type: String },
 
     list: {
