@@ -13,6 +13,12 @@ export class ChatService {
     return apiConfig.request(`${this.endpoint}?userId=${userId}`);
   }
 
+  async getOrCreateChatByListId(listId: string, userId: string) {
+    return apiConfig.request(
+      `${this.endpoint}/by-list?listId=${listId}&userId=${userId}`
+    );
+  }
+
   async createChat(data: any) {
     return apiConfig.request(this.endpoint, {
       method: "POST",

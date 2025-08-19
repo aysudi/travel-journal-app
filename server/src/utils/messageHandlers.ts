@@ -12,7 +12,7 @@ import {
 } from "../services/messageService.js";
 
 const validateMessageData = (data: SendMessageData) => {
-  if (!data.chatId || !data.content) {
+  if (!data.chat || !data.content) {
     return { isValid: false, error: "Chat ID and content are required" };
   }
   if (data.content.length > 1000) {
@@ -35,7 +35,7 @@ export const registerMessageHandlers = (
 
       const result = await createMessage({
         ...data,
-        senderId: socket.user.id,
+        sender: socket.user.id,
       });
 
       if (!result.success || !result.data) {
@@ -46,14 +46,15 @@ export const registerMessageHandlers = (
       }
 
       const message = result.data;
-      io.to(`chat:${data.chatId}`).emit("message:new", {
-        id: message._id.toString(),
+      io.to(`chat:${data.chat}`).emit("message:new", {
+        id: message._id?.toString?.() || message._id,
         content: message.content,
-        senderId: socket.user.id,
-        senderName: socket.user.username,
-        chatId: data.chatId,
-        timestamp: message.createdAt,
-        seenBy: [socket.user.id],
+        sender: message.sender,
+        chatId: data.chat,
+        createdAt: message.createdAt,
+        seenBy: message.seenBy?.map?.(
+          (s: any) => s.user?.toString?.() || s.user
+        ) || [socket.user.id],
         tempId: data.tempId,
       });
     } catch (error) {

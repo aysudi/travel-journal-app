@@ -7,7 +7,9 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { useState } from "react";
-import ChatCard from "../../Chat/ChatCard";
+import ChatCard from "../Chat/ChatCard";
+import { useGetOrCreateChatByListId } from "../../../hooks/useChats";
+import { useUserProfile } from "../../../hooks/useAuth";
 
 type Props = {
   travelList: any;
@@ -16,6 +18,22 @@ type Props = {
 
 const CoverImage = ({ travelList, handleCoverImageUpload }: Props) => {
   const [chatOpen, setChatOpen] = useState(false);
+  const { data: user }: any = useUserProfile();
+
+  const {
+    data,
+    isLoading,
+    error,
+  }: { data: any; isLoading: boolean; error: any } = useGetOrCreateChatByListId(
+    travelList._id,
+    user?.id
+  );
+
+  if (isLoading) return <div>Loading chat...</div>;
+  if (error) return <div>Error loading chat</div>;
+
+  const chatId: string = data.id;
+
   return (
     <div className="relative h-140 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 overflow-hidden">
       {travelList?.coverImage ? (
@@ -54,7 +72,11 @@ const CoverImage = ({ travelList, handleCoverImageUpload }: Props) => {
       {chatOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="relative">
-            <ChatCard setChatOpen={setChatOpen} />
+            <ChatCard
+              listId={travelList._id}
+              chatId={chatId}
+              setChatOpen={setChatOpen}
+            />
           </div>
         </div>
       )}
