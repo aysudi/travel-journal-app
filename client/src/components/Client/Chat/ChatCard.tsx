@@ -1,8 +1,9 @@
 import { useUserProfile } from "../../../hooks/useAuth";
 import { useMessagesByChat } from "../../../hooks/useMessages";
 import { useEffect, useRef, useState } from "react";
-import { Paperclip, Send, X } from "lucide-react";
+import { Send, X, Sticker } from "lucide-react";
 import connectSocket from "../../../services/socket";
+import GifPicker from "../GifPicker";
 
 interface Message {
   _id?: string;
@@ -21,6 +22,7 @@ const ChatCard = ({ setChatOpen, chat, listId }: any) => {
   const [message, setMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const socket = connectSocket();
+  const [showGifPicker, setShowGifPicker] = useState(false);
 
   useEffect(() => {
     refetch();
@@ -51,8 +53,19 @@ const ChatCard = ({ setChatOpen, chat, listId }: any) => {
       list: listId,
       tempId: Date.now().toString(),
     });
-    refetch();
     setMessage("");
+  };
+
+  const sendGifMessage = (gifUrl: string) => {
+    if (!gifUrl || !chat) return;
+    socket.emit("message:send", {
+      chat: chat.id,
+      content: gifUrl,
+      list: listId,
+      tempId: Date.now().toString(),
+      isGif: true,
+    });
+    setShowGifPicker(false);
   };
 
   const messages: Message[] =
@@ -144,7 +157,20 @@ const ChatCard = ({ setChatOpen, chat, listId }: any) => {
                         }
                       `}
                   >
-                    {msg.content}
+                    {/* Render GIF if content is a gif url, else render text */}
+                    {msg.content.match(/https?:\/\/.*\.(gif)(\?.*)?$/i) ? (
+                      <img
+                        src={msg.content}
+                        alt="GIF"
+                        className="max-w-xs max-h-60 rounded-lg border border-indigo-200"
+                        style={{ display: "block", margin: "0 auto" }}
+                        onError={(e) =>
+                          (e.currentTarget.style.display = "none")
+                        }
+                      />
+                    ) : (
+                      msg.content
+                    )}
                     <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
                       <span>
                         {isSelf ? "You" : msg.sender?.username || "User"}
@@ -174,11 +200,19 @@ const ChatCard = ({ setChatOpen, chat, listId }: any) => {
         className="relative flex items-center gap-3 px-6 py-5 bg-white/70 backdrop-blur-xl border-t border-white/30"
       >
         <button
-          type="button"
-          className="p-2 rounded-full hover:bg-indigo-100 transition"
+          onClick={() => setShowGifPicker(true)}
+          className="px-2 py-2 rounded-xl hover:bg-gray-100 cursor-pointer"
         >
-          <Paperclip size={20} className="text-indigo-500" />
+          <Sticker className="w-5 h-5" />
         </button>
+
+        {showGifPicker && (
+          <GifPicker
+            onSelect={(gifUrl: string) => sendGifMessage(gifUrl)}
+            onClose={() => setShowGifPicker(false)}
+          />
+        )}
+
         <input
           type="text"
           className="flex-1 px-4 py-3 rounded-full border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white text-gray-900 shadow"
