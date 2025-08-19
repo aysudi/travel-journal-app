@@ -31,7 +31,7 @@ export const createNewChat = async (
   next: NextFunction
 ) => {
   try {
-    const { members, name, description, createdBy } = req.body;
+    const { members, list, description, createdBy } = req.body;
 
     if (!members || !Array.isArray(members)) {
       return res.status(400).json({
@@ -44,7 +44,7 @@ export const createNewChat = async (
 
     const response = await createChat({
       members: allMembers,
-      name,
+      list,
       description,
       createdBy,
     });
@@ -65,16 +65,16 @@ export const getCurrentUserChats = async (
   next: NextFunction
 ) => {
   try {
-    const userId = req.query.userId as string;
+    const listId = req.query.listId as string;
 
-    if (!userId) {
+    if (!listId) {
       return res.status(400).json({
         success: false,
-        message: "userId query parameter is required",
+        message: "listId query parameter is required",
       });
     }
 
-    const response = await getUserChats(userId);
+    const response = await getUserChats(listId);
 
     if (!response.success) {
       return res.status(400).json(response);

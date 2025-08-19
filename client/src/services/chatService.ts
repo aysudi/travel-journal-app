@@ -9,8 +9,8 @@ export class ChatService {
     return apiConfig.request(url);
   }
 
-  async getCurrentUserChats(userId: string) {
-    return apiConfig.request(`${this.endpoint}?userId=${userId}`);
+  async getCurrentListChats(listId: string) {
+    return apiConfig.request(`${this.endpoint}?listId=${listId}`);
   }
 
   async getOrCreateChatByListId(listId: string, userId: string) {
