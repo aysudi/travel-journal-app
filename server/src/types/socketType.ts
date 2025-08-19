@@ -97,8 +97,9 @@ export interface UserPresenceData {
 }
 
 export interface SendMessageData {
-  chatId: string;
+  chat: string;
   content: string;
+  list: string;
   tempId?: string;
 }
 

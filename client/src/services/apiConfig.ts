@@ -79,7 +79,6 @@ export class ApiConfig {
       }
 
       if (response.status === 401) {
-        console.log("401 Unauthorized - clearing token");
         this.clearToken();
         window.dispatchEvent(new CustomEvent("auth:logout"));
       }

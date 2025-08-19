@@ -1,26 +1,42 @@
-import { useParams } from "react-router-dom";
-import { useUserProfile } from "../../hooks/useAuth";
-import { useCreateMessage, useMessagesByChat } from "../../hooks/useMessages";
+import { useUserProfile } from "../../../hooks/useAuth";
+import { useMessagesByChat } from "../../../hooks/useMessages";
 import { useEffect, useRef, useState } from "react";
 import { Paperclip, Send, X } from "lucide-react";
+import connectSocket from "../../../services/socket";
 
 interface Message {
-  _id: string;
+  _id?: string;
   content: string;
-  createdAt: string;
-  sender: { _id: string; username: string; profileImage?: string };
+  createdAt?: string;
+  sender?: { _id: string; username: string; profileImage?: string };
 }
 
-const ChatCard = ({ setChatOpen }: any) => {
-  const { chatId = "" } = useParams<{ chatId: string }>();
+const ChatCard = ({ setChatOpen, chatId, listId }: any) => {
   const { data: user } = useUserProfile();
-  const { data: messagesData, isLoading } = useMessagesByChat(
-    chatId,
-    user?.id ? { userId: user.id } : undefined
-  );
-  const createMessage = useCreateMessage();
+  const {
+    data: messagesData,
+    isLoading,
+    refetch,
+  } = useMessagesByChat(chatId, user?.id ? { userId: user.id } : undefined);
   const [message, setMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const socket = connectSocket();
+
+  useEffect(() => {
+    refetch();
+    if (!chatId) return;
+    socket.emit("join:chats", [chatId]);
+    const handleNewMessage = (msg: any) => {
+      const msgChatId = msg.chatId || msg.chat;
+      if (msgChatId === chatId) {
+        refetch().then();
+      }
+    };
+    socket.on("message:new", handleNewMessage);
+    return () => {
+      socket.off("message:new", handleNewMessage);
+    };
+  }, [chatId, socket]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -29,16 +45,18 @@ const ChatCard = ({ setChatOpen }: any) => {
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim() || !user) return;
-    createMessage.mutate({
+    socket.emit("message:send", {
       chat: chatId,
-      sender: user.id,
       content: message,
+      list: listId,
+      tempId: Date.now().toString(),
     });
+    refetch();
     setMessage("");
   };
 
   const messages: Message[] =
-    (messagesData && (messagesData as any).data?.messages) || [];
+    (messagesData && (messagesData as any)?.messages) || [];
 
   return (
     <div className="w-full max-w-5xl min-w-[350px] md:min-w-[600px] h-[80vh] flex flex-col rounded-3xl shadow-2xl bg-white/60 backdrop-blur-2xl border border-white/40 overflow-hidden relative">
@@ -74,11 +92,11 @@ const ChatCard = ({ setChatOpen }: any) => {
             No messages yet. Start the conversation!
           </div>
         ) : (
-          messages.map((msg) => {
-            const isSelf = user && msg.sender._id === user.id;
+          messages.map((msg, idx) => {
+            const isSelf = user && msg.sender?._id === user.id;
             return (
               <div
-                key={msg._id}
+                key={msg._id || idx}
                 className={`flex mb-2 ${
                   isSelf ? "justify-end" : "justify-start"
                 }`}
@@ -88,13 +106,20 @@ const ChatCard = ({ setChatOpen }: any) => {
                     isSelf ? "flex-row-reverse" : ""
                   }`}
                 >
-                  <div
-                    className={`w-8 h-8 rounded-full bg-indigo-200 flex items-center justify-center text-indigo-700 font-bold text-sm shadow ${
+                  <img
+                    src={
+                      msg.sender?.profileImage ||
+                      "https://static.vecteezy.com/system/resources/previews/019/879/186/non_2x/user-icon-on-transparent-background-free-png.png"
+                    }
+                    alt={msg.sender?.username || "User"}
+                    className={`w-8 h-8 rounded-full object-cover border-2 border-indigo-200 bg-white shadow ${
                       isSelf ? "ml-1" : "mr-1"
                     }`}
-                  >
-                    {msg.sender.username.charAt(0).toUpperCase()}
-                  </div>
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        "https://static.vecteezy.com/system/resources/previews/019/879/186/non_2x/user-icon-on-transparent-background-free-png.png";
+                    }}
+                  />
                   <div
                     className={`px-4 py-2 rounded-2xl shadow-md text-base break-words
                         ${
@@ -106,13 +131,17 @@ const ChatCard = ({ setChatOpen }: any) => {
                   >
                     {msg.content}
                     <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
-                      <span>{isSelf ? "You" : msg.sender.username}</span>
+                      <span>
+                        {isSelf ? "You" : msg.sender?.username || "User"}
+                      </span>
                       <span>·</span>
                       <span>
-                        {new Date(msg.createdAt).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {msg.createdAt
+                          ? new Date(msg.createdAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : ""}
                       </span>
                     </div>
                   </div>
