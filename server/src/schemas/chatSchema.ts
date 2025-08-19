@@ -19,6 +19,12 @@ const chatSchema = new mongoose.Schema(
 
     avatar: { type: String },
 
+    list: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "TravelList",
+      required: true,
+    },
+
     lastMessage: {
       message: { type: mongoose.Schema.Types.ObjectId, ref: "Message" },
       timestamp: { type: Date },

@@ -2,6 +2,8 @@ import { Types } from "mongoose";
 import ChatModel from "../models/Chat";
 import formatMongoData from "../utils/formatMongoData";
 import MessageModel from "../models/Message";
+import TravelList from "../models/TravelList";
+import UserModel from "../models/User";
 
 export const getAllChats = async () => {
   try {
@@ -135,7 +137,6 @@ export const deleteChat = async (chatId: string, userId: string) => {
       _id: new Types.ObjectId(chatId),
       "members.user": new Types.ObjectId(userId),
     });
-    console.log(chat);
 
     if (!chat) {
       return {
@@ -156,6 +157,65 @@ export const deleteChat = async (chatId: string, userId: string) => {
     return {
       success: false,
       message: error.message || "Failed to delete chat",
+    };
+  }
+};
+
+// Get or create chat by list id
+export const getOrCreateChatByListId = async (
+  listId: string,
+  userId: string
+) => {
+  try {
+    let chat = await ChatModel.findOne({ list: listId });
+    if (!chat) {
+      const list = await TravelList.findById(listId).populate(
+        "owner customPermissions.user"
+      );
+      if (!list) throw new Error("List not found");
+      let memberIds: string[] = [];
+      if (list.visibility === "friends") {
+        const owner = list.owner;
+        const ownerDoc = await UserModel.findById(owner);
+        const friends = ownerDoc?.friends || [];
+        memberIds = [
+          owner.toString(),
+          ...friends.map((f: any) => f.toString()),
+        ];
+      } else if (list.visibility === "private") {
+        memberIds = [
+          list.owner.toString(),
+          ...list.customPermissions.map((perm: any) => perm.user.toString()),
+        ];
+      } else if (list.visibility === "public") {
+        memberIds = [userId];
+      }
+      memberIds = Array.from(new Set(memberIds));
+      const membersWithMetadata = memberIds.map((id) => ({
+        user: new Types.ObjectId(id),
+        joinedAt: new Date(),
+        isActive: true,
+      }));
+      chat = new ChatModel({
+        list: [listId],
+        members: membersWithMetadata,
+        createdBy: new Types.ObjectId(list.owner),
+        messageCount: 0,
+      });
+      await chat.save();
+    }
+    const populatedChat = await ChatModel.findById(chat._id)
+      .populate("members.user")
+      .populate("createdBy", "username email profileImage username");
+    return {
+      success: true,
+      data: formatMongoData(populatedChat),
+      message: "Chat found or created by list id",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.message || "Failed to get or create chat by list id",
     };
   }
 };

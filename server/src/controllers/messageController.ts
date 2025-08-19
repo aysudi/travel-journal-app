@@ -31,12 +31,12 @@ export const sendMessage = async (
   next: NextFunction
 ) => {
   try {
-    const { chat, content, sender } = req.body;
+    const { chat, content, sender, list } = req.body;
 
-    if (!chat || !content) {
+    if (!chat || !content || !list) {
       return res.status(400).json({
         success: false,
-        message: "Chat ID and content are required",
+        message: "Chat ID, content, and list are required",
       });
     }
 
@@ -44,6 +44,7 @@ export const sendMessage = async (
       chat,
       sender,
       content,
+      list,
     });
 
     if (!response.success) {
@@ -81,7 +82,7 @@ export const getMessages = async (
       });
     }
 
-    if (page < 1 || limit < 1 || limit > 100) {
+    if (page < 1 || limit < 1 || limit > 1000) {
       return res.status(400).json({
         success: false,
         message: "Invalid pagination parameters",
@@ -135,7 +136,6 @@ export const removeMessage = async (
   next: NextFunction
 ) => {
   try {
-    console.log(req.query.id);
     const userId: any = req.query.id;
     const { id: messageId } = req.params;
 
