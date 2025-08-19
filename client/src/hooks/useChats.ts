@@ -26,6 +26,18 @@ export const useCurrentUserChats = (userId: string) => {
   });
 };
 
+export const useGetOrCreateChatByListId = (listId: string, userId: string) => {
+  return useQuery({
+    queryKey: ["chat", "by-list", listId, userId],
+    queryFn: () => chatService.getOrCreateChatByListId(listId, userId),
+    enabled: !!listId && !!userId,
+    staleTime: 0,
+    gcTime: 10 * 60 * 1000,
+    retry: 1,
+    refetchOnWindowFocus: false,
+  });
+};
+
 export const useCreateChat = () => {
   const queryClient = useQueryClient();
   return useMutation({

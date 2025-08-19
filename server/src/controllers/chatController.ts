@@ -5,6 +5,7 @@ import {
   getAllChats,
   updateChat,
   deleteChat,
+  getOrCreateChatByListId,
 } from "../services/chatService";
 import { AuthenticatedRequest } from "../types/authType";
 
@@ -120,10 +121,8 @@ export const deleteChatById = async (
   next: NextFunction
 ) => {
   try {
-    console.log("User ID:", req.query.userId);
     const userId: any = req.query.userId;
     const { chatId } = req.params;
-    console.log("Chat ID:", chatId);
 
     if (!chatId) {
       return res.status(400).json({
@@ -138,6 +137,33 @@ export const deleteChatById = async (
       return res.status(400).json(response);
     }
 
+    res.status(200).json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getOrCreateChatByListIdController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const listId = req.query.listId || req.body.listId;
+    const userId = req.query.userId || req.body.userId;
+    if (!listId || !userId) {
+      return res.status(400).json({
+        success: false,
+        message: "listId and userId are required",
+      });
+    }
+    const response = await getOrCreateChatByListId(
+      listId as string,
+      userId as string
+    );
+    if (!response.success) {
+      return res.status(400).json(response);
+    }
     res.status(200).json(response);
   } catch (error) {
     next(error);

@@ -24,14 +24,15 @@ export const useMessagesByChat = (
   chatId: string,
   params?: GetMessagesByChatParams
 ) => {
+  const finalParams = { ...params, limit: params?.limit ?? 1000 };
   return useQuery({
-    queryKey: ["messages", "chat", chatId, params],
-    queryFn: () => messageService.getMessagesByChat(chatId, params),
+    queryKey: ["messages", "chat", chatId, finalParams],
+    queryFn: () => messageService.getMessagesByChat(chatId, finalParams),
     enabled: !!chatId,
     staleTime: 2 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     retry: 2,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
   });
 };
 
