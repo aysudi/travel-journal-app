@@ -15,12 +15,12 @@ const chatSchema = new mongoose.Schema(
       },
     ],
 
-    description: { type: String },
+    description: { type: String, required: true },
 
     avatar: { type: String },
 
     list: {
-      type: [mongoose.Schema.Types.ObjectId],
+      type: mongoose.Schema.Types.ObjectId,
       ref: "TravelList",
       required: true,
     },

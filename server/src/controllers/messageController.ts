@@ -63,7 +63,6 @@ export const getMessages = async (
   next: NextFunction
 ) => {
   try {
-    const userId = req.query.userId as string;
     const { chatId } = req.params;
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 50;
@@ -75,13 +74,6 @@ export const getMessages = async (
       });
     }
 
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        message: "userId query parameter is required",
-      });
-    }
-
     if (page < 1 || limit < 1 || limit > 1000) {
       return res.status(400).json({
         success: false,
@@ -89,7 +81,7 @@ export const getMessages = async (
       });
     }
 
-    const response = await getChatMessages(chatId, userId, page, limit);
+    const response = await getChatMessages(chatId, page, limit);
 
     if (!response.success) {
       return res.status(400).json(response);

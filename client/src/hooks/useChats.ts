@@ -14,11 +14,11 @@ export const useAllChats = () => {
   });
 };
 
-export const useCurrentUserChats = (userId: string) => {
+export const useCurrentListChats = (listId: string) => {
   return useQuery({
-    queryKey: ["chats", "user", userId],
-    queryFn: () => chatService.getCurrentUserChats(userId),
-    enabled: !!userId,
+    queryKey: ["chats", "list", listId],
+    queryFn: () => chatService.getCurrentListChats(listId),
+    enabled: !!listId,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     retry: 2,

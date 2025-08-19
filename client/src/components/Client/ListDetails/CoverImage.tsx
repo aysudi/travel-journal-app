@@ -32,7 +32,7 @@ const CoverImage = ({ travelList, handleCoverImageUpload }: Props) => {
   if (isLoading) return <div>Loading chat...</div>;
   if (error) return <div>Error loading chat</div>;
 
-  const chatId: string = data.id;
+  const chat: string = data;
 
   return (
     <div className="relative h-140 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 overflow-hidden">
@@ -74,7 +74,7 @@ const CoverImage = ({ travelList, handleCoverImageUpload }: Props) => {
           <div className="relative">
             <ChatCard
               listId={travelList._id}
-              chatId={chatId}
+              chat={chat}
               setChatOpen={setChatOpen}
             />
           </div>

@@ -11,24 +11,24 @@ interface Message {
   sender?: { _id: string; username: string; profileImage?: string };
 }
 
-const ChatCard = ({ setChatOpen, chatId, listId }: any) => {
+const ChatCard = ({ setChatOpen, chat, listId }: any) => {
   const { data: user } = useUserProfile();
   const {
     data: messagesData,
     isLoading,
     refetch,
-  } = useMessagesByChat(chatId, user?.id ? { userId: user.id } : undefined);
+  } = useMessagesByChat(chat.id, user?.id ? { userId: user.id } : undefined);
   const [message, setMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const socket = connectSocket();
 
   useEffect(() => {
     refetch();
-    if (!chatId) return;
-    socket.emit("join:chats", [chatId]);
+    if (!chat.id) return;
+    socket.emit("join:chats", [chat.id]);
     const handleNewMessage = (msg: any) => {
       const msgChatId = msg.chatId || msg.chat;
-      if (msgChatId === chatId) {
+      if (msgChatId === chat.id) {
         refetch().then();
       }
     };
@@ -36,7 +36,7 @@ const ChatCard = ({ setChatOpen, chatId, listId }: any) => {
     return () => {
       socket.off("message:new", handleNewMessage);
     };
-  }, [chatId, socket]);
+  }, [chat.id, socket]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -46,7 +46,7 @@ const ChatCard = ({ setChatOpen, chatId, listId }: any) => {
     e.preventDefault();
     if (!message.trim() || !user) return;
     socket.emit("message:send", {
-      chat: chatId,
+      chat: chat.id,
       content: message,
       list: listId,
       tempId: Date.now().toString(),
@@ -70,11 +70,26 @@ const ChatCard = ({ setChatOpen, chatId, listId }: any) => {
       </button>
       {/* Header */}
       <div className="flex items-center gap-3 px-8 py-6 border-b border-white/30 bg-white/40 backdrop-blur-md">
-        <div className="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-400 to-pink-400 flex items-center justify-center text-white font-bold text-xl shadow-md">
-          💬
-        </div>
+        {chat.avatar && chat.avatar.length > 0 ? (
+          <img
+            className="w-11 h-11 rounded-full"
+            src={chat.avatar}
+            alt={chat.description}
+          />
+        ) : (
+          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-400 to-pink-400 flex items-center justify-center text-white font-bold text-xl shadow-md">
+            💬
+          </div>
+        )}
+
         <div>
-          <div className="font-bold text-lg text-gray-900">Group Chat</div>
+          {chat.description && chat.description.length > 0 ? (
+            <div className="font-bold text-lg text-gray-900">
+              {chat.description}
+            </div>
+          ) : (
+            <div className="font-bold text-lg text-gray-900">Group Chat</div>
+          )}
           <div className="text-xs text-gray-500">
             Connect & share with your friends
           </div>

@@ -27,7 +27,6 @@ export const createMessage = async (data: any) => {
   try {
     const chat = await ChatModel.findOne({
       _id: new Types.ObjectId(data.chat),
-      "members.user": new Types.ObjectId(data.sender),
     });
 
     if (!chat) {
@@ -73,15 +72,12 @@ export const createMessage = async (data: any) => {
 
 export const getChatMessages = async (
   chatId: string,
-  userId: string,
   page: number = 1,
   limit: number = 50
 ) => {
   try {
     const chat = await ChatModel.findOne({
       _id: new Types.ObjectId(chatId),
-      "members.user": new Types.ObjectId(userId),
-      "members.isActive": true,
     });
 
     if (!chat) {

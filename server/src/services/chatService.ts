@@ -41,9 +41,8 @@ export const createChat = async (data: any) => {
     }));
 
     const chat = new ChatModel({
-      type: data.type,
       members: membersWithMetadata,
-      name: data.name,
+      list: data.list,
       description: data.description,
       createdBy: new Types.ObjectId(data.createdBy),
       messageCount: 0,
@@ -68,12 +67,10 @@ export const createChat = async (data: any) => {
   }
 };
 
-export const getUserChats = async (userId: string) => {
+export const getUserChats = async (listId: string) => {
   try {
     const chats = await ChatModel.find({
-      "members.user": new Types.ObjectId(userId),
-      "members.isActive": true,
-      "archived.isArchived": false,
+      list: new Types.ObjectId(listId),
     })
       .populate("members.user", "username email profile isOnline lastSeen")
       .populate("lastMessage.sender", "username profile")
