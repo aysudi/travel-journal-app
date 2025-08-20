@@ -24,10 +24,8 @@ const CoverImage = ({ travelList, handleCoverImageUpload }: Props) => {
     data,
     isLoading,
     error,
-  }: { data: any; isLoading: boolean; error: any } = useGetOrCreateChatByListId(
-    travelList._id,
-    user?.id
-  );
+    refetch: refetchChat,
+  }: any = useGetOrCreateChatByListId(travelList._id, user?.id);
 
   if (isLoading) return <div>Loading chat...</div>;
   if (error) return <div>Error loading chat</div>;
@@ -76,6 +74,7 @@ const CoverImage = ({ travelList, handleCoverImageUpload }: Props) => {
               listId={travelList._id}
               chat={chat}
               setChatOpen={setChatOpen}
+              refetchChat={refetchChat}
             />
           </div>
         </div>
