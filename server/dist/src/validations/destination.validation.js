@@ -26,9 +26,9 @@ const destinationUpdateSchema = Joi.object({
         "string.empty": "Destination name cannot be empty",
         "string.max": "Destination name cannot exceed 100 characters",
     }),
-    country: Joi.string().trim().min(1).max(50).optional().messages({
-        "string.empty": "Country cannot be empty",
-        "string.max": "Country name cannot exceed 50 characters",
+    location: Joi.string().trim().min(1).max(50).optional().messages({
+        "string.empty": "Location cannot be empty",
+        "string.max": "Location name cannot exceed 50 characters",
     }),
     datePlanned: Joi.date().optional().allow(null),
     dateVisited: Joi.date().optional().allow(null),

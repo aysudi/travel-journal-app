@@ -49,7 +49,6 @@ const createInvitation = async (invitationData) => {
             throw new Error("Invalid list ID provided");
         }
         let inviteeId = invitee;
-        // If inviteeEmail is provided instead of invitee ID, look up the user
         if (inviteeEmail && !invitee) {
             const inviteeUser = await User.findOne({ email: inviteeEmail });
             if (!inviteeUser) {
@@ -63,7 +62,6 @@ const createInvitation = async (invitationData) => {
         if (!Types.ObjectId.isValid(inviteeId)) {
             throw new Error("Invalid invitee ID");
         }
-        // Check for existing pending invitation
         const existingInvitation = await ListInvitation.findOne({
             list,
             invitee: inviteeId,
@@ -72,7 +70,6 @@ const createInvitation = async (invitationData) => {
         if (existingInvitation) {
             throw new Error("Pending invitation already exists for this user and list");
         }
-        // Create expiration date if not provided (default 7 days)
         const expirationDate = expiresAt
             ? new Date(expiresAt)
             : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -144,30 +141,23 @@ export const acceptInvitation = async (invitationId, userId) => {
         if (!invitation) {
             throw new Error("Invitation not found");
         }
-        // Check if the user is the invitee
         if (invitation.invitee._id.toString() !== userId) {
             throw new Error("You are not authorized to accept this invitation");
         }
-        // Check if invitation is still pending
         if (invitation.status !== "pending") {
             throw new Error("Invitation is not pending");
         }
-        // Check if invitation has expired
         if (invitation.expiresAt && invitation.expiresAt < new Date()) {
             throw new Error("Invitation has expired");
         }
-        // Update invitation status
         invitation.status = "accepted";
         await invitation.save();
-        // Add user to the travel list's customPermissions
         const travelList = await TravelList.findById(invitation.list._id);
         if (!travelList) {
             throw new Error("Travel list not found");
         }
-        // Check if user already has permissions (to avoid duplicates)
         const existingPermission = travelList.customPermissions.find((permission) => permission.user.toString() === userId);
         if (!existingPermission) {
-            // Add new permission entry using findByIdAndUpdate to avoid validation issues
             await TravelList.findByIdAndUpdate(invitation.list._id, {
                 $push: {
                     customPermissions: {
@@ -179,11 +169,10 @@ export const acceptInvitation = async (invitationId, userId) => {
                 },
             }, {
                 new: true,
-                runValidators: false, // Skip validation to avoid coverImage requirement
+                runValidators: false,
             });
         }
         else {
-            // Update existing permission level if different
             if (existingPermission.level !== invitation.permissionLevel) {
                 await TravelList.findByIdAndUpdate(invitation.list._id, {
                     $set: {
@@ -194,7 +183,7 @@ export const acceptInvitation = async (invitationId, userId) => {
                 }, {
                     arrayFilters: [{ "elem.user": userId }],
                     new: true,
-                    runValidators: false, // Skip validation to avoid coverImage requirement
+                    runValidators: false,
                 });
             }
         }
@@ -214,15 +203,12 @@ export const rejectInvitation = async (invitationId, userId) => {
         if (!invitation) {
             throw new Error("Invitation not found");
         }
-        // Check if the user is the invitee
         if (invitation.invitee._id.toString() !== userId) {
             throw new Error("You are not authorized to reject this invitation");
         }
-        // Check if invitation is still pending
         if (invitation.status !== "pending") {
             throw new Error("Invitation is not pending");
         }
-        // Update invitation status
         invitation.status = "rejected";
         await invitation.save();
         return invitation;
@@ -241,15 +227,12 @@ export const cancelInvitation = async (invitationId, userId) => {
         if (!invitation) {
             throw new Error("Invitation not found");
         }
-        // Check if the user is the inviter
         if (invitation.inviter._id.toString() !== userId) {
             throw new Error("You are not authorized to cancel this invitation");
         }
-        // Check if invitation is still pending
         if (invitation.status !== "pending") {
             throw new Error("Only pending invitations can be canceled");
         }
-        // Delete the invitation
         await ListInvitation.findByIdAndDelete(invitationId);
         return { message: "Invitation canceled successfully" };
     }
@@ -264,14 +247,13 @@ export const removeUserPermissions = async (listId, userId) => {
         if (!travelList) {
             throw new Error("Travel list not found");
         }
-        // Remove user from customPermissions using findByIdAndUpdate
         const result = await TravelList.findByIdAndUpdate(listId, {
             $pull: {
                 customPermissions: { user: userId },
             },
         }, {
             new: true,
-            runValidators: false, // Skip validation to avoid coverImage requirement
+            runValidators: false,
         });
         return { message: "User permissions removed successfully" };
     }

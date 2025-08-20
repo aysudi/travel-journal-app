@@ -1,4 +1,5 @@
 import * as journalEntryService from "../services/journalEntryService";
+import JournalEntryModel from "../models/JournalEntry";
 import { journalEntryCreateSchema, journalEntryUpdateSchema, objectIdSchema, } from "../validations/journalEntry.validation";
 import formatMongoData from "../utils/formatMongoData";
 // Create a new journal entry
@@ -137,46 +138,62 @@ export const updateJournalEntry = async (req, res) => {
 // Delete journal entry
 export const deleteJournalEntry = async (req, res) => {
     try {
-        const userId = req.user?.id;
-        const { id } = req.params;
-        if (!userId) {
-            return res.status(401).json({
-                success: false,
-                message: "Authentication required",
-            });
-        }
-        const { error } = objectIdSchema.validate(id);
+        const { error } = objectIdSchema.validate(req.params.id);
         if (error) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid journal entry ID",
-            });
+            return res.status(400).json({ error: error.details[0].message });
         }
-        await journalEntryService.deleteJournalEntry(id, userId);
-        res.status(200).json({
-            success: true,
-            message: "Journal entry deleted successfully",
+        const { id } = req.params;
+        const userId = req.user?.id;
+        const existingEntry = await JournalEntryModel.findById(id);
+        if (!existingEntry) {
+            return res.status(404).json({ error: "Journal entry not found" });
+        }
+        if (existingEntry.author.toString() !== userId) {
+            return res
+                .status(403)
+                .json({ error: "You can only delete your own journal entries" });
+        }
+        const deletedEntry = await journalEntryService.deleteJournalEntry(id, userId);
+        res.json({ message: "Journal entry deleted successfully", deletedEntry });
+    }
+    catch (err) {
+        console.error("Error deleting journal entry:", err);
+        res.status(500).json({ error: "Failed to delete journal entry" });
+    }
+};
+export const toggleJournalEntryLike = async (req, res) => {
+    try {
+        const { error } = objectIdSchema.validate(req.params.id);
+        if (error) {
+            return res.status(400).json({ error: error.details[0].message });
+        }
+        const { id } = req.params;
+        const userId = req.user?.id;
+        if (!id || !userId) {
+            return res
+                .status(400)
+                .json({ error: "Journal entry ID and user ID are required" });
+        }
+        const journalEntry = await journalEntryService.getJournalEntryById(id);
+        if (!journalEntry) {
+            return res.status(404).json({ error: "Journal entry not found" });
+        }
+        const userLiked = journalEntry.likes.includes(userId);
+        let updatedEntry;
+        if (userLiked) {
+            updatedEntry = await journalEntryService.unlikeJournalEntry(id, userId);
+        }
+        else {
+            updatedEntry = await journalEntryService.likeJournalEntry(id, userId);
+        }
+        res.json({
+            message: `Journal entry ${userLiked ? "unliked" : "liked"} successfully`,
+            journalEntry: updatedEntry,
         });
     }
-    catch (error) {
-        console.error("Delete journal entry error:", error);
-        if (error.message.includes("not found")) {
-            return res.status(404).json({
-                success: false,
-                message: error.message,
-            });
-        }
-        if (error.message.includes("permission")) {
-            return res.status(403).json({
-                success: false,
-                message: error.message,
-            });
-        }
-        res.status(500).json({
-            success: false,
-            message: "Failed to delete journal entry",
-            error: error.message,
-        });
+    catch (err) {
+        console.error("Error toggling journal entry like:", err);
+        res.status(500).json({ error: "Failed to toggle like" });
     }
 };
 // Get journal entries with filtering, pagination, and search
@@ -191,6 +208,7 @@ export const getJournalEntries = async (req, res) => {
                     message: "Invalid travel list ID",
                 });
             }
+            const userId = req.user?.id;
             const queryParams = {
                 page: page ? Number(page) : undefined,
                 limit: limit ? Number(limit) : undefined,
@@ -199,6 +217,7 @@ export const getJournalEntries = async (req, res) => {
                 search: search,
                 sort: sort,
                 order: order || "desc",
+                userId,
             };
             if (queryParams.author) {
                 const { error: authorError } = objectIdSchema.validate(queryParams.author);

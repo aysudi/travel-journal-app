@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllTravelLists, getTravelListById, getOwnedTravelLists, getCollaboratingTravelLists, getPublicTravelLists, createTravelList, updateTravelList, deleteTravelList, addCustomPermission, removeCustomPermission, updateCustomPermission, uploadCoverImage, duplicateTravelList, getFriendsLists, } from "../controllers/travelListController";
+import { getAllTravelLists, getTravelListById, getOwnedTravelLists, getCollaboratingTravelLists, getPublicTravelLists, createTravelList, updateTravelList, deleteTravelList, addCustomPermission, removeCustomPermission, updateCustomPermission, uploadCoverImage, duplicateTravelList, getFriendsLists, travelListUploadMiddleware, } from "../controllers/travelListController";
 import { authenticateToken } from "../middlewares/authMiddleware";
 import uploadMiddleware from "../middlewares/uploadMiddleware";
 const travelListRouter = express.Router();
@@ -10,8 +10,8 @@ travelListRouter.get("/owned", getOwnedTravelLists);
 travelListRouter.get("/collaborating", getCollaboratingTravelLists);
 travelListRouter.get("/friends", getFriendsLists);
 travelListRouter.get("/:id", getTravelListById);
-travelListRouter.post("/", createTravelList);
-travelListRouter.put("/:id", updateTravelList);
+travelListRouter.post("/", ...travelListUploadMiddleware("travel-lists"), createTravelList);
+travelListRouter.put("/:id", ...travelListUploadMiddleware("travel-lists"), updateTravelList);
 travelListRouter.delete("/:id", deleteTravelList);
 travelListRouter.post("/:id/permissions", addCustomPermission);
 travelListRouter.put("/:id/permissions", updateCustomPermission);

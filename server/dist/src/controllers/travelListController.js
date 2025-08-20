@@ -1,4 +1,5 @@
 import * as travelListService from "../services/travelListService";
+import { travelListUploadMiddleware, } from "../middlewares/uploadMiddleware";
 import formatMongoData from "../utils/formatMongoData";
 export const getAllTravelLists = async (req, res) => {
     try {
@@ -134,23 +135,43 @@ export const createTravelList = async (req, res) => {
                 message: "User not authenticated",
             });
         }
+        if (req.body.tags && typeof req.body.tags === "string") {
+            try {
+                req.body.tags = JSON.parse(req.body.tags);
+            }
+            catch (e) {
+                req.body.tags = [];
+            }
+        }
+        if (req.body.isPublic && typeof req.body.isPublic === "string") {
+            req.body.isPublic = req.body.isPublic === "true";
+        }
+        const hasFile = !!req.cloudinaryResult;
+        const hasCoverImageUrl = !!req.body.coverImage;
+        if (!hasFile && !hasCoverImageUrl) {
+            return res.status(400).json({
+                success: false,
+                message: "Cover image is required",
+            });
+        }
         const travelListData = {
             ...req.body,
             owner: userId,
         };
-        const newTravelList = await travelListService.post(travelListData);
+        const cloudinaryResult = req.cloudinaryResult;
+        const newTravelList = await travelListService.post(travelListData, cloudinaryResult);
         res.status(201).json({
             success: true,
             message: "Travel list created successfully",
-            data: newTravelList,
+            data: formatMongoData(newTravelList),
         });
     }
     catch (error) {
-        console.error("Create travel list error:", error);
         res.status(500).json({
             success: false,
             message: "Failed to create travel list",
             error: error.message,
+            details: process.env.NODE_ENV === "development" ? error.stack : undefined,
         });
     }
 };
@@ -158,7 +179,6 @@ export const updateTravelList = async (req, res) => {
     try {
         const { id } = req.params;
         const userId = req.user?.id;
-        // Check if travel list exists
         const existingList = await travelListService.getOne(id);
         if (!existingList) {
             return res.status(404).json({
@@ -166,7 +186,6 @@ export const updateTravelList = async (req, res) => {
                 message: "Travel list not found",
             });
         }
-        // Check if user is owner or has custom permission
         const isOwner = existingList.owner._id.toString() === userId;
         const hasCustomPermission = existingList.customPermissions.some((perm) => perm.user._id.toString() === userId &&
             (perm.level === "contribute" || perm.level === "co-owner"));
@@ -176,7 +195,8 @@ export const updateTravelList = async (req, res) => {
                 message: "You don't have permission to update this travel list",
             });
         }
-        const updatedTravelList = await travelListService.update(id, req.body);
+        const cloudinaryResult = req.cloudinaryResult;
+        const updatedTravelList = await travelListService.update(id, req.body, cloudinaryResult);
         res.status(200).json({
             success: true,
             message: "Travel list updated successfully",
@@ -311,7 +331,6 @@ export const removeCustomPermission = async (req, res) => {
         });
     }
 };
-// Update custom permission level
 export const updateCustomPermission = async (req, res) => {
     try {
         const { id } = req.params;
@@ -437,3 +456,4 @@ export const getFriendsLists = async (req, res) => {
         });
     }
 };
+export { travelListUploadMiddleware };

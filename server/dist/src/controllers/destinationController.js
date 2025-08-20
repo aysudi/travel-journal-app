@@ -1,63 +1,85 @@
 import * as destinationService from "../services/destinationService";
+import { v2 as cloudinary } from "cloudinary";
+import multer from "multer";
 import { destinationCreateSchema, destinationUpdateSchema, destinationStatusSchema, objectIdSchema, } from "../validations/destination.validation";
 import formatMongoData from "../utils/formatMongoData";
+const upload = multer({ storage: multer.memoryStorage() });
 // Create a new destination
-export const createDestination = async (req, res) => {
-    try {
-        const userId = req.user?.id;
-        if (!userId) {
-            return res.status(401).json({
-                success: false,
-                message: "Authentication required",
+export const createDestination = [
+    upload.array("images", 10),
+    async (req, res) => {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({
+                    success: false,
+                    message: "Authentication required",
+                });
+            }
+            const { error, value } = destinationCreateSchema.validate(req.body);
+            if (error) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Validation error",
+                    errors: error.details.map((detail) => detail.message),
+                });
+            }
+            const destinationData = { ...value };
+            if (destinationData.country) {
+                destinationData.location = destinationData.country;
+                delete destinationData.country;
+            }
+            let imageUrls = [];
+            if (req.files && Array.isArray(req.files)) {
+                for (const file of req.files) {
+                    await new Promise((resolve, reject) => {
+                        const stream = cloudinary.uploader.upload_stream({ folder: "destinations" }, (error, result) => {
+                            if (error)
+                                reject(error);
+                            else {
+                                if (result?.secure_url)
+                                    imageUrls.push(result.secure_url);
+                                resolve(result);
+                            }
+                        });
+                        stream.end(file.buffer);
+                    });
+                }
+            }
+            destinationData.images = imageUrls;
+            const destination = await destinationService.createDestination(destinationData, userId);
+            res.status(201).json({
+                success: true,
+                message: "Destination created successfully",
+                data: formatMongoData(destination),
             });
         }
-        const { error, value } = destinationCreateSchema.validate(req.body);
-        if (error) {
-            return res.status(400).json({
+        catch (error) {
+            console.error("Create destination error:", error);
+            if (error.message && error.message.includes("Travel list not found")) {
+                return res.status(404).json({
+                    success: false,
+                    message: error.message,
+                });
+            }
+            if (error.message && error.message.includes("permission")) {
+                return res.status(403).json({
+                    success: false,
+                    message: error.message,
+                });
+            }
+            res.status(500).json({
                 success: false,
-                message: "Validation error",
-                errors: error.details.map((detail) => detail.message),
+                message: "Failed to create destination",
+                error: error.message,
             });
         }
-        // Convert "country" to "location" if the validation schema uses "country"
-        const destinationData = { ...value };
-        if (destinationData.country) {
-            destinationData.location = destinationData.country;
-            delete destinationData.country;
-        }
-        const destination = await destinationService.createDestination(destinationData, userId);
-        res.status(201).json({
-            success: true,
-            message: "Destination created successfully",
-            data: formatMongoData(destination),
-        });
-    }
-    catch (error) {
-        console.error("Create destination error:", error);
-        if (error.message.includes("Travel list not found")) {
-            return res.status(404).json({
-                success: false,
-                message: error.message,
-            });
-        }
-        if (error.message.includes("permission")) {
-            return res.status(403).json({
-                success: false,
-                message: error.message,
-            });
-        }
-        res.status(500).json({
-            success: false,
-            message: "Failed to create destination",
-            error: error.message,
-        });
-    }
-};
+    },
+];
 // Get destination by ID
 export const getDestinationById = async (req, res) => {
     try {
         const { id } = req.params;
-        // Validate ID format
         const { error } = objectIdSchema.validate(id);
         if (error) {
             return res.status(400).json({
@@ -88,65 +110,111 @@ export const getDestinationById = async (req, res) => {
     }
 };
 // Update destination
-export const updateDestination = async (req, res) => {
-    try {
-        const userId = req.user?.id;
-        const { id } = req.params;
-        if (!userId) {
-            return res.status(401).json({
-                success: false,
-                message: "Authentication required",
+export const updateDestination = [
+    upload.fields([
+        { name: "images", maxCount: 10 },
+        { name: "newImages", maxCount: 10 },
+    ]),
+    async (req, res) => {
+        try {
+            if (req.body.images && typeof req.body.images === "string") {
+                try {
+                    req.body.images = JSON.parse(req.body.images);
+                }
+                catch {
+                    req.body.images = [];
+                }
+            }
+            const userId = req.user?.id;
+            const { id } = req.params;
+            if (!userId) {
+                return res.status(401).json({
+                    success: false,
+                    message: "Authentication required",
+                });
+            }
+            const { error: idError } = objectIdSchema.validate(id);
+            if (idError) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid destination ID",
+                });
+            }
+            if ("id" in req.body) {
+                delete req.body.id;
+            }
+            const { error, value } = destinationUpdateSchema.validate(req.body);
+            console.log(error);
+            if (error) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Validation error",
+                    errors: error.details.map((detail) => detail.message),
+                });
+            }
+            const updateData = { ...value };
+            console.log("update data: ", updateData);
+            if (updateData.country) {
+                updateData.location = updateData.country;
+                delete updateData.country;
+            }
+            if ("id" in req.body) {
+                delete req.body.id;
+            }
+            if ("list" in req.body) {
+                delete req.body.list;
+            }
+            let imagesFromClient = Array.isArray(req.body.images)
+                ? req.body.images
+                : [];
+            let imageUrls = [];
+            if (req.files && req.files["newImages"]) {
+                const newImages = req.files["newImages"];
+                for (const file of newImages) {
+                    await new Promise((resolve, reject) => {
+                        const stream = cloudinary.uploader.upload_stream({ folder: "destinations" }, (error, result) => {
+                            if (error)
+                                reject(error);
+                            else {
+                                if (result?.secure_url)
+                                    imageUrls.push(result.secure_url);
+                                resolve(result);
+                            }
+                        });
+                        stream.end(file.buffer);
+                    });
+                }
+            }
+            updateData.images = [...imagesFromClient, ...imageUrls];
+            const updatedDestination = await destinationService.updateDestination(id, updateData, userId);
+            res.status(200).json({
+                success: true,
+                message: "Destination updated successfully",
+                data: formatMongoData(updatedDestination),
             });
         }
-        const { error: idError } = objectIdSchema.validate(id);
-        if (idError) {
-            return res.status(400).json({
+        catch (error) {
+            console.error("Update destination error:", error);
+            if (error.message && error.message.includes("not found")) {
+                return res.status(404).json({
+                    success: false,
+                    message: error.message,
+                });
+            }
+            if (error.message && error.message.includes("permission")) {
+                return res.status(403).json({
+                    success: false,
+                    message: error.message,
+                });
+            }
+            res.status(500).json({
                 success: false,
-                message: "Invalid destination ID",
+                message: "Failed to update destination",
+                error: error.message,
             });
         }
-        const { error, value } = destinationUpdateSchema.validate(req.body);
-        if (error) {
-            return res.status(400).json({
-                success: false,
-                message: "Validation error",
-                errors: error.details.map((detail) => detail.message),
-            });
-        }
-        // Convert "country" to "location" if the validation schema uses "country"
-        const updateData = { ...value };
-        if (updateData.country) {
-            updateData.location = updateData.country;
-            delete updateData.country;
-        }
-        const updatedDestination = await destinationService.updateDestination(id, updateData, userId);
-        res.status(200).json({
-            success: true,
-            message: "Destination updated successfully",
-            data: formatMongoData(updatedDestination),
-        });
-    }
-    catch (error) {
-        console.error("Update destination error:", error);
-        if (error.message.includes("not found")) {
-            return res.status(404).json({
-                success: false,
-                message: error.message,
-            });
-        }
-        if (error.message.includes("permission")) {
-            return res.status(403).json({
-                success: false,
-                message: error.message,
-            });
-        }
-        res.status(500).json({
-            success: false,
-            message: "Failed to update destination",
-            error: error.message,
-        });
-    }
-};
+    },
+];
 // Delete destination
 export const deleteDestination = async (req, res) => {
     try {
@@ -164,6 +232,19 @@ export const deleteDestination = async (req, res) => {
                 success: false,
                 message: "Invalid destination ID",
             });
+        }
+        const oldDestination = await destinationService.getDestinationById(id);
+        if (oldDestination.images && oldDestination.images.length > 0) {
+            for (const url of oldDestination.images) {
+                const parts = url.split("/");
+                const folder = parts[parts.length - 2];
+                const filename = parts[parts.length - 1].split(".")[0];
+                const publicId = `destinations/${filename}`;
+                try {
+                    await cloudinary.uploader.destroy(publicId);
+                }
+                catch { }
+            }
         }
         await destinationService.deleteDestination(id, userId);
         res.status(200).json({
@@ -232,9 +313,8 @@ export const getDestinations = async (req, res) => {
 // Get destinations by travel list ID
 export const getDestinationsByTravelList = async (req, res) => {
     try {
-        const userId = req.user?.id; // Optional for access control
+        const userId = req.user?.id;
         const { listId } = req.params;
-        // Validate list ID format
         const { error } = objectIdSchema.validate(listId);
         if (error) {
             return res.status(400).json({
@@ -281,7 +361,6 @@ export const getDestinationsByStatus = async (req, res) => {
                 message: "Authentication required",
             });
         }
-        // Validate status
         if (!["Wishlist", "Planned", "Visited"].includes(status)) {
             return res.status(400).json({
                 success: false,
@@ -341,7 +420,6 @@ export const updateDestinationStatus = async (req, res) => {
                 message: "Authentication required",
             });
         }
-        // Validate ID format
         const { error: idError } = objectIdSchema.validate(id);
         if (idError) {
             return res.status(400).json({
@@ -349,7 +427,6 @@ export const updateDestinationStatus = async (req, res) => {
                 message: "Invalid destination ID",
             });
         }
-        // Validate request body
         const { error, value } = destinationStatusSchema.validate(req.body);
         if (error) {
             return res.status(400).json({
@@ -397,7 +474,6 @@ export const bulkUpdateDestinationStatus = async (req, res) => {
                 message: "Authentication required",
             });
         }
-        // Validate request body
         if (!Array.isArray(destinationIds) || destinationIds.length === 0) {
             return res.status(400).json({
                 success: false,
@@ -410,7 +486,6 @@ export const bulkUpdateDestinationStatus = async (req, res) => {
                 message: "Invalid status. Must be Wishlist, Planned, or Visited",
             });
         }
-        // Validate each ID format
         for (const id of destinationIds) {
             const { error } = objectIdSchema.validate(id);
             if (error) {
@@ -459,7 +534,7 @@ export const getRecentDestinations = async (req, res) => {
                 message: "Authentication required",
             });
         }
-        const limitNum = limit ? Math.min(Number(limit), 20) : 5; // Max 20 destinations
+        const limitNum = limit ? Math.min(Number(limit), 20) : 5;
         const destinations = await destinationService.getRecentDestinations(userId, limitNum);
         res.status(200).json({
             success: true,
@@ -493,7 +568,6 @@ export const searchDestinations = async (req, res) => {
                 message: "Search query is required",
             });
         }
-        // Validate status if provided
         if (status &&
             !["Wishlist", "Planned", "Visited"].includes(status)) {
             return res.status(400).json({
@@ -503,7 +577,7 @@ export const searchDestinations = async (req, res) => {
         }
         const options = {
             status: status,
-            limit: limit ? Math.min(Number(limit), 100) : 50, // Max 100 results
+            limit: limit ? Math.min(Number(limit), 100) : 50,
         };
         const destinations = await destinationService.searchDestinations(searchQuery, userId, options);
         res.status(200).json({
