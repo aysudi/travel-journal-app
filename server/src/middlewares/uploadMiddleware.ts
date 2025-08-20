@@ -106,13 +106,20 @@ function uploadToCloudinary(folderName: string) {
   };
 }
 
-function uploadMiddleware(folderName: string) {
-  return [upload.single("profileImage"), uploadToCloudinary(folderName)];
+function uploadMiddleware(
+  folderName: string,
+  fieldName: string = "profileImage"
+) {
+  return [upload.single(fieldName), uploadToCloudinary(folderName)];
 }
 
 function travelListUploadMiddleware(folderName: string = "travel-lists") {
   return [upload.single("coverImage"), uploadToCloudinary(folderName)];
 }
 
+function chatUploadMiddleware(folderName: string = "chat-avatars") {
+  return [upload.single("avatar"), uploadToCloudinary(folderName)];
+}
+
 export default uploadMiddleware;
-export { travelListUploadMiddleware };
+export { travelListUploadMiddleware, chatUploadMiddleware };

@@ -23,8 +23,8 @@ interface Message {
 
 const ChatCard = ({ setChatOpen, chat, listId, refetchChat }: any) => {
   const [showGroupEdit, setShowGroupEdit] = useState(false);
-  const [groupName, setGroupName] = useState(chat.name || "");
-  const [groupDesc, setGroupDesc] = useState(chat.description || "");
+  const [name, setName] = useState(chat.name || "");
+  const [description, setDescription] = useState(chat.description || "");
   const [groupAvatar, setGroupAvatar] = useState(chat.avatar || "");
   const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
   const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
@@ -39,6 +39,9 @@ const ChatCard = ({ setChatOpen, chat, listId, refetchChat }: any) => {
   const socket = connectSocket();
   const [showGifPicker, setShowGifPicker] = useState(false);
   const updateChat = useUpdateChat();
+  const [avatar, setAvatar] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     refetch();
@@ -100,7 +103,6 @@ const ChatCard = ({ setChatOpen, chat, listId, refetchChat }: any) => {
     setEditingMsgId(msg._id || "");
     setMessage(msg.content);
   };
-
   const handleDeleteMessage = (msg: Message) => {
     if (!msg._id) return;
     socket.emit("message:delete", { messageId: msg._id });
@@ -118,23 +120,46 @@ const ChatCard = ({ setChatOpen, chat, listId, refetchChat }: any) => {
     setShowGifPicker(false);
   };
 
-  const handleEditChat = () => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (e.currentTarget.files && file) {
+      setImagePreview(URL.createObjectURL(file));
+      setAvatar(file);
+    }
+  };
+
+  const handleEditChat = async () => {
     if (!chat.id) return;
+    let data: any;
+    if (avatar) {
+      data = new FormData();
+      data.append("id", user?.id);
+      data.append("name", name);
+      data.append("description", description);
+      data.append("avatar", avatar);
+    } else {
+      data = {
+        name,
+        description,
+      };
+    }
     updateChat.mutate(
       {
         id: chat.id,
-        data: {
-          name: groupName,
-          description: groupDesc,
-          avatar: groupAvatar,
-        },
+        data,
       },
       {
-        onSuccess: () => {
-          if (typeof refetchChat === "function") {
-            refetchChat();
-          }
+        onSuccess: (response: any) => {
+          if (imagePreview) URL.revokeObjectURL(imagePreview);
+          setImagePreview("");
+          setAvatar(null);
           setShowGroupEdit(false);
+          if (response && response.avatar) {
+            setGroupAvatar(response.avatar);
+            setImagePreview("");
+            if (fileInputRef.current) fileInputRef.current.value = "";
+          }
+          if (typeof refetchChat === "function") refetchChat();
         },
       }
     );
@@ -159,7 +184,7 @@ const ChatCard = ({ setChatOpen, chat, listId, refetchChat }: any) => {
           <img
             className="w-11 h-11 rounded-full object-cover border border-indigo-200"
             src={groupAvatar}
-            alt={groupDesc}
+            alt={description}
           />
         ) : (
           <div className="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-400 to-pink-400 flex items-center justify-center text-white font-bold text-xl shadow-md">
@@ -168,10 +193,10 @@ const ChatCard = ({ setChatOpen, chat, listId, refetchChat }: any) => {
         )}
         <div className="flex flex-col">
           <div className="font-bold text-lg text-gray-900">
-            {groupName || "Group Chat"}
+            {name || "Group Chat"}
           </div>
           <div className="text-xs text-gray-500">
-            {groupDesc || "Connect & share with your friends"}
+            {description || "Connect & share with your friends"}
           </div>
         </div>
         <button
@@ -340,11 +365,18 @@ const ChatCard = ({ setChatOpen, chat, listId, refetchChat }: any) => {
                     htmlFor="avatar-upload"
                     className="cursor-pointer relative group"
                   >
-                    {groupAvatar ? (
+                    {imagePreview || groupAvatar ? (
                       <img
-                        src={groupAvatar}
+                        src={imagePreview || groupAvatar}
                         alt="Avatar"
                         className="w-20 h-20 rounded-full object-cover border-2 border-indigo-300"
+                        onError={(e) => {
+                          if (imagePreview) {
+                            URL.revokeObjectURL(imagePreview);
+                            setImagePreview("");
+                          }
+                          (e.target as HTMLImageElement).src = groupAvatar;
+                        }}
                       />
                     ) : (
                       <div className="w-20 h-20 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-400">
@@ -352,18 +384,13 @@ const ChatCard = ({ setChatOpen, chat, listId, refetchChat }: any) => {
                       </div>
                     )}
                     <input
+                      ref={fileInputRef}
                       id="avatar-upload"
                       type="file"
                       accept="image/*"
                       className="hidden"
                       onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onload = (ev) =>
-                            setGroupAvatar(ev.target?.result as string);
-                          reader.readAsDataURL(file);
-                        }
+                        handleImageChange(e);
                       }}
                     />
                     <span className="absolute bottom-0 right-0 bg-indigo-500 text-white rounded-full p-1 text-xs opacity-80 group-hover:opacity-100 transition">
@@ -374,14 +401,14 @@ const ChatCard = ({ setChatOpen, chat, listId, refetchChat }: any) => {
                 <input
                   className="px-3 py-2 rounded border border-indigo-200"
                   placeholder="Group Name"
-                  value={groupName}
-                  onChange={(e) => setGroupName(e.target.value)}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                 />
                 <textarea
                   className="px-3 py-2 rounded border border-indigo-200 min-h-[60px]"
                   placeholder="Description"
-                  value={groupDesc}
-                  onChange={(e) => setGroupDesc(e.target.value)}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                 />
                 <button
                   className="mt-2 px-4 py-2 rounded bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition cursor-pointer"
