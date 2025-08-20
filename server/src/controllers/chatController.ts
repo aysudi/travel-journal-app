@@ -8,6 +8,8 @@ import {
   getOrCreateChatByListId,
 } from "../services/chatService";
 import { AuthenticatedRequest } from "../types/authType";
+import ChatModel from "../models/Chat";
+import { v2 as cloudinary } from "cloudinary";
 
 export const getAllChatsController = async (
   req: Request,
@@ -87,7 +89,7 @@ export const getCurrentUserChats = async (
 };
 
 export const updateChatDetails = async (
-  req: AuthenticatedRequest,
+  req: any,
   res: Response,
   next: NextFunction
 ) => {
@@ -96,11 +98,26 @@ export const updateChatDetails = async (
     const { chatId } = req.params;
     const updateData = req.body;
 
+    const chat = await ChatModel.findById(chatId);
+
     if (!chatId) {
       return res.status(400).json({
         success: false,
         message: "Chat ID is required",
       });
+    }
+
+    if (req.cloudinaryResult) {
+      if (chat?.public_id && chat?.public_id !== "") {
+        try {
+          await cloudinary.uploader.destroy(chat?.public_id);
+        } catch (error) {
+          console.error("Error deleting old image from Cloudinary:", error);
+        }
+      }
+
+      updateData.avatar = req.cloudinaryResult.secure_url;
+      updateData.public_id = req.cloudinaryResult.public_id;
     }
 
     const response = await updateChat(chatId, updateData, userId);

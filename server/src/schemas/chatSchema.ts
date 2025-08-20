@@ -20,6 +20,7 @@ const chatSchema = new mongoose.Schema(
     name: { type: String, required: true },
 
     avatar: { type: String },
+    public_id: { type: String, default: "" },
 
     list: {
       type: mongoose.Schema.Types.ObjectId,
