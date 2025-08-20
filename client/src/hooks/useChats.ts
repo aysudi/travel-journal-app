@@ -51,8 +51,9 @@ export const useCreateChat = () => {
 export const useUpdateChat = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) =>
-      chatService.updateChat(id, data),
+    mutationFn: ({ id, data }: { id: string; data: any }) => {
+      return chatService.updateChat(id, data);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["chats"] });
     },
