@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import connectSocket from "../../../services/socket";
 import GifPicker from "../GifPicker";
+import { useUpdateChat } from "../../../hooks/useChats";
 
 interface Message {
   _id?: string;
@@ -20,7 +21,7 @@ interface Message {
   sender?: { _id: string; username: string; profileImage?: string };
 }
 
-const ChatCard = ({ setChatOpen, chat, listId }: any) => {
+const ChatCard = ({ setChatOpen, chat, listId, refetchChat }: any) => {
   const [showGroupEdit, setShowGroupEdit] = useState(false);
   const [groupName, setGroupName] = useState(chat.name || "");
   const [groupDesc, setGroupDesc] = useState(chat.description || "");
@@ -37,6 +38,7 @@ const ChatCard = ({ setChatOpen, chat, listId }: any) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const socket = connectSocket();
   const [showGifPicker, setShowGifPicker] = useState(false);
+  const updateChat = useUpdateChat();
 
   useEffect(() => {
     refetch();
@@ -114,6 +116,28 @@ const ChatCard = ({ setChatOpen, chat, listId }: any) => {
       isGif: true,
     });
     setShowGifPicker(false);
+  };
+
+  const handleEditChat = () => {
+    if (!chat.id) return;
+    updateChat.mutate(
+      {
+        id: chat.id,
+        data: {
+          name: groupName,
+          description: groupDesc,
+          avatar: groupAvatar,
+        },
+      },
+      {
+        onSuccess: () => {
+          if (typeof refetchChat === "function") {
+            refetchChat();
+          }
+          setShowGroupEdit(false);
+        },
+      }
+    );
   };
 
   const messages: Message[] =
@@ -301,7 +325,7 @@ const ChatCard = ({ setChatOpen, chat, listId }: any) => {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
             <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md relative">
               <button
-                className="absolute top-3 right-3 p-1 rounded-full hover:bg-gray-100"
+                className="absolute top-3 right-3 p-1 rounded-full hover:bg-gray-100 cursor-pointer"
                 onClick={() => setShowGroupEdit(false)}
                 aria-label="Close"
               >
@@ -360,8 +384,10 @@ const ChatCard = ({ setChatOpen, chat, listId }: any) => {
                   onChange={(e) => setGroupDesc(e.target.value)}
                 />
                 <button
-                  className="mt-2 px-4 py-2 rounded bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition"
-                  onClick={() => setShowGroupEdit(false)}
+                  className="mt-2 px-4 py-2 rounded bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition cursor-pointer"
+                  onClick={() => {
+                    handleEditChat();
+                  }}
                 >
                   Save
                 </button>
