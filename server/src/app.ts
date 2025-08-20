@@ -2,6 +2,7 @@ import cors from "cors";
 import express from "express";
 import passport from "passport";
 import config from "./config/config.js";
+import Stripe from "stripe";
 
 import "./models/User.js";
 import "./models/TravelList.js";
@@ -22,6 +23,7 @@ import commentRouter from "./routes/commentRoute.js";
 import listInvitationRouter from "./routes/listInvitationRoutes.js";
 import uploadRouter from "./routes/uploadRoute.js";
 import chatRouter from "./routes/chatRoute.js";
+import stripeRouter from "./routes/stripeRoute.js";
 
 const app = express();
 
@@ -53,6 +55,51 @@ app.use("/list-invitations", listInvitationRouter);
 app.use("/api", uploadRouter);
 app.use("/chats", chatRouter);
 app.use("/messages", messageRouter);
+app.use("/api/payments", stripeRouter);
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+  apiVersion: "2025-07-30.basil",
+});
+
+app.post(
+  "/api/payments/webhook",
+  // IMPORTANT: raw body for signature verification:
+  express.raw({ type: "application/json" }),
+  (req, res) => {
+    const sig = req.headers["stripe-signature"] as string;
+    let event: Stripe.Event;
+
+    try {
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        sig,
+        process.env.STRIPE_WEBHOOK_SECRET as string
+      );
+    } catch (err: any) {
+      console.error("Webhook signature verification failed.", err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    // Handle events you care about:
+    switch (event.type) {
+      case "payment_intent.succeeded": {
+        const pi = event.data.object as Stripe.PaymentIntent;
+        // TODO: mark order as paid in your DB using pi.id / metadata
+        break;
+      }
+      case "checkout.session.completed": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        // TODO: fulfill order / activate subscription using session.id
+        break;
+      }
+      // ...add invoice.paid, customer.subscription.* if you use subscriptions
+      default:
+        // console.log(`Unhandled event: ${event.type}`);
+        break;
+    }
+    res.json({ received: true });
+  }
+);
 
 app.get("/", (_, res) => {
   res.send("Server is up and running!");

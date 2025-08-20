@@ -1,4 +1,5 @@
 import TravelList from "../models/TravelList";
+import { v2 as cloudinary } from "cloudinary";
 export const getAll = async (params) => {
     const { page = 1, limit = 10, search = "", sort = "createdAt", } = params || {};
     const query = {};
@@ -63,18 +64,61 @@ export const getPublicLists = async (params) => {
         limit,
     };
 };
-export const update = async (id, payload) => await TravelList.findByIdAndUpdate(id, payload, { new: true })
-    .populate("owner", "firstName lastName email profileImage")
-    .populate("destinations")
-    .populate("customPermissions.user", "fullName username email profileImage");
-export const post = async (payload) => {
-    const newList = await TravelList.create(payload);
-    return await TravelList.findById(newList._id)
+export const update = async (id, payload, cloudinaryResult) => {
+    const existingList = await TravelList.findById(id);
+    if (!existingList) {
+        throw new Error("Travel list not found");
+    }
+    if (cloudinaryResult) {
+        if (existingList.public_id) {
+            try {
+                await cloudinary.uploader.destroy(existingList.public_id);
+            }
+            catch (error) {
+                console.error("Error deleting old cover image from Cloudinary:", error);
+            }
+        }
+        payload.coverImage = cloudinaryResult.secure_url;
+        payload.public_id = cloudinaryResult.public_id;
+    }
+    return await TravelList.findByIdAndUpdate(id, payload, { new: true })
         .populate("owner", "firstName lastName email profileImage")
         .populate("destinations")
-        .populate("customPermissions.user", "fullName email profileImage");
+        .populate("customPermissions.user", "fullName username email profileImage");
 };
-export const deleteOne = async (id) => await TravelList.findByIdAndDelete(id);
+export const post = async (payload, cloudinaryResult) => {
+    try {
+        if (cloudinaryResult) {
+            payload.coverImage = cloudinaryResult.secure_url;
+            payload.public_id = cloudinaryResult.public_id;
+        }
+        const newList = await TravelList.create(payload);
+        const populatedList = await TravelList.findById(newList._id)
+            .populate("owner", "firstName lastName email profileImage")
+            .populate("destinations")
+            .populate("customPermissions.user", "fullName email profileImage");
+        return populatedList;
+    }
+    catch (error) {
+        console.error("❌ Error in travelListService.post:", error);
+        throw error;
+    }
+};
+export const deleteOne = async (id) => {
+    const existingList = await TravelList.findById(id);
+    if (!existingList) {
+        throw new Error("Travel list not found");
+    }
+    if (existingList.public_id) {
+        try {
+            await cloudinary.uploader.destroy(existingList.public_id);
+        }
+        catch (error) {
+            console.error("Error deleting cover image from Cloudinary:", error);
+        }
+    }
+    return await TravelList.findByIdAndDelete(id);
+};
 export const addCustomPermission = async (listId, userId, permissionLevel, grantedBy) => {
     return await TravelList.findByIdAndUpdate(listId, {
         $addToSet: {
@@ -145,17 +189,14 @@ export const canUserAccessList = (list, userId) => {
 export const getFriendsLists = async (userId, limit = 10) => {
     const User = await import("../models/User.js");
     const UserModel = User.default;
-    // Get current user with friends
     const currentUser = await UserModel.findById(userId).populate("friends", "_id");
     if (!currentUser || !currentUser.friends.length) {
         return [];
     }
-    // Get friend IDs
     const friendIds = currentUser.friends.map((friend) => friend._id);
-    // Find lists created by friends with "friends" visibility only
     const friendsLists = await TravelList.find({
         owner: { $in: friendIds },
-        visibility: "friends", // Only lists with friends visibility
+        visibility: "friends",
     })
         .populate("owner", "fullName username email profileImage")
         .populate("destinations")

@@ -11,16 +11,16 @@ export const getAll = async () => {
     return await UserModel.find()
         .select("-password")
         .populate("ownedLists")
-        .populate("friends", "fullName username profileImage isVerified");
+        .populate("friends", "fullName username profileImage email isVerified");
 };
 export const getUserById = async (id) => {
     try {
         const user = await UserModel.findById(id)
             .select("-password")
             .populate("ownedLists")
-            .populate("friends", "fullName username profileImage isVerified")
-            .populate("friendRequestsReceived.from", "fullName username profileImage isVerified")
-            .populate("friendRequestsSent.to", "fullName username profileImage isVerified");
+            .populate("friends", "fullName username email profileImage isVerified")
+            .populate("friendRequestsReceived.from", "fullName email username profileImage isVerified")
+            .populate("friendRequestsSent.to", "fullName email username profileImage isVerified");
         return user;
     }
     catch (error) {
@@ -59,7 +59,6 @@ export const updateUser = async (id, payload) => {
                 message: "User not found",
             };
         }
-        // Update user fields
         Object.keys(payload).forEach((key) => {
             if (payload[key] !== undefined && user.schema.paths[key]) {
                 user[key] = payload[key];

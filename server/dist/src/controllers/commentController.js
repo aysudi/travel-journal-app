@@ -109,6 +109,13 @@ export const toggleCommentLike = async (req, res, next) => {
             });
             return;
         }
+        if (!commentId || commentId === "undefined") {
+            res.status(400).json({
+                success: false,
+                message: "Comment ID is required",
+            });
+            return;
+        }
         const comment = await Comment.findById(commentId);
         if (!comment) {
             res.status(404).json({
