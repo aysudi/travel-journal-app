@@ -6,16 +6,10 @@ import UserModel from "../models/User.js";
 export const createJournalEntry = async (entryData, authorId) => {
     const destination = await DestinationModel.findById(entryData.destination).populate({
         path: "list",
-        select: "owner collaborators",
+        select: "owner customPermissions visibility",
     });
     if (!destination) {
         throw new Error("Destination not found");
-    }
-    const travelList = destination.list;
-    const hasAccess = travelList.owner.toString() === authorId ||
-        travelList.collaborators.includes(authorId);
-    if (!hasAccess) {
-        throw new Error("You don't have permission to add journal entries to this destination");
     }
     const journalEntry = new JournalEntryModel({
         ...entryData,
@@ -36,7 +30,7 @@ export const getJournalEntryById = async (entryId) => {
         select: "name location list",
         populate: {
             path: "list",
-            select: "title owner collaborators",
+            select: "title owner visibility customPermissions",
         },
     });
     if (!journalEntry) {
@@ -63,7 +57,7 @@ export const updateJournalEntry = async (entryId, updateData, userId) => {
         select: "name location list",
         populate: {
             path: "list",
-            select: "title owner collaborators",
+            select: "title owner customPermissions visibility",
         },
     });
     return updatedEntry;
@@ -78,6 +72,48 @@ export const deleteJournalEntry = async (entryId, userId) => {
         throw new Error("You don't have permission to delete this journal entry");
     }
     await JournalEntryModel.findByIdAndDelete(entryId);
+};
+// Like journal entry
+export const likeJournalEntry = async (entryId, userId) => {
+    const updatedEntry = await JournalEntryModel.findByIdAndUpdate(entryId, { $addToSet: { likes: userId } }, { new: true })
+        .populate({
+        path: "author",
+        select: "fullName username profileImage",
+    })
+        .populate({
+        path: "likes",
+        select: "fullName username profileImage",
+    })
+        .populate({
+        path: "destination",
+        select: "name location list",
+        populate: {
+            path: "list",
+            select: "title owner customPermissions visibility",
+        },
+    });
+    return updatedEntry;
+};
+// Unlike journal entry
+export const unlikeJournalEntry = async (entryId, userId) => {
+    const updatedEntry = await JournalEntryModel.findByIdAndUpdate(entryId, { $pull: { likes: userId } }, { new: true })
+        .populate({
+        path: "author",
+        select: "fullName username profileImage",
+    })
+        .populate({
+        path: "likes",
+        select: "fullName username profileImage",
+    })
+        .populate({
+        path: "destination",
+        select: "name location list",
+        populate: {
+            path: "list",
+            select: "title owner customPermissions visibility",
+        },
+    });
+    return updatedEntry;
 };
 // Get journal entries with filtering, pagination, and search
 export const getJournalEntries = async (query) => {
@@ -109,7 +145,7 @@ export const getJournalEntries = async (query) => {
             select: "name location list",
             populate: {
                 path: "list",
-                select: "title owner collaborators",
+                select: "title owner customPermissions visibility",
             },
         })
             .populate({
@@ -140,7 +176,7 @@ export const getJournalEntries = async (query) => {
 export const getJournalEntriesByDestination = async (destinationId, userId) => {
     const destination = await DestinationModel.findById(destinationId).populate({
         path: "list",
-        select: "owner collaborators",
+        select: "owner customPermissions visibility",
     });
     if (!destination) {
         throw new Error("Destination not found");
@@ -191,7 +227,7 @@ export const getJournalEntriesByAuthor = async (authorId, currentUserId) => {
         select: "name location list",
         populate: {
             path: "list",
-            select: "title",
+            select: "title visibility",
         },
     })
         .sort({ createdAt: -1 });
@@ -222,7 +258,7 @@ export const getPublicJournalEntries = async (query) => {
             select: "name location list",
             populate: {
                 path: "list",
-                select: "title",
+                select: "title visibility",
             },
         })
             .sort(sortObj)
@@ -304,7 +340,7 @@ export const getRecentJournalEntries = async (userId, limit = 5) => {
         select: "name location list",
         populate: {
             path: "list",
-            select: "title",
+            select: "title visibility",
         },
     })
         .sort({ createdAt: -1 })
@@ -315,11 +351,11 @@ export const getRecentJournalEntries = async (userId, limit = 5) => {
 };
 // Get journal entries by travel list ID
 export const getJournalEntriesByTravelList = async (travelListId, query = {}) => {
-    const { page = 1, limit = 10, author, public: isPublic, search, sort = "createdAt", order = "desc", } = query;
+    const { page = 1, limit = 10, author, public: isPublic, search, sort = "createdAt", order = "desc", userId, } = query;
     const skip = (page - 1) * limit;
     const destinations = await DestinationModel.find({
         list: travelListId,
-    }).select("_id");
+    }).select("_id visibility");
     const destinationIds = destinations.map((dest) => dest._id);
     if (destinationIds.length === 0) {
         return {
@@ -336,6 +372,7 @@ export const getJournalEntriesByTravelList = async (travelListId, query = {}) =>
     }
     const filter = {
         destination: { $in: destinationIds },
+        $or: [{ public: true }, userId ? { author: userId } : {}],
     };
     if (author)
         filter.author = author;
@@ -360,12 +397,11 @@ export const getJournalEntriesByTravelList = async (travelListId, query = {}) =>
             select: "name location list",
             populate: {
                 path: "list",
-                select: "title owner customPermissions",
+                select: "title owner visibility customPermissions",
             },
         })
             .populate({
             path: "comments",
-            select: "author content likes",
         })
             .populate({ path: "likes", select: "fullName username profileImage" })
             .sort(sortObj)
