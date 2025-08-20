@@ -4,6 +4,8 @@ import formatMongoData from "../utils/formatMongoData";
 import MessageModel from "../models/Message";
 import TravelList from "../models/TravelList";
 import UserModel from "../models/User";
+import { v2 as cloudinary } from "cloudinary";
+import "../config/cloudConfig";
 
 export const getAllChats = async () => {
   try {
@@ -106,6 +108,31 @@ export const updateChat = async (
         message: "Chat not found or insufficient permissions",
       };
     }
+
+    // if (updateData.avatar && updateData.avatar !== chat.avatar) {
+    //   if (
+    //     chat.avatar &&
+    //     typeof chat.avatar === "string" &&
+    //     chat.avatar.includes("cloudinary.com")
+    //   ) {
+    //     const publicIdMatch = chat.avatar.match(
+    //       /\/v\d+\/([^\.\/]+)\.[a-zA-Z]+$/
+    //     );
+    //     const publicId = publicIdMatch ? publicIdMatch[1] : null;
+    //     if (publicId) {
+    //       try {
+    //         await cloudinary.uploader.destroy(`voyagevault/${publicId}`);
+    //       } catch (e) {}
+    //     }
+    //   }
+    //   if (updateData.avatar.startsWith("data:image")) {
+    //     const uploadRes = await cloudinary.uploader.upload(updateData.avatar, {
+    //       folder: "voyagevault",
+    //       overwrite: true,
+    //     });
+    //     updateData.avatar = uploadRes.secure_url;
+    //   }
+    // }
 
     const updatedChat = await ChatModel.findByIdAndUpdate(
       chatId,
