@@ -96,7 +96,7 @@ export const updateChatDetails = async (
   try {
     const userId = req.body.id;
     const { chatId } = req.params;
-    const updateData = req.body;
+    const updateData = { ...req.body };
 
     const chat = await ChatModel.findById(chatId);
 
@@ -107,7 +107,10 @@ export const updateChatDetails = async (
       });
     }
 
+    console.log("update data: ", updateData);
+
     if (req.cloudinaryResult) {
+      console.log("hello");
       if (chat?.public_id && chat?.public_id !== "") {
         try {
           await cloudinary.uploader.destroy(chat?.public_id);
@@ -115,7 +118,6 @@ export const updateChatDetails = async (
           console.error("Error deleting old image from Cloudinary:", error);
         }
       }
-
       updateData.avatar = req.cloudinaryResult.secure_url;
       updateData.public_id = req.cloudinaryResult.public_id;
     }
