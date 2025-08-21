@@ -11,7 +11,7 @@ stripeRouter.post("/create-checkout-session", async (req, res) => {
   try {
     const {
       lineItems,
-      mode = "payment",
+      mode = "subscription",
       successUrl,
       cancelUrl,
       customer,

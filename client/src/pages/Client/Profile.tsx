@@ -65,6 +65,35 @@ const Profile = () => {
     );
   }
 
+  const handleGoPremium = async () => {
+    try {
+      const res = await fetch("/api/payments/create-checkout-session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          lineItems: [
+            {
+              price: import.meta.env.VITE_STRIPE_PRODUCT_ID,
+              quantity: 1,
+            },
+          ],
+          successUrl: window.location.origin + "/profile/success",
+          cancelUrl: window.location.origin + "/profile",
+        }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert("Could not start checkout. Please try again.");
+      }
+    } catch (err) {
+      alert("Failed to start premium checkout. Please try again.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
@@ -80,15 +109,27 @@ const Profile = () => {
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-8">
           {/* Cover Section */}
           <div className="h-32 bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 relative">
-            {/* Premium Badge */}
-            {user.premium && (
-              <div className="absolute top-4 right-4">
-                <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                  <Crown size={16} />
-                  Premium
+            <div className="absolute top-4 right-4">
+              {user.premium ? (
+                <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-4 py-2 rounded-xl shadow-lg font-semibold text-base cursor-pointer">
+                  <Crown size={20} className="animate-bounce" />
+                  <span>You're a Premium Member</span>
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="flex flex-col items-end">
+                  <button
+                    onClick={handleGoPremium}
+                    className="flex items-center gap-2 bg-gradient-to-r from-teal-500 to-cyan-600 text-white px-6 py-2 rounded-xl shadow-lg font-semibold text-base hover:scale-105 hover:from-teal-600 hover:to-cyan-700 transition-all duration-200 cursor-pointer"
+                  >
+                    <Crown size={20} />
+                    <span>Upgrade to Premium</span>
+                  </button>
+                  <span className="mt-2 text-xs text-cyan-900 bg-cyan-100 px-2 py-1 rounded">
+                    Unlock exclusive features!
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Profile Info Section */}
