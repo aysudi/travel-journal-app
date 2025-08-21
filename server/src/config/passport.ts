@@ -48,6 +48,7 @@ passport.use(
           provider: "google",
           providerId: profile.id,
           isVerified: true,
+          lastLogin: new Date(),
         });
 
         return done(null, newUser);
@@ -109,6 +110,7 @@ passport.use(
           provider: "github",
           providerId: profile.id,
           isVerified: true,
+          lastLogin: new Date(),
         });
 
         return done(null, newUser);
