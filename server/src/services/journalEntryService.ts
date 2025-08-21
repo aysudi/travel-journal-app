@@ -35,7 +35,6 @@ export const createJournalEntry = async (
   return await getJournalEntryById(journalEntry._id.toString());
 };
 
-// Get journal entry by ID with populated fields
 export const getJournalEntryById = async (entryId: string): Promise<any> => {
   const journalEntry = await JournalEntryModel.findById(entryId)
     .populate({
