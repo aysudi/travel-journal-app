@@ -20,6 +20,7 @@ import AuthCallback from "../pages/Auth/AuthCallback";
 import MyLists from "../pages/Client/MyLists";
 import JournalDetails from "../pages/Client/JournalDetails";
 import CreateList from "../pages/Client/CreateList";
+import PremiumSuccess from "../pages/Client/PremiumSuccess";
 
 const ROUTES = [
   // Root redirect to login
@@ -63,6 +64,10 @@ const ROUTES = [
       {
         path: "create-list",
         element: <CreateList />,
+      },
+      {
+        path: "/profile/success",
+        element: <PremiumSuccess />,
       },
     ],
   },
