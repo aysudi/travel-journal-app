@@ -1,6 +1,7 @@
+import passport from "passport";
+import "./config/passport.js";
 import cors from "cors";
 import express from "express";
-import passport from "passport";
 import config from "./config/config.js";
 import Stripe from "stripe";
 
@@ -27,6 +28,8 @@ import stripeRouter from "./routes/stripeRoute.js";
 
 const app = express();
 
+app.use(passport.initialize());
+
 app.use(express.json());
 app.use(
   cors({
@@ -40,7 +43,6 @@ app.use(
     credentials: true,
   })
 );
-app.use(passport.initialize());
 
 // Using routes
 app.use("/auth", googleRouter);
