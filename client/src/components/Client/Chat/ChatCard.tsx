@@ -13,6 +13,7 @@ import {
 import connectSocket from "../../../services/socket";
 import GifPicker from "../GifPicker";
 import { useUpdateChat } from "../../../hooks/useChats";
+import Swal from "sweetalert2";
 
 interface Message {
   _id?: string;
@@ -22,10 +23,16 @@ interface Message {
 }
 
 const ChatCard = ({ setChatOpen, chat, listId, refetchChat }: any) => {
+  const [editData, setEditData] = useState<{
+    name: string;
+    description: string;
+    avatar: string | File;
+  }>({
+    name: chat.name,
+    description: chat.description,
+    avatar: chat.avatar,
+  });
   const [showGroupEdit, setShowGroupEdit] = useState(false);
-  const [name, setName] = useState(chat.name || "");
-  const [description, setDescription] = useState(chat.description || "");
-  const [groupAvatar, setGroupAvatar] = useState(chat.avatar || "");
   const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
   const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
   const { data: user } = useUserProfile();
@@ -39,7 +46,6 @@ const ChatCard = ({ setChatOpen, chat, listId, refetchChat }: any) => {
   const socket = connectSocket();
   const [showGifPicker, setShowGifPicker] = useState(false);
   const updateChat = useUpdateChat();
-  const [avatar, setAvatar] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -107,7 +113,6 @@ const ChatCard = ({ setChatOpen, chat, listId, refetchChat }: any) => {
     if (!msg._id) return;
     socket.emit("message:delete", { messageId: msg._id });
   };
-
   const sendGifMessage = (gifUrl: string) => {
     if (!gifUrl || !chat) return;
     socket.emit("message:send", {
@@ -124,52 +129,40 @@ const ChatCard = ({ setChatOpen, chat, listId, refetchChat }: any) => {
     const file = e.target.files?.[0];
     if (e.currentTarget.files && file) {
       setImagePreview(URL.createObjectURL(file));
-      setAvatar(file);
+      setEditData((prev: any) => ({ ...prev, avatar: file }));
     }
   };
 
   const handleEditChat = async () => {
     if (!chat.id) return;
-    let data: any;
-    if (avatar) {
-      data = new FormData();
-      data.append("id", user?.id);
-      data.append("name", name);
-      data.append("description", description);
-      data.append("avatar", avatar);
-    } else {
-      data = {
-        name,
-        description,
-      };
-    }
-    updateChat.mutate(
-      {
+    try {
+      const data = new FormData();
+      data.append("name", editData.name ?? "");
+      data.append("description", editData.description ?? "");
+      if (editData.avatar instanceof File) {
+        data.append("avatar", editData.avatar);
+      }
+      await updateChat.mutateAsync({
         id: chat.id,
         data,
-      },
-      {
-        onSuccess: (response: any) => {
-          if (imagePreview) URL.revokeObjectURL(imagePreview);
-          setImagePreview("");
-          setAvatar(null);
-          setShowGroupEdit(false);
-          if (response && response.avatar) {
-            setGroupAvatar(response.avatar);
-            setImagePreview("");
-            if (fileInputRef.current) fileInputRef.current.value = "";
-          }
-          if (typeof refetchChat === "function") refetchChat();
-        },
-      }
-    );
+      });
+      Swal.fire({
+        title: "Chat updated successfully!",
+        icon: "success",
+        draggable: true,
+      });
+      refetchChat();
+      setShowGroupEdit(false);
+    } catch (error) {
+      console.error("Failed to update chat:", error);
+    }
   };
 
   const messages: Message[] =
     (messagesData && (messagesData as any)?.messages) || [];
 
   return (
-    <div className="w-full max-w-5xl min-w-[350px] md:min-w-[600px] h-[80vh] flex flex-col rounded-3xl shadow-2xl bg-white/60 backdrop-blur-2xl border border-white/40 overflow-hidden relative">
+    <div className="w-full max-w-6xl min-w-[450px] md:min-w-[750px] h-[80vh] flex flex-col rounded-3xl shadow-2xl bg-white/60 backdrop-blur-2xl border border-white/40 overflow-hidden relative">
       {/* Close Button */}
       <button
         className="absolute top-4 right-4 z-20 p-2 rounded-full bg-white/70 hover:bg-indigo-100 text-gray-500 hover:text-indigo-600 shadow transition cursor-pointer"
@@ -180,11 +173,11 @@ const ChatCard = ({ setChatOpen, chat, listId, refetchChat }: any) => {
       </button>
       {/* Header */}
       <div className="flex items-center gap-3 px-8 py-6 border-b border-white/30 bg-white/40 backdrop-blur-md relative">
-        {groupAvatar ? (
+        {chat.avatar ? (
           <img
             className="w-11 h-11 rounded-full object-cover border border-indigo-200"
-            src={groupAvatar}
-            alt={description}
+            src={chat.avatar}
+            alt={editData.description}
           />
         ) : (
           <div className="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-400 to-pink-400 flex items-center justify-center text-white font-bold text-xl shadow-md">
@@ -193,10 +186,10 @@ const ChatCard = ({ setChatOpen, chat, listId, refetchChat }: any) => {
         )}
         <div className="flex flex-col">
           <div className="font-bold text-lg text-gray-900">
-            {name || "Group Chat"}
+            {editData.name || "Group Chat"}
           </div>
           <div className="text-xs text-gray-500">
-            {description || "Connect & share with your friends"}
+            {editData.description || "Connect & share with your friends"}
           </div>
         </div>
         <button
@@ -365,9 +358,15 @@ const ChatCard = ({ setChatOpen, chat, listId, refetchChat }: any) => {
                     htmlFor="avatar-upload"
                     className="cursor-pointer relative group"
                   >
-                    {imagePreview || groupAvatar ? (
+                    {imagePreview || editData.avatar ? (
                       <img
-                        src={imagePreview || groupAvatar}
+                        src={
+                          imagePreview
+                            ? imagePreview
+                            : editData.avatar instanceof File
+                            ? URL.createObjectURL(editData.avatar)
+                            : (editData.avatar as string | undefined)
+                        }
                         alt="Avatar"
                         className="w-20 h-20 rounded-full object-cover border-2 border-indigo-300"
                         onError={(e) => {
@@ -375,7 +374,8 @@ const ChatCard = ({ setChatOpen, chat, listId, refetchChat }: any) => {
                             URL.revokeObjectURL(imagePreview);
                             setImagePreview("");
                           }
-                          (e.target as HTMLImageElement).src = groupAvatar;
+                          (e.target as HTMLImageElement).src =
+                            editData.avatar as string;
                         }}
                       />
                     ) : (
@@ -401,14 +401,24 @@ const ChatCard = ({ setChatOpen, chat, listId, refetchChat }: any) => {
                 <input
                   className="px-3 py-2 rounded border border-indigo-200"
                   placeholder="Group Name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={editData.name}
+                  onChange={(e) =>
+                    setEditData((prev: any) => ({
+                      ...prev,
+                      name: e.target.value,
+                    }))
+                  }
                 />
                 <textarea
                   className="px-3 py-2 rounded border border-indigo-200 min-h-[60px]"
                   placeholder="Description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  value={editData.description}
+                  onChange={(e) =>
+                    setEditData((prev: any) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
                 />
                 <button
                   className="mt-2 px-4 py-2 rounded bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition cursor-pointer"

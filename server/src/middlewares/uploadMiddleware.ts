@@ -15,7 +15,7 @@ const fileFilter = (
     "image/jpg",
     "image/png",
     "image/webp",
-    "application/pdf",
+    "image/avif",
   ];
 
   if (!allowedTypes.includes(file.mimetype)) {
