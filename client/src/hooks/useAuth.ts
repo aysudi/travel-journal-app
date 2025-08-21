@@ -134,3 +134,9 @@ export const useResendVerification = () => {
     },
   });
 };
+
+export function useDeleteAccount(id: string | undefined) {
+  return useMutation({
+    mutationFn: () => userService.deleteAccount(id),
+  });
+}

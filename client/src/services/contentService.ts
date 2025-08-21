@@ -121,7 +121,7 @@ export class JournalEntryService {
       travelListId?: string;
       authorId?: string;
     }
-  ): Promise<PaginatedResponse<JournalEntry>> {
+  ) {
     const searchParams = new URLSearchParams();
 
     if (params?.destinationId)
@@ -138,7 +138,7 @@ export class JournalEntryService {
     const query = searchParams.toString();
     const url = query ? `${this.endpoint}?${query}` : this.endpoint;
 
-    return apiConfig.request<PaginatedResponse<JournalEntry>>(url);
+    return apiConfig.request<any>(url);
   }
 
   async getJournalEntryById(id: string): Promise<JournalEntry> {
