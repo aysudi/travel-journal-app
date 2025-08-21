@@ -160,13 +160,10 @@ export class UserService {
     );
   }
 
-  async deleteAccount(): Promise<{ message: string }> {
-    return apiConfig.request<{ message: string }>(
-      `${this.endpoint}/delete-account`,
-      {
-        method: "DELETE",
-      }
-    );
+  async deleteAccount(id: string | undefined): Promise<{ message: string }> {
+    return apiConfig.request<{ message: string }>(`${this.endpoint}/${id}`, {
+      method: "DELETE",
+    });
   }
 
   async getUserById(userId: string): Promise<UserProfile> {

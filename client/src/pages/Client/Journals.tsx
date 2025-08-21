@@ -143,7 +143,9 @@ const Journals = () => {
                 <div className="text-2xl font-bold text-gray-800">
                   {
                     new Set(
-                      journalsArray.map((j: JournalEntry) => j.author._id)
+                      journalsArray.map((j: JournalEntry) => {
+                        return j.author._id;
+                      })
                     ).size
                   }
                 </div>

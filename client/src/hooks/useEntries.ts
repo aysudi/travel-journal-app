@@ -89,13 +89,7 @@ export const journalEntryKeys = {
   ) => [...journalEntryKeys.all, "search", params] as const,
 };
 
-export const useJournalEntries = (
-  params?: PaginationParams & {
-    destinationId?: string;
-    travelListId?: string;
-    authorId?: string;
-  }
-) => {
+export const useJournalEntries = (params?: any) => {
   return useQuery({
     queryKey: journalEntryKeys.search(params || {}),
     queryFn: () => journalEntryService.getJournalEntries(params),

@@ -225,6 +225,9 @@ export const registerUser = async (
 
     const verificationLink = `${config.SERVER_URL}/auth/verify-email?token=${token}`;
     sendVerificationEmail(req.body.email, req.body.fullName, verificationLink);
+    console.log("email", req.body.email);
+    console.log("fullName", req.body.fullName);
+    console.log("verificationLink", verificationLink);
 
     res.status(201).json({
       message: "User registered successfully | Verify your email",
@@ -415,7 +418,6 @@ export const changePassword = async (
   }
 };
 
-// Friends functionality
 export const sendFriendRequest = async (
   req: any,
   res: Response,
