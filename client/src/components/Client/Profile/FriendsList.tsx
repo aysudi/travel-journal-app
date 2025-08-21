@@ -1,5 +1,6 @@
 import { Crown, UserMinus, UserPlus, Users } from "lucide-react";
 import { useRemoveFriend } from "../../../hooks/useFriends";
+import Swal from "sweetalert2";
 
 type FriendsProps = {
   friends: Array<{
@@ -59,7 +60,26 @@ const FriendsList = ({ friends, setShowAddFriend }: FriendsProps) => {
               <span></span>
               <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <button
-                  onClick={() => removeFriend.mutate(friend.id)}
+                  onClick={() => {
+                    Swal.fire({
+                      title: "Are you sure?",
+                      text: "You won't be able to revert this!",
+                      icon: "warning",
+                      showCancelButton: true,
+                      confirmButtonColor: "#3085d6",
+                      cancelButtonColor: "#d33",
+                      confirmButtonText: "Yes, delete it!",
+                    }).then((result) => {
+                      if (result.isConfirmed) {
+                        removeFriend.mutate(friend.id);
+                        Swal.fire({
+                          title: "Deleted!",
+                          text: "Your friend has been deleted.",
+                          icon: "success",
+                        });
+                      }
+                    });
+                  }}
                   disabled={removeFriend.isPending}
                   className="text-red-500 hover:text-red-600 p-1 disabled:opacity-50 cursor-pointer"
                   title="Remove friend"
