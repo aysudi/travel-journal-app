@@ -41,7 +41,9 @@ export const useGetOrCreateChatByListId = (listId: string, userId: string) => {
 export const useCreateChat = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) => chatService.createChat(data),
+    mutationFn: (data: any) => {
+      return chatService.createChat(data);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["chats"] });
     },
