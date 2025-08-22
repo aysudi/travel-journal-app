@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { useParams } from "react-router";
 import { Plus, Users, BookOpen } from "lucide-react";
 import { useTravelList } from "../../hooks/useTravelList";
@@ -28,7 +28,6 @@ import DestinationDetails from "../../components/Client/ListDetails/DestinationD
 
 const ListDetails = () => {
   const { listId } = useParams<{ listId: string }>();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [activeTab, setActiveTab] = useState<
     "destinations" | "journals" | "photos"
@@ -109,17 +108,6 @@ const ListDetails = () => {
     }
   };
 
-  const handleCoverImageUpload = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      console.log("File selected:", file);
-    }
-  };
-
   const handleDestinationClick = (destination: Destination) => {
     setSelectedDestination(destination);
     setSelectedImageIndex(0);
@@ -129,10 +117,7 @@ const ListDetails = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       {/* Cover Image Section */}
-      <CoverImage
-        travelList={travelList}
-        handleCoverImageUpload={handleCoverImageUpload}
-      />
+      <CoverImage travelList={travelList} />
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Owner and Collaborators Section */}
@@ -309,15 +294,6 @@ const ListDetails = () => {
           </div>
         </div>
       </div>
-      {/* Hidden File Input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleFileChange}
-        className="hidden"
-      />
-
       {/* Add Destination Modal */}
       {showAddDestination && (
         <AddDestinationModal

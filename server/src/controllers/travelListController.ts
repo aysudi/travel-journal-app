@@ -473,9 +473,16 @@ export const uploadCoverImage = async (req: Request, res: Response) => {
       });
     }
 
+    const cloudinaryResult = (req as any).cloudinaryResult;
+    if (!cloudinaryResult?.secure_url) {
+      return res.status(500).json({
+        success: false,
+        message: "Cloudinary upload failed",
+      });
+    }
     const updatedList = await travelListService.updateCoverImage(
       id,
-      (req.file as any).path
+      cloudinaryResult.secure_url
     );
 
     res.status(200).json({

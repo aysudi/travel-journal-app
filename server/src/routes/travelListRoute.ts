@@ -49,7 +49,7 @@ travelListRouter.delete("/:id/permissions", removeCustomPermission);
 
 travelListRouter.post(
   "/:id/cover-image",
-  ...uploadMiddleware("travel-lists"),
+  ...travelListUploadMiddleware("travel-lists"),
   uploadCoverImage
 );
 
