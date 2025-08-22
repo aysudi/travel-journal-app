@@ -20,6 +20,11 @@ interface Message {
   content: string;
   createdAt?: string;
   sender?: { _id: string; username: string; profileImage?: string };
+  edited?: {
+    isEdited: boolean;
+    editedAt?: string;
+    originalContent?: string;
+  };
 }
 
 const ChatCard = ({ setChatOpen, chat, listId, refetchChat }: any) => {
@@ -331,6 +336,23 @@ const ChatCard = ({ setChatOpen, chat, listId, refetchChat }: any) => {
                             })
                           : ""}
                       </span>
+                      {msg.edited?.isEdited && (
+                        <>
+                          <span>·</span>
+                          <span
+                            className="italic text-gray-400 hover:text-indigo-500 cursor-help transition"
+                            title={
+                              msg.edited.editedAt
+                                ? `Edited at ${new Date(
+                                    msg.edited.editedAt
+                                  ).toLocaleString()}`
+                                : "Edited"
+                            }
+                          >
+                            (edited)
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
