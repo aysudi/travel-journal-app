@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   ArrowRight,
   ArrowLeft,
@@ -20,6 +19,9 @@ import { enqueueSnackbar } from "notistack";
 import createListValidation from "../../validations/createListValidation";
 import { travelListService, destinationService } from "../../services";
 import type { CreateTravelListData, TravelList } from "../../types/api";
+import { useCreateChat } from "../../hooks/useChats";
+import { useUserProfile } from "../../hooks/useAuth";
+import { useState } from "react";
 
 interface DestinationFormData {
   name: string;
@@ -39,6 +41,8 @@ const CreateList = () => {
   );
   const [destinations, setDestinations] = useState<DestinationFormData[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const createChat = useCreateChat();
+  const { data: user } = useUserProfile();
 
   const [currentDestination, setCurrentDestination] =
     useState<DestinationFormData>({
@@ -165,7 +169,12 @@ const CreateList = () => {
           await createDestinations(createdList.id);
         }
 
-        console.log(createdList);
+        await createChat.mutateAsync({
+          members: [user?.id],
+          name: createdList.title,
+          createdBy: user?.id,
+          list: createdList.id,
+        });
 
         enqueueSnackbar("Travel list created successfully!", {
           variant: "success",
