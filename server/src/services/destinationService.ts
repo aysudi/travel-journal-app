@@ -40,20 +40,6 @@ export const createDestination = async (
     throw new Error("Travel list not found");
   }
 
-  const hasAccess =
-    travelList.owner.toString() === userId ||
-    travelList.customPermissions.some(
-      (perm: any) =>
-        perm.user.toString() === userId &&
-        (perm.level === "contribute" || perm.level === "co-owner")
-    );
-
-  if (!hasAccess) {
-    throw new Error(
-      "You don't have permission to add destinations to this travel list"
-    );
-  }
-
   const destination = new DestinationModel(destinationData);
   await destination.save();
 

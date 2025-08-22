@@ -33,7 +33,7 @@ export const createNewChat = async (
   next: NextFunction
 ) => {
   try {
-    const { members, list, description, createdBy } = req.body;
+    const { members, list, description, createdBy, name } = req.body;
 
     if (!members || !Array.isArray(members)) {
       return res.status(400).json({
@@ -49,6 +49,7 @@ export const createNewChat = async (
       list,
       description,
       createdBy,
+      name,
     });
 
     if (!response.success) {
@@ -107,10 +108,7 @@ export const updateChatDetails = async (
       });
     }
 
-    console.log("update data: ", updateData);
-
     if (req.cloudinaryResult) {
-      console.log("hello");
       if (chat?.public_id && chat?.public_id !== "") {
         try {
           await cloudinary.uploader.destroy(chat?.public_id);
