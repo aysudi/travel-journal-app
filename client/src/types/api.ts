@@ -151,6 +151,16 @@ export interface CreateDestinationData {
   list: string;
 }
 
+export interface DestinationFormData {
+  name: string;
+  location: string;
+  status: "wishlist" | "planned" | "visited";
+  datePlanned?: string;
+  dateVisited?: string;
+  notes: string;
+  images: File[];
+}
+
 // Journal Entry Types
 export interface JournalEntry {
   id: string;

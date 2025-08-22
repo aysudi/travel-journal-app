@@ -16,12 +16,14 @@ import {
   useUploadCoverImage,
 } from "../../../hooks/useTravelList";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 
 type Props = {
   travelList: any;
+  isOwner: boolean;
 };
 
-const CoverImage = ({ travelList }: Props) => {
+const CoverImage = ({ travelList, isOwner }: Props) => {
   const [chatOpen, setChatOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -30,6 +32,7 @@ const CoverImage = ({ travelList }: Props) => {
   const uploadCoverImage = useUploadCoverImage();
   const queryClient = useQueryClient();
   const [coverImagePreview, setCoverImagePreview] = useState<string>("");
+  const navigate = useNavigate();
 
   const {
     data,
@@ -99,6 +102,7 @@ const CoverImage = ({ travelList }: Props) => {
           text: "Your travel list has been deleted.",
           icon: "success",
         });
+        navigate("/explore");
       }
     });
   };
@@ -140,48 +144,50 @@ const CoverImage = ({ travelList }: Props) => {
 
       {/* Cover Image Actions */}
       <div className="absolute top-4 right-4 flex gap-2 z-20">
-        <button
-          onClick={handleImageChange}
-          className="bg-white/20 backdrop-blur-sm text-white p-3 rounded-full hover:bg-white/30 transition-all duration-200 cursor-pointer"
-        >
-          <Camera size={20} />
-        </button>
-        {/* Hidden file input for image upload */}
-        <input
-          type="file"
-          accept="image/*"
-          ref={fileInputRef}
-          style={{ display: "none" }}
-          onChange={handleCoverImageUpload}
-        />
+        {isOwner && (
+          <>
+            <button
+              onClick={handleImageChange}
+              className="bg-white/20 backdrop-blur-sm text-white p-3 rounded-full hover:bg-white/30 transition-all duration-200 cursor-pointer"
+            >
+              <Camera size={20} />
+            </button>
+            {/* Hidden file input for image upload */}
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              style={{ display: "none" }}
+              onChange={handleCoverImageUpload}
+            />
+            <button
+              className="bg-white/20 backdrop-blur-sm text-white p-3 rounded-full hover:bg-white/30 transition-all duration-200 cursor-pointer"
+              onClick={handleMenuClick}
+              type="button"
+            >
+              <MoreVertical size={20} />
+            </button>
+          </>
+        )}
         <button
           className="bg-white/20 backdrop-blur-sm text-white p-3 rounded-full hover:bg-white/30 transition-all duration-200 cursor-pointer"
           onClick={() => setChatOpen(true)}
         >
           <MessageCircle size={20} />
         </button>
-        <div className="relative">
-          <button
-            className="bg-white/20 backdrop-blur-sm text-white p-3 rounded-full hover:bg-white/30 transition-all duration-200 cursor-pointer"
-            onClick={handleMenuClick}
-            type="button"
-          >
-            <MoreVertical size={20} />
-          </button>
-          {menuOpen && (
-            <div className="absolute right-0 mt-2 w-36 bg-white rounded-lg shadow-lg py-2 z-30">
-              <button
-                className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-150 cursor-pointer"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete();
-                }}
-              >
-                Delete List
-              </button>
-            </div>
-          )}
-        </div>
+        {menuOpen && isOwner && (
+          <div className="absolute right-0 mt-2 w-36 bg-white rounded-lg shadow-lg py-2 z-30">
+            <button
+              className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-150 cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete();
+              }}
+            >
+              Delete List
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ChatCard Modal Overlay */}
