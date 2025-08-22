@@ -1,46 +1,37 @@
 import React, { useState } from "react";
 import { useParams } from "react-router";
-import { Plus, Users, BookOpen } from "lucide-react";
+import { Plus, Users } from "lucide-react";
 import { useTravelList } from "../../hooks/useTravelList";
 import Loading from "../../components/Common/Loading";
 import { useJournalEntriesByTravelList } from "../../hooks/useEntries";
 import {
-  useCreateDestination,
   useDestinationsByTravelList,
-  destinationKeys,
+  useCreateDestination,
   useUpdateDestination,
+  destinationKeys,
 } from "../../hooks/useDestination";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Destination, JournalEntry } from "../../types/api";
 import Swal from "sweetalert2";
 import AddDestinationModal from "../../components/Client/ListDetails/AddDestinationModal";
-import NavigationTabs from "../../components/Client/ListDetails/NavigationTabs";
-import DestinationsTabs from "../../components/Client/ListDetails/DestinationsTabs";
-import JournalsTabs from "../../components/Client/ListDetails/JournalsTabs";
-import CreateJournalModal from "../../components/Client/Journals/CreateJournalModal";
-import { useCreateJournalEntry } from "../../hooks/useEntries";
-import PhotosTab from "../../components/Client/ListDetails/PhotosTab";
 import OwnersSection from "../../components/Client/ListDetails/OwnersSection";
 import CoverImage from "../../components/Client/ListDetails/CoverImage";
 import EditDestinationModal from "../../components/Client/ListDetails/EditDestinationModal";
 import InvitationModal from "../../components/Client/ListDetails/InvitationModal";
 import DestinationDetails from "../../components/Client/ListDetails/DestinationDetails";
+import Navigation from "../../components/Client/ListDetails/Navigation";
+import { useUserProfile } from "../../hooks/useAuth";
 
 const ListDetails = () => {
   const { listId } = useParams<{ listId: string }>();
 
-  const [activeTab, setActiveTab] = useState<
-    "destinations" | "journals" | "photos"
-  >("destinations");
   const [showAddDestination, setShowAddDestination] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showDestinationDetail, setShowDestinationDetail] = useState(false);
   const [showEditDestination, setShowEditDestination] = useState(false);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [_, setSelectedImageIndex] = useState(0);
   const [selectedDestination, setSelectedDestination] =
     useState<Destination | null>(null);
-  const [showCreateJournal, setShowCreateJournal] = useState(false);
-  const createJournal = useCreateJournalEntry();
 
   const { data: travelList, isLoading, error } = useTravelList(listId || "");
   const {
@@ -56,6 +47,7 @@ const ListDetails = () => {
   const createDestination = useCreateDestination();
   const queryClient = useQueryClient();
   const editDestination = useUpdateDestination();
+  const { data: user } = useUserProfile();
 
   const destinationsArray = destinations || [];
   const [journalsArrayState, setJournalsArrayState] = useState<any>([]);
@@ -67,6 +59,34 @@ const ListDetails = () => {
     }
   }, [journals]);
   const getDestinationStatus = (dest: Destination): string => dest.status;
+
+  let hasFullAccess = false;
+  if (travelList && user) {
+    if (typeof travelList.owner === "string") {
+      hasFullAccess = user.id === travelList.owner;
+    } else if (travelList.owner && typeof travelList.owner === "object") {
+      hasFullAccess =
+        user.id === travelList.owner.id ||
+        (travelList.owner &&
+          (travelList.owner as any)._id &&
+          user.id === (travelList.owner as any)._id);
+    }
+    if (Array.isArray(travelList.customPermissions)) {
+      for (const perm of travelList.customPermissions) {
+        const permUserId =
+          typeof perm.user === "string"
+            ? perm.user
+            : perm.user?.id || (perm.user && (perm.user as any)._id);
+        if (
+          permUserId === user.id &&
+          (perm.level === "contribute" || perm.level === "co-owner")
+        ) {
+          hasFullAccess = true;
+          break;
+        }
+      }
+    }
+  }
 
   if (isLoading || isLoadingDestinations || isLoadingJournals) {
     return <Loading variant="page" />;
@@ -117,7 +137,7 @@ const ListDetails = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       {/* Cover Image Section */}
-      <CoverImage travelList={travelList} />
+      <CoverImage travelList={travelList} isOwner={!!hasFullAccess} />
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Owner and Collaborators Section */}
@@ -164,135 +184,33 @@ const ListDetails = () => {
                   <span>Invite</span>
                 </button>
               )}
-              {travelList.visibility !== "friends" && (
-                <button
-                  onClick={() => setShowAddDestination(true)}
-                  className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl cursor-pointer"
-                >
-                  <Plus size={18} />
-                  <span>Add Destination</span>
-                </button>
+              {hasFullAccess && (
+                <>
+                  <button
+                    onClick={() => setShowAddDestination(true)}
+                    className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl cursor-pointer"
+                  >
+                    <Plus size={18} />
+                    <span>Add Destination</span>
+                  </button>
+                </>
               )}
             </div>
           </div>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="bg-white rounded-2xl shadow-xl mb-8">
-          <NavigationTabs
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            destinationsArray={destinationsArray}
-            journalsArray={journalsArray}
-          />
-
-          {/* Tab Content */}
-          <div className="p-6">
-            {/* Destinations Tab */}
-            {activeTab === "destinations" && (
-              <DestinationsTabs
-                setShowAddDestination={setShowAddDestination}
-                getStatusColor={getStatusColor}
-                getDestinationStatus={getDestinationStatus}
-                handleDestinationClick={handleDestinationClick}
-                destinationsArray={destinationsArray}
-              />
-            )}
-
-            {/* Journals Tab */}
-            {activeTab === "journals" && (
-              <div>
-                <div className="space-y-6">
-                  {(journalsArray as JournalEntry[]).map(
-                    (journal: JournalEntry, idx: number) => {
-                      return (
-                        <JournalsTabs
-                          key={idx}
-                          journal={journal}
-                          listId={listId}
-                          onDelete={(id: string) => {
-                            setJournalsArrayState((prev: any[]) =>
-                              prev.filter((j) => j.id !== id)
-                            );
-                          }}
-                        />
-                      );
-                    }
-                  )}
-                </div>
-
-                {/* Empty State for Journals */}
-                {(journalsArray as JournalEntry[]).length === 0 && (
-                  <div className="text-center py-12">
-                    <BookOpen
-                      size={64}
-                      className="text-gray-300 mx-auto mb-4"
-                    />
-                    <h3 className="text-xl font-medium text-gray-600 mb-2">
-                      No journals yet
-                    </h3>
-                    <p className="text-gray-500 mb-6">
-                      Start documenting your travel experiences by creating your
-                      first journal entry
-                    </p>
-                    <button
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl cursor-pointer"
-                      onClick={() => setShowCreateJournal(true)}
-                    >
-                      <Plus size={20} />
-                      <span>Write Your First Journal</span>
-                    </button>
-                  </div>
-                )}
-                {(journalsArray as JournalEntry[]).length > 0 && (
-                  <div className="text-center py-12">
-                    <button
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl cursor-pointer"
-                      onClick={() => setShowCreateJournal(true)}
-                    >
-                      <Plus size={20} />
-                      <span>Add Journal</span>
-                    </button>
-                  </div>
-                )}
-                {/* Create Journal Modal */}
-                {showCreateJournal && (
-                  <CreateJournalModal
-                    open={showCreateJournal}
-                    onClose={() => setShowCreateJournal(false)}
-                    destinations={destinationsArray}
-                    loading={createJournal.isPending}
-                    onSubmit={async (data) => {
-                      await createJournal.mutateAsync(data, {
-                        onSuccess: (newEntry) => {
-                          setShowCreateJournal(false);
-                          setJournalsArrayState((prev: any) => [
-                            newEntry,
-                            ...(prev.length > 0 ? prev : journals || []),
-                          ]);
-                          Swal.fire({
-                            title: "Journal created successfully!",
-                            icon: "success",
-                            timer: 1500,
-                            showConfirmButton: false,
-                          });
-                        },
-                      });
-                    }}
-                  />
-                )}
-              </div>
-            )}
-
-            {/* Photos Tab */}
-            {activeTab === "photos" && (
-              <PhotosTab
-                destinationsArray={destinationsArray}
-                journalsArray={journalsArray}
-              />
-            )}
-          </div>
-        </div>
+        <Navigation
+          destinationsArray={destinationsArray}
+          handleDestinationClick={handleDestinationClick}
+          journalsArray={journalsArray}
+          setShowAddDestination={setShowAddDestination}
+          getDestinationStatus={getDestinationStatus}
+          getStatusColor={getStatusColor}
+          setJournalsArrayState={setJournalsArrayState}
+          listId={listId}
+          journals={journals}
+        />
       </div>
       {/* Add Destination Modal */}
       {showAddDestination && (
@@ -354,16 +272,20 @@ const ListDetails = () => {
           setShowInviteModal={setShowInviteModal}
         />
       )}
-      {/* Destination Detail Modal */}
+      {/* Destination Details Modal */}
       {showDestinationDetail && selectedDestination && (
         <DestinationDetails
-          setShowDestinationDetail={setShowDestinationDetail}
-          selectedImageIndex={selectedImageIndex}
-          selectedDestination={selectedDestination}
-          setSelectedImageIndex={setSelectedImageIndex}
-          setShowEditDestination={setShowEditDestination}
-          getDestinationStatus={getDestinationStatus}
-          getStatusColor={getStatusColor}
+          destination={selectedDestination}
+          isOpen={showDestinationDetail}
+          onClose={() => setShowDestinationDetail(false)}
+          onEdit={() => {
+            setShowEditDestination(true);
+            setShowDestinationDetail(false);
+          }}
+          onDelete={() => {
+            // You may want to implement delete logic here or in the modal
+          }}
+          isOwner={!!hasFullAccess}
         />
       )}
     </div>
