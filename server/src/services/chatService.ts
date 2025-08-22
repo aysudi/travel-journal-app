@@ -45,9 +45,10 @@ export const createChat = async (data: any) => {
     const chat = new ChatModel({
       members: membersWithMetadata,
       list: data.list,
-      description: data.description,
+      description: data?.description,
       createdBy: new Types.ObjectId(data.createdBy),
       messageCount: 0,
+      name: data.name,
     });
 
     await chat.save();
