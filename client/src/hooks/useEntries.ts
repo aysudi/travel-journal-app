@@ -271,7 +271,9 @@ export const useDeleteJournalEntry = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => journalEntryService.deleteJournalEntry(id),
+    mutationFn: (id: string) => {
+      return journalEntryService.deleteJournalEntry(id);
+    },
     onSuccess: (_, deletedId) => {
       const cachedEntry = queryClient.getQueryData<JournalEntry>(
         journalEntryKeys.list(deletedId)
