@@ -88,12 +88,12 @@ const JournalsTabs = ({ journal, listId, onDelete }: Props) => {
                 <span className="text-gray-300">•</span>
                 <div
                   className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                    journal.isPublic
+                    journal.public
                       ? "bg-green-50 text-green-700 border border-green-200"
                       : "bg-gray-50 text-gray-600 border border-gray-200"
                   }`}
                 >
-                  {journal.isPublic ? (
+                  {journal.public ? (
                     <>
                       <Globe size={10} />
                       <span>Public</span>

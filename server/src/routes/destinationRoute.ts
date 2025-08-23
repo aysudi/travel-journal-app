@@ -9,7 +9,6 @@ import {
   getDestinationsByStatus,
   getDestinationStats,
   updateDestinationStatus,
-  bulkUpdateDestinationStatus,
   getRecentDestinations,
   searchDestinations,
 } from "../controllers/destinationController";
@@ -32,7 +31,6 @@ destinationRouter.delete("/:id", deleteDestination);
 // Status-related operations
 destinationRouter.get("/status/:status", getDestinationsByStatus);
 destinationRouter.patch("/:id/status", updateDestinationStatus);
-destinationRouter.patch("/bulk/status", bulkUpdateDestinationStatus);
 
 // User-specific operations
 destinationRouter.get("/my/stats", getDestinationStats);

@@ -51,8 +51,23 @@ const ListDetails = () => {
 
   const destinationsArray = destinations || [];
   const [journalsArrayState, setJournalsArrayState] = useState<any>([]);
-  const journalsArray =
+  let journalsArray =
     journalsArrayState.length > 0 ? journalsArrayState : journals || [];
+  if (travelList && user) {
+    let isOwner = false;
+    if (typeof travelList.owner === "string") {
+      isOwner = user.id === travelList.owner;
+    } else if (travelList.owner && typeof travelList.owner === "object") {
+      isOwner =
+        user.id === travelList.owner.id ||
+        (travelList.owner &&
+          (travelList.owner as any)._id &&
+          user.id === (travelList.owner as any)._id);
+    }
+    if (!isOwner) {
+      journalsArray = journalsArray.filter((j: any) => j.public === true);
+    }
+  }
   React.useEffect(() => {
     if (journals) {
       setJournalsArrayState([]);
@@ -282,9 +297,7 @@ const ListDetails = () => {
             setShowEditDestination(true);
             setShowDestinationDetail(false);
           }}
-          onDelete={() => {
-            // You may want to implement delete logic here or in the modal
-          }}
+          onDelete={() => {}}
           isOwner={!!hasFullAccess}
         />
       )}

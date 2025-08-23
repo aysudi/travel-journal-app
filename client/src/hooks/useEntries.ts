@@ -200,7 +200,7 @@ export const useCreateJournalEntry = () => {
         queryKey: journalEntryKeys.byAuthor(newEntry.author._id),
       });
 
-      if (newEntry.isPublic) {
+      if (newEntry.public) {
         queryClient.invalidateQueries({ queryKey: journalEntryKeys.public() });
       }
 
@@ -304,7 +304,7 @@ export const useDeleteJournalEntry = () => {
           queryKey: journalEntryKeys.byAuthor(cachedEntry.author._id),
         });
 
-        if (cachedEntry.isPublic) {
+        if (cachedEntry.public) {
           queryClient.invalidateQueries({
             queryKey: journalEntryKeys.public(),
           });
@@ -351,7 +351,7 @@ export const useUploadJournalImages = () => {
           });
         }
 
-        if (cachedEntry.isPublic) {
+        if (cachedEntry.public) {
           queryClient.invalidateQueries({
             queryKey: journalEntryKeys.public(),
           });
@@ -360,30 +360,6 @@ export const useUploadJournalImages = () => {
     },
     onError: (error) => {
       console.error("Failed to upload journal images:", error);
-    },
-  });
-};
-
-export const useBulkDeleteJournalEntries = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (entryIds: string[]) => {
-      const results = await Promise.allSettled(
-        entryIds.map((id) => journalEntryService.deleteJournalEntry(id))
-      );
-      return results;
-    },
-    onSuccess: (_, deletedIds) => {
-      deletedIds.forEach((id) => {
-        queryClient.removeQueries({ queryKey: journalEntryKeys.list(id) });
-      });
-
-      queryClient.invalidateQueries({ queryKey: journalEntryKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: journalEntryKeys.all });
-    },
-    onError: (error) => {
-      console.error("Failed to bulk delete journal entries:", error);
     },
   });
 };

@@ -176,7 +176,7 @@ export interface JournalEntry {
     username: string;
     profileImage: string;
   };
-  isPublic: boolean;
+  public: boolean;
   createdAt: string;
   updatedAt: string;
   likes: [

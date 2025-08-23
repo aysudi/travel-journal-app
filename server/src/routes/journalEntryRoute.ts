@@ -10,7 +10,6 @@ import {
   getPublicJournalEntries,
   getJournalEntryStats,
   getRecentJournalEntries,
-  bulkUpdateJournalEntries,
   getMyJournalEntries,
   toggleJournalEntryLike,
 } from "../controllers/journalEntryController";
@@ -38,7 +37,5 @@ journalEntryRouter.put("/:id", updateJournalEntry);
 journalEntryRouter.delete("/:id", deleteJournalEntry);
 
 journalEntryRouter.patch("/:id/like", toggleJournalEntryLike);
-
-journalEntryRouter.patch("/bulk", bulkUpdateJournalEntries);
 
 export default journalEntryRouter;

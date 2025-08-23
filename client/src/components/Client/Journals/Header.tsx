@@ -22,7 +22,7 @@ const Header = ({ user, journal }: Props) => {
           </button>
 
           <div className="flex items-center gap-2">
-            {journal.isPublic ? (
+            {journal.public ? (
               <div className="flex items-center gap-1 text-green-600 text-sm">
                 <Globe size={16} />
                 <span>Public</span>
