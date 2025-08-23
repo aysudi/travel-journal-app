@@ -73,12 +73,14 @@ const Journals = () => {
       switch (selectedFilter) {
         case "trending":
           return (
+            (b.likes?.length || 0) - (a.likes?.length || 0) ||
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
           );
         case "recent":
           return (
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
           );
+        case "all":
         default:
           return (
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
