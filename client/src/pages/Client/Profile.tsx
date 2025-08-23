@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Calendar, UserPlus } from "lucide-react";
-import { useDeleteAccount, useUserProfile } from "../../hooks/useAuth";
+import { Calendar } from "lucide-react";
+import { useUserProfile } from "../../hooks/useAuth";
 import { useFriends } from "../../hooks/useFriends";
 import ChangePassword from "../../components/Client/Profile/ChangePassword";
 import UserInfo from "../../components/Client/Profile/UserInfo";
@@ -12,21 +12,17 @@ import { Users, Crown, Award, BarChart2, UserCircle } from "lucide-react";
 import ProfileImage from "../../components/Client/Profile/ProfileImage";
 import ActionsButtons from "../../components/Client/Profile/ActionsButtons";
 import AddFriend from "../../components/Client/Profile/AddFriend";
-import FriendsRequests from "../../components/Client/Profile/FriendsRequests";
-import FriendsList from "../../components/Client/Profile/FriendsList";
 import Tabs from "../../components/Common/Tabs";
-import Swal from "sweetalert2";
-import { useNavigate } from "react-router";
+import DeleteAccount from "../../components/Client/Profile/DeleteAccount";
+import FriendsTab from "../../components/Client/Profile/FriendsTab";
 
 const Profile = () => {
   const { data: user, isLoading, isError, error } = useUserProfile();
   const { data: friendsData } = useFriends();
-  const navigate = useNavigate();
 
   const [isEditing, setIsEditing] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showAddFriend, setShowAddFriend] = useState(false);
-  const deleteAccount = useDeleteAccount(user?.id);
 
   const [editData, setEditData] = useState<{
     fullName: string;
@@ -42,7 +38,6 @@ const Profile = () => {
   const [imagePreview, setImagePreview] = useState<string>("");
 
   const friends = friendsData?.friends || [];
-  const friendRequests = friendsData?.friendRequestsReceived || [];
 
   if (isLoading) {
     return <Loading variant="page" />;
@@ -218,74 +213,7 @@ const Profile = () => {
                 />
 
                 {/* Delete Account Button - improved UI */}
-                <div className="flex flex-col items-end mt-10">
-                  <div className="w-full bg-red-50 border border-red-200 rounded-xl p-5 flex flex-col items-center shadow-md">
-                    <div className="flex items-center gap-2 mb-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-6 w-6 text-red-600"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"
-                        />
-                      </svg>
-                      <span className="text-lg font-semibold text-red-700">
-                        Danger Zone
-                      </span>
-                    </div>
-                    <p className="text-sm text-red-600 text-center mb-4">
-                      Deleting your account is <b>irreversible</b>. All your
-                      data will be lost and cannot be recovered.
-                    </p>
-                    <button
-                      className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white rounded-lg font-semibold shadow border border-red-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-400 cursor-pointer"
-                      onClick={async () => {
-                        Swal.fire({
-                          title: "Are you sure?",
-                          text: "You won't be able to revert this!",
-                          icon: "warning",
-                          showCancelButton: true,
-                          confirmButtonColor: "#3085d6",
-                          cancelButtonColor: "#d33",
-                          confirmButtonText: "Yes, delete it!",
-                        }).then(async (result) => {
-                          if (result.isConfirmed) {
-                            await deleteAccount.mutateAsync();
-                            localStorage.removeItem("token");
-                            navigate("/auth/login");
-                            Swal.fire({
-                              title: "Deleted!",
-                              text: "Account has been deleted.",
-                              icon: "success",
-                            });
-                          }
-                        });
-                      }}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"
-                        />
-                      </svg>
-                      Delete Account
-                    </button>
-                  </div>
-                </div>
+                <DeleteAccount user={user} />
               </div>
             </div>
           </div>
@@ -301,37 +229,11 @@ const Profile = () => {
           </div>
 
           {/* Friends Tab */}
-          <div>
-            <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <Users size={24} className="text-indigo-600" />
-                  <h3 className="text-2xl font-bold text-gray-800">Friends</h3>
-                  <span className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-medium">
-                    {friends.length}
-                  </span>
-                </div>
-                <button
-                  onClick={() => setShowAddFriend(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl cursor-pointer"
-                >
-                  <UserPlus size={18} />
-                  <span>Add Friend</span>
-                </button>
-              </div>
-
-              {/* Friend Requests */}
-              {friendRequests.length > 0 && (
-                <FriendsRequests friendRequests={friendRequests} />
-              )}
-
-              {/* Friends List */}
-              <FriendsList
-                friends={friends}
-                setShowAddFriend={setShowAddFriend}
-              />
-            </div>
-          </div>
+          <FriendsTab
+            friends={friends}
+            friendsData={friendsData}
+            setShowAddFriend={setShowAddFriend}
+          />
         </Tabs>
 
         {/* Add Friend Modal */}
