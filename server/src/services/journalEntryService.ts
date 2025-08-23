@@ -347,7 +347,6 @@ export const getPublicJournalEntries = async (
     ];
   }
 
-  // Build sort object
   const sortObj: any = {};
   sortObj[sort] = order === "asc" ? 1 : -1;
 
@@ -423,37 +422,6 @@ export const getJournalEntryStats = async (userId: string): Promise<any> => {
       totalPhotos: 0,
     }
   );
-};
-
-// Bulk update journal entries (useful for changing privacy settings)
-export const bulkUpdateJournalEntries = async (
-  entryIds: string[],
-  updateData: JournalEntryUpdateData,
-  userId: string
-): Promise<any> => {
-  const entries = await JournalEntryModel.find({
-    _id: { $in: entryIds },
-    author: userId,
-  });
-
-  if (entries.length !== entryIds.length) {
-    throw new Error(
-      "Some journal entries not found or you don't have permission to update them"
-    );
-  }
-
-  const result = await JournalEntryModel.updateMany(
-    {
-      _id: { $in: entryIds },
-      author: userId,
-    },
-    { $set: updateData }
-  );
-
-  return {
-    matchedCount: result.matchedCount,
-    modifiedCount: result.modifiedCount,
-  };
 };
 
 // Get recent journal entries activity for dashboard

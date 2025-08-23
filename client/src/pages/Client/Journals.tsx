@@ -90,8 +90,10 @@ const Journals = () => {
   );
 
   const publicJournals = sortedJournals.filter(
-    (journal: any) => journal.destination.list.visibility === "public"
+    (journal: any) => journal.public === true
   );
+
+  console.log(publicJournals);
 
   if (isLoading && page === 1) {
     return <Loading variant="page" />;

@@ -318,49 +318,6 @@ export const updateDestinationStatus = async (
   return await updateDestination(destinationId, updateData, userId);
 };
 
-export const bulkUpdateDestinationStatus = async (
-  destinationIds: string[],
-  status: "Wishlist" | "Planned" | "Visited",
-  userId: string
-): Promise<any> => {
-  const destinations = await DestinationModel.find({
-    _id: { $in: destinationIds },
-  }).populate("list", "owner customPermissions");
-
-  if (destinations.length !== destinationIds.length) {
-    throw new Error("Some destinations not found");
-  }
-
-  for (const destination of destinations) {
-    const travelList = destination.list as any;
-    const hasAccess =
-      travelList.owner.toString() === userId ||
-      travelList.customPermissions.some(
-        (perm: any) =>
-          perm.user.toString() === userId &&
-          (perm.level === "contribute" || perm.level === "co-owner")
-      );
-
-    if (!hasAccess) {
-      throw new Error("You don't have permission to update some destinations");
-    }
-  }
-  const updateData: any = { status };
-  if (status === "Visited") {
-    updateData.dateVisited = new Date();
-  }
-
-  const result = await DestinationModel.updateMany(
-    { _id: { $in: destinationIds } },
-    { $set: updateData }
-  );
-
-  return {
-    matchedCount: result.matchedCount,
-    modifiedCount: result.modifiedCount,
-  };
-};
-
 export const getRecentDestinations = async (
   userId: string,
   limit: number = 5

@@ -150,30 +150,6 @@ export const useDeleteDestination = () => {
   });
 };
 
-export const useBulkDeleteDestinations = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (destinationIds: string[]) => {
-      const results = await Promise.allSettled(
-        destinationIds.map((id) => destinationService.deleteDestination(id))
-      );
-      return results;
-    },
-    onSuccess: (_, deletedIds) => {
-      deletedIds.forEach((id) => {
-        queryClient.removeQueries({ queryKey: destinationKeys.list(id) });
-      });
-
-      queryClient.invalidateQueries({ queryKey: destinationKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: destinationKeys.all });
-    },
-    onError: (error) => {
-      console.error("Failed to bulk delete destinations:", error);
-    },
-  });
-};
-
 export const useOptimisticDestinationUpdate = () => {
   const queryClient = useQueryClient();
 
