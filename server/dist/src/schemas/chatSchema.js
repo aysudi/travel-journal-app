@@ -12,7 +12,7 @@ const chatSchema = new mongoose.Schema({
             isActive: { type: Boolean, default: true },
         },
     ],
-    description: { type: String, required: true },
+    description: { type: String },
     name: { type: String, required: true },
     avatar: { type: String },
     public_id: { type: String, default: "" },

@@ -4,6 +4,7 @@ import cors from "cors";
 import express from "express";
 import config from "./config/config.js";
 import Stripe from "stripe";
+import UserModel from "./models/User.js";
 
 import "./models/User.js";
 import "./models/TravelList.js";
@@ -91,7 +92,20 @@ app.post(
       }
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        // TODO: fulfill order / activate subscription using session.id
+        // Set user as premium after successful payment
+        const userId = session.metadata?.userId;
+        if (userId) {
+          (async () => {
+            try {
+              await UserModel.findByIdAndUpdate(userId, { premium: true });
+              console.log(`User ${userId} upgraded to premium.`);
+            } catch (err) {
+              console.error("Failed to update user premium status:", err);
+            }
+          })();
+        } else {
+          console.warn("No userId found in Stripe session metadata.");
+        }
         break;
       }
       // ...add invoice.paid, customer.subscription.* if you use subscriptions

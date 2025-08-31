@@ -105,15 +105,11 @@ userSchema.virtual("journalEntries", {
     localField: "_id",
     foreignField: "author",
 });
-userSchema.virtual("notifications", {
-    ref: "Notification",
+userSchema.virtual("destinations", {
+    ref: "Destination",
     localField: "_id",
-    foreignField: "recipient",
+    foreignField: "list.owner",
     options: { sort: { createdAt: -1 } },
-});
-userSchema.virtual("allLists").get(function () {
-    const ownedLists = Array.isArray(this.ownedLists) ? this.ownedLists : [];
-    return ownedLists;
 });
 userSchema.methods.getAllListsWithRoles = async function () {
     const TravelList = mongoose.model("TravelList");
@@ -142,7 +138,6 @@ userSchema.methods.getAllListsWithRoles = async function () {
     });
     return [...ownedWithRoles, ...collaboratingWithRoles];
 };
-// Friend-related methods
 userSchema.methods.sendFriendRequest = async function (targetUserId) {
     const User = mongoose.model("User");
     const targetUser = await User.findById(targetUserId);
@@ -152,23 +147,19 @@ userSchema.methods.sendFriendRequest = async function (targetUserId) {
     if (this.friends.includes(targetUserId)) {
         throw new Error("Already friends");
     }
-    // Check if there's already a pending request
     if (this.friendRequestsSent.some((req) => req.to.toString() === targetUserId)) {
         throw new Error("Friend request already sent");
     }
     if (targetUser.friendRequestsReceived.some((req) => req.from.toString() === this._id.toString())) {
         throw new Error("Friend request already exists");
     }
-    // If target user has public profile, automatically become friends
     if (targetUser.profileVisibility === "public") {
-        // Add each other as friends
         this.friends.push(targetUserId);
         targetUser.friends.push(this._id);
         await Promise.all([this.save(), targetUser.save()]);
         return { message: "Added as friend successfully (public profile)" };
     }
     else {
-        // For private profiles, send friend request
         this.friendRequestsSent.push({ to: targetUserId, sentAt: new Date() });
         await this.save();
         targetUser.friendRequestsReceived.push({
@@ -194,7 +185,6 @@ userSchema.methods.acceptFriendRequest = async function (fromUserId) {
     if (sentRequestIndex !== -1) {
         fromUser.friendRequestsSent.splice(sentRequestIndex, 1);
     }
-    // Add each other as friends
     this.friends.push(fromUserId);
     fromUser.friends.push(this._id);
     await Promise.all([this.save(), fromUser.save()]);
@@ -206,7 +196,6 @@ userSchema.methods.rejectFriendRequest = async function (fromUserId) {
     if (!fromUser) {
         throw new Error("User not found");
     }
-    // Remove the friend request from both users
     const requestIndex = this.friendRequestsReceived.findIndex((req) => req.from.toString() === fromUserId);
     if (requestIndex === -1) {
         throw new Error("Friend request not found");
@@ -225,7 +214,6 @@ userSchema.methods.removeFriend = async function (friendId) {
     if (!friend) {
         throw new Error("User not found");
     }
-    // Remove from both friends lists
     this.friends = this.friends.filter((id) => id.toString() !== friendId);
     friend.friends = friend.friends.filter((id) => id.toString() !== this._id.toString());
     await Promise.all([this.save(), friend.save()]);

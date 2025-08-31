@@ -8,6 +8,7 @@ const travelListSchema = new mongoose.Schema({
     },
     description: {
         type: String,
+        required: true,
     },
     tags: [
         {

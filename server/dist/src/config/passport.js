@@ -34,6 +34,7 @@ passport.use(new GoogleStrategy({
             provider: "google",
             providerId: profile.id,
             isVerified: true,
+            lastLogin: new Date(),
         });
         return done(null, newUser);
     }
@@ -76,6 +77,7 @@ passport.use(new GitHubStrategy({
             provider: "github",
             providerId: profile.id,
             isVerified: true,
+            lastLogin: new Date(),
         });
         return done(null, newUser);
     }

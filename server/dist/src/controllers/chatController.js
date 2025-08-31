@@ -15,7 +15,7 @@ export const getAllChatsController = async (req, res, next) => {
 };
 export const createNewChat = async (req, res, next) => {
     try {
-        const { members, list, description, createdBy } = req.body;
+        const { members, list, description, createdBy, name } = req.body;
         if (!members || !Array.isArray(members)) {
             return res.status(400).json({
                 success: false,
@@ -28,6 +28,7 @@ export const createNewChat = async (req, res, next) => {
             list,
             description,
             createdBy,
+            name,
         });
         if (!response.success) {
             return res.status(400).json(response);
@@ -61,7 +62,7 @@ export const updateChatDetails = async (req, res, next) => {
     try {
         const userId = req.body.id;
         const { chatId } = req.params;
-        const updateData = req.body;
+        const updateData = { ...req.body };
         const chat = await ChatModel.findById(chatId);
         if (!chatId) {
             return res.status(400).json({
