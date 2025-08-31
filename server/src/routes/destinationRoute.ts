@@ -11,8 +11,8 @@ import {
   updateDestinationStatus,
   getRecentDestinations,
   searchDestinations,
-} from "../controllers/destinationController";
-import { authenticateToken } from "../middlewares/authMiddleware";
+} from "../controllers/destinationController.js";
+import { authenticateToken } from "../middlewares/authMiddleware.js";
 
 const destinationRouter = express.Router();
 

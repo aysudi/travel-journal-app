@@ -6,9 +6,9 @@ import {
   updateChat,
   deleteChat,
   getOrCreateChatByListId,
-} from "../services/chatService";
-import { AuthenticatedRequest } from "../types/authType";
-import ChatModel from "../models/Chat";
+} from "../services/chatService.js";
+import { AuthenticatedRequest } from "../types/authType.js";
+import ChatModel from "../models/Chat.js";
 import { v2 as cloudinary } from "cloudinary";
 
 export const getAllChatsController = async (

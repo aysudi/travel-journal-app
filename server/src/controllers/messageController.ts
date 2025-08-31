@@ -6,8 +6,8 @@ import {
   updateMessage,
   deleteMessage,
   markMessageAsRead,
-} from "../services/messageService";
-import { AuthenticatedRequest } from "../types/authType";
+} from "../services/messageService.js";
+import { AuthenticatedRequest } from "../types/authType.js";
 
 export const getAllMessagesController = async (
   req: Request,

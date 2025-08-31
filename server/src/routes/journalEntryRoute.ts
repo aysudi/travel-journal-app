@@ -12,8 +12,8 @@ import {
   getRecentJournalEntries,
   getMyJournalEntries,
   toggleJournalEntryLike,
-} from "../controllers/journalEntryController";
-import { authenticateToken } from "../middlewares/authMiddleware";
+} from "../controllers/journalEntryController.js";
+import { authenticateToken } from "../middlewares/authMiddleware.js";
 
 const journalEntryRouter = express.Router();
 

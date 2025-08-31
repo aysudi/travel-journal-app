@@ -1,8 +1,8 @@
 import { Server } from "socket.io";
 import http from "http";
 import jwt from "jsonwebtoken";
-import UserModel from "../models/User";
-import { AuthenticatedSocket } from "../types/socketType";
+import UserModel from "../models/User.js";
+import { AuthenticatedSocket } from "../types/socketType.js";
 import { registerMessageHandlers } from "../utils/messageHandlers.js";
 
 const connectedUsers = new Map<string, AuthenticatedSocket>();

@@ -1,4 +1,4 @@
-import TravelList from "../models/TravelList";
+import TravelList from "../models/TravelList.js";
 import { v2 as cloudinary } from "cloudinary";
 
 interface PaginationParams {

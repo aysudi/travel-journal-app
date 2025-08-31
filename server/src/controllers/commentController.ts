@@ -6,9 +6,9 @@ import {
   deleteComment,
   likeComment,
   unlikeComment,
-} from "../services/commentService";
-import Comment from "../models/Comment";
-import formatMongoData from "../utils/formatMongoData";
+} from "../services/commentService.js";
+import Comment from "../models/Comment.js";
+import formatMongoData from "../utils/formatMongoData.js";
 
 export const getAllComments = async (
   req: Request,

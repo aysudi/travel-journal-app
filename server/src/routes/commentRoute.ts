@@ -5,8 +5,8 @@ import {
   getCommentsByJournalEntry,
   removeComment,
   toggleCommentLike,
-} from "../controllers/commentController";
-import { authenticateToken } from "../middlewares/authMiddleware";
+} from "../controllers/commentController.js";
+import { authenticateToken } from "../middlewares/authMiddleware.js";
 
 const commentRouter = express.Router();
 

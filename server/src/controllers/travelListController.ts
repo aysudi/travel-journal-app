@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import * as travelListService from "../services/travelListService";
+import * as travelListService from "../services/travelListService.js";
 import uploadMiddleware, {
   travelListUploadMiddleware,
-} from "../middlewares/uploadMiddleware";
-import formatMongoData from "../utils/formatMongoData";
+} from "../middlewares/uploadMiddleware.js";
+import formatMongoData from "../utils/formatMongoData.js";
 
 export const getAllTravelLists = async (req: Request, res: Response) => {
   try {
