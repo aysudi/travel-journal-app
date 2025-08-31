@@ -46,18 +46,18 @@ app.use(
 );
 
 // Using routes
-app.use("/auth", googleRouter);
-app.use("/auth", githubRouter);
-app.use("/auth", userRouter);
-app.use("/travel-lists", travelListRouter);
-app.use("/destinations", destinationRouter);
-app.use("/journal-entries", journalEntryRouter);
-app.use("/messages", messageRouter);
-app.use("/comments", commentRouter);
-app.use("/list-invitations", listInvitationRouter);
+app.use("/api/auth", googleRouter);
+app.use("/api/auth", githubRouter);
+app.use("/api/auth", userRouter);
+app.use("/api/travel-lists", travelListRouter);
+app.use("/api/destinations", destinationRouter);
+app.use("/api/journal-entries", journalEntryRouter);
+app.use("/api/messages", messageRouter);
+app.use("/api/comments", commentRouter);
+app.use("/api/list-invitations", listInvitationRouter);
 app.use("/api", uploadRouter);
-app.use("/chats", chatRouter);
-app.use("/messages", messageRouter);
+app.use("/api/chats", chatRouter);
+app.use("/api/messages", messageRouter);
 app.use("/api/payments", stripeRouter);
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
@@ -66,7 +66,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
 
 app.post(
   "/api/payments/webhook",
-  // IMPORTANT: raw body for signature verification:
   express.raw({ type: "application/json" }),
   (req, res) => {
     const sig = req.headers["stripe-signature"] as string;
