@@ -16,7 +16,7 @@ import {
   getFriendsLists,
   travelListUploadMiddleware,
 } from "../controllers/travelListController.js";
-import { authenticateToken } from "../middlewares/authMiddleware";
+import { authenticateToken } from "../middlewares/authMiddleware.js";
 
 const travelListRouter = express.Router();
 
