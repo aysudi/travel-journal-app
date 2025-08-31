@@ -1,11 +1,11 @@
 import { Types } from "mongoose";
-import ChatModel from "../models/Chat";
-import formatMongoData from "../utils/formatMongoData";
-import MessageModel from "../models/Message";
-import TravelList from "../models/TravelList";
-import UserModel from "../models/User";
+import ChatModel from "../models/Chat.js";
+import formatMongoData from "../utils/formatMongoData.js";
+import MessageModel from "../models/Message.js";
+import TravelList from "../models/TravelList.js";
+import UserModel from "../models/User.js";
 import { v2 as cloudinary } from "cloudinary";
-import "../config/cloudConfig";
+import "../config/cloudConfig.js";
 
 export const getAllChats = async () => {
   try {

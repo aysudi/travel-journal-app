@@ -1,12 +1,12 @@
 import { Request, Response } from "express";
-import * as journalEntryService from "../services/journalEntryService";
-import JournalEntryModel from "../models/JournalEntry";
+import * as journalEntryService from "../services/journalEntryService.js";
+import JournalEntryModel from "../models/JournalEntry.js";
 import {
   journalEntryCreateSchema,
   journalEntryUpdateSchema,
   objectIdSchema,
-} from "../validations/journalEntry.validation";
-import formatMongoData from "../utils/formatMongoData";
+} from "../validations/journalEntry.validation.js";
+import formatMongoData from "../utils/formatMongoData.js";
 
 // Create a new journal entry
 export const createJournalEntry = async (req: Request, res: Response) => {

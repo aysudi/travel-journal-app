@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import * as destinationService from "../services/destinationService";
+import * as destinationService from "../services/destinationService.js";
 import { v2 as cloudinary } from "cloudinary";
 import multer from "multer";
 import {
@@ -7,8 +7,8 @@ import {
   destinationUpdateSchema,
   destinationStatusSchema,
   objectIdSchema,
-} from "../validations/destination.validation";
-import formatMongoData from "../utils/formatMongoData";
+} from "../validations/destination.validation.js";
+import formatMongoData from "../utils/formatMongoData.js";
 
 const upload = multer({ storage: multer.memoryStorage() });
 

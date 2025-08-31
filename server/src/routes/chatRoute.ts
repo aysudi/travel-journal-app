@@ -6,8 +6,8 @@ import {
   getCurrentUserChats,
   updateChatDetails,
   getOrCreateChatByListIdController,
-} from "../controllers/chatController";
-import { chatUploadMiddleware } from "../middlewares/uploadMiddleware";
+} from "../controllers/chatController.js";
+import { chatUploadMiddleware } from "../middlewares/uploadMiddleware.js";
 
 const chatRouter = express.Router();
 
