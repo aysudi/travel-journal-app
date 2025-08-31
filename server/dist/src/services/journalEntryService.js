@@ -18,7 +18,6 @@ export const createJournalEntry = async (entryData, authorId) => {
     await journalEntry.save();
     return await getJournalEntryById(journalEntry._id.toString());
 };
-// Get journal entry by ID with populated fields
 export const getJournalEntryById = async (entryId) => {
     const journalEntry = await JournalEntryModel.findById(entryId)
         .populate({
@@ -244,7 +243,6 @@ export const getPublicJournalEntries = async (query) => {
             { content: { $regex: search, $options: "i" } },
         ];
     }
-    // Build sort object
     const sortObj = {};
     sortObj[sort] = order === "asc" ? 1 : -1;
     const [entries, total] = await Promise.all([
@@ -313,24 +311,6 @@ export const getJournalEntryStats = async (userId) => {
         privateEntries: 0,
         totalPhotos: 0,
     });
-};
-// Bulk update journal entries (useful for changing privacy settings)
-export const bulkUpdateJournalEntries = async (entryIds, updateData, userId) => {
-    const entries = await JournalEntryModel.find({
-        _id: { $in: entryIds },
-        author: userId,
-    });
-    if (entries.length !== entryIds.length) {
-        throw new Error("Some journal entries not found or you don't have permission to update them");
-    }
-    const result = await JournalEntryModel.updateMany({
-        _id: { $in: entryIds },
-        author: userId,
-    }, { $set: updateData });
-    return {
-        matchedCount: result.matchedCount,
-        modifiedCount: result.modifiedCount,
-    };
 };
 // Get recent journal entries activity for dashboard
 export const getRecentJournalEntries = async (userId, limit = 5) => {

@@ -431,62 +431,6 @@ export const getRecentJournalEntries = async (req, res) => {
         });
     }
 };
-// Bulk update journal entries (for privacy settings)
-export const bulkUpdateJournalEntries = async (req, res) => {
-    try {
-        const userId = req.user?.id;
-        const { entryIds, updateData } = req.body;
-        if (!userId) {
-            return res.status(401).json({
-                success: false,
-                message: "Authentication required",
-            });
-        }
-        if (!Array.isArray(entryIds) || entryIds.length === 0) {
-            return res.status(400).json({
-                success: false,
-                message: "Entry IDs array is required and cannot be empty",
-            });
-        }
-        for (const id of entryIds) {
-            const { error } = objectIdSchema.validate(id);
-            if (error) {
-                return res.status(400).json({
-                    success: false,
-                    message: `Invalid entry ID: ${id}`,
-                });
-            }
-        }
-        const { error, value } = journalEntryUpdateSchema.validate(updateData);
-        if (error) {
-            return res.status(400).json({
-                success: false,
-                message: "Validation error",
-                errors: error.details.map((detail) => detail.message),
-            });
-        }
-        const result = await journalEntryService.bulkUpdateJournalEntries(entryIds, value, userId);
-        res.status(200).json({
-            success: true,
-            message: "Journal entries updated successfully",
-            data: result,
-        });
-    }
-    catch (error) {
-        console.error("Bulk update journal entries error:", error);
-        if (error.message.includes("permission")) {
-            return res.status(403).json({
-                success: false,
-                message: error.message,
-            });
-        }
-        res.status(500).json({
-            success: false,
-            message: "Failed to update journal entries",
-            error: error.message,
-        });
-    }
-};
 // Get my journal entries (authenticated user's own entries)
 export const getMyJournalEntries = async (req, res) => {
     try {

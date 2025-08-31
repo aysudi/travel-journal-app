@@ -9,7 +9,7 @@ const fileFilter = (_, file, cb) => {
         "image/jpg",
         "image/png",
         "image/webp",
-        "application/pdf",
+        "image/avif",
     ];
     if (!allowedTypes.includes(file.mimetype)) {
         const err = new Error("Only JPEG, PNG, JPG, WebP images, and PDF files are allowed");

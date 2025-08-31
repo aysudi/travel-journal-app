@@ -5,12 +5,6 @@ export const createDestination = async (destinationData, userId) => {
     if (!travelList) {
         throw new Error("Travel list not found");
     }
-    const hasAccess = travelList.owner.toString() === userId ||
-        travelList.customPermissions.some((perm) => perm.user.toString() === userId &&
-            (perm.level === "contribute" || perm.level === "co-owner"));
-    if (!hasAccess) {
-        throw new Error("You don't have permission to add destinations to this travel list");
-    }
     const destination = new DestinationModel(destinationData);
     await destination.save();
     return await getDestinationById(destination._id.toString());
@@ -205,32 +199,6 @@ export const updateDestinationStatus = async (destinationId, status, userId) => 
         updateData.dateVisited = new Date();
     }
     return await updateDestination(destinationId, updateData, userId);
-};
-export const bulkUpdateDestinationStatus = async (destinationIds, status, userId) => {
-    const destinations = await DestinationModel.find({
-        _id: { $in: destinationIds },
-    }).populate("list", "owner customPermissions");
-    if (destinations.length !== destinationIds.length) {
-        throw new Error("Some destinations not found");
-    }
-    for (const destination of destinations) {
-        const travelList = destination.list;
-        const hasAccess = travelList.owner.toString() === userId ||
-            travelList.customPermissions.some((perm) => perm.user.toString() === userId &&
-                (perm.level === "contribute" || perm.level === "co-owner"));
-        if (!hasAccess) {
-            throw new Error("You don't have permission to update some destinations");
-        }
-    }
-    const updateData = { status };
-    if (status === "Visited") {
-        updateData.dateVisited = new Date();
-    }
-    const result = await DestinationModel.updateMany({ _id: { $in: destinationIds } }, { $set: updateData });
-    return {
-        matchedCount: result.matchedCount,
-        modifiedCount: result.modifiedCount,
-    };
 };
 export const getRecentDestinations = async (userId, limit = 5) => {
     const accessibleLists = await TravelListModel.find({

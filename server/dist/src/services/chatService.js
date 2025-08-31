@@ -35,9 +35,10 @@ export const createChat = async (data) => {
         const chat = new ChatModel({
             members: membersWithMetadata,
             list: data.list,
-            description: data.description,
+            description: data?.description,
             createdBy: new Types.ObjectId(data.createdBy),
             messageCount: 0,
+            name: data.name,
         });
         await chat.save();
         const populatedChat = await ChatModel.findById(chat._id)
@@ -89,30 +90,6 @@ export const updateChat = async (chatId, updateData, userId) => {
                 message: "Chat not found or insufficient permissions",
             };
         }
-        // if (updateData.avatar && updateData.avatar !== chat.avatar) {
-        //   if (
-        //     chat.avatar &&
-        //     typeof chat.avatar === "string" &&
-        //     chat.avatar.includes("cloudinary.com")
-        //   ) {
-        //     const publicIdMatch = chat.avatar.match(
-        //       /\/v\d+\/([^\.\/]+)\.[a-zA-Z]+$/
-        //     );
-        //     const publicId = publicIdMatch ? publicIdMatch[1] : null;
-        //     if (publicId) {
-        //       try {
-        //         await cloudinary.uploader.destroy(`voyagevault/${publicId}`);
-        //       } catch (e) {}
-        //     }
-        //   }
-        //   if (updateData.avatar.startsWith("data:image")) {
-        //     const uploadRes = await cloudinary.uploader.upload(updateData.avatar, {
-        //       folder: "voyagevault",
-        //       overwrite: true,
-        //     });
-        //     updateData.avatar = uploadRes.secure_url;
-        //   }
-        // }
         const updatedChat = await ChatModel.findByIdAndUpdate(chatId, { $set: updateData }, { new: true })
             .populate("members.user", "username email fullName profileImage")
             .populate("createdBy", "username profileImage fullName email");

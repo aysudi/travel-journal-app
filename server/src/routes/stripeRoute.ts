@@ -15,16 +15,20 @@ stripeRouter.post("/create-checkout-session", async (req, res) => {
       successUrl,
       cancelUrl,
       customer,
+      metadata, // <-- extract metadata from req.body
     } = req.body;
 
-    const session = await stripe.checkout.sessions.create({
+    const sessionParams: Stripe.Checkout.SessionCreateParams = {
       mode,
       line_items: lineItems,
       success_url: successUrl,
       cancel_url: cancelUrl,
       customer,
       allow_promotion_codes: true,
-    });
+    };
+    if (metadata) sessionParams.metadata = metadata;
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     return res.json({ id: session.id, url: session.url });
   } catch (err: any) {

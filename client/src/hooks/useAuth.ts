@@ -56,8 +56,10 @@ export const useUpdateProfile = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: UpdateProfileData | FormData) =>
-      userService.updateProfile(data),
+    mutationFn: (data: UpdateProfileData | FormData) => {
+      console.log("Updating profile with data:", data);
+      return userService.updateProfile(data);
+    },
     onSuccess: (updatedUser: UserProfile) => {
       queryClient.setQueryData(authKeys.profile(), updatedUser);
     },

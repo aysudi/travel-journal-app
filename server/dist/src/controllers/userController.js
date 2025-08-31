@@ -164,6 +164,9 @@ export const registerUser = async (req, res, next) => {
         }, "6h");
         const verificationLink = `${config.SERVER_URL}/auth/verify-email?token=${token}`;
         sendVerificationEmail(req.body.email, req.body.fullName, verificationLink);
+        console.log("email", req.body.email);
+        console.log("fullName", req.body.fullName);
+        console.log("verificationLink", verificationLink);
         res.status(201).json({
             message: "User registered successfully | Verify your email",
             data: formatMongoData(response.data),
@@ -312,7 +315,6 @@ export const changePassword = async (req, res, next) => {
         next(error);
     }
 };
-// Friends functionality
 export const sendFriendRequest = async (req, res, next) => {
     try {
         const userId = req.user.id;

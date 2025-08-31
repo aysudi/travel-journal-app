@@ -148,7 +148,7 @@ const Journals = () => {
                   {
                     new Set(
                       journalsArray.map((j: JournalEntry) => {
-                        return j.author._id;
+                        return j.author?._id;
                       })
                     ).size
                   }

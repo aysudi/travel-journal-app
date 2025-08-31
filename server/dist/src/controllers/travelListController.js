@@ -397,7 +397,14 @@ export const uploadCoverImage = async (req, res) => {
                 message: "No file uploaded",
             });
         }
-        const updatedList = await travelListService.updateCoverImage(id, req.file.path);
+        const cloudinaryResult = req.cloudinaryResult;
+        if (!cloudinaryResult?.secure_url) {
+            return res.status(500).json({
+                success: false,
+                message: "Cloudinary upload failed",
+            });
+        }
+        const updatedList = await travelListService.updateCoverImage(id, cloudinaryResult.secure_url);
         res.status(200).json({
             success: true,
             message: "Cover image uploaded successfully",
