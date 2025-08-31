@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllTravelLists, getTravelListById, getOwnedTravelLists, getCollaboratingTravelLists, getPublicTravelLists, createTravelList, updateTravelList, deleteTravelList, addCustomPermission, removeCustomPermission, updateCustomPermission, uploadCoverImage, duplicateTravelList, getFriendsLists, travelListUploadMiddleware, } from "../controllers/travelListController";
+import { getAllTravelLists, getTravelListById, getOwnedTravelLists, getCollaboratingTravelLists, getPublicTravelLists, createTravelList, updateTravelList, deleteTravelList, addCustomPermission, removeCustomPermission, updateCustomPermission, uploadCoverImage, duplicateTravelList, getFriendsLists, travelListUploadMiddleware, } from "../controllers/travelListController.js";
 import { authenticateToken } from "../middlewares/authMiddleware";
 const travelListRouter = express.Router();
 travelListRouter.get("/public", getPublicTravelLists);
