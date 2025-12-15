@@ -1,13 +1,6 @@
 import { useState, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import {
-  MapPin,
-  Calendar,
-  Camera,
-  MoreHorizontal,
-  ExternalLink,
-  BookOpen,
-} from "lucide-react";
+import { MapPin, Calendar, Camera, ExternalLink, BookOpen } from "lucide-react";
 import { useJournalEntry } from "../../hooks/useEntries";
 import { useUserProfile } from "../../hooks/useAuth";
 import { useCommentsByJournal } from "../../hooks/useComments";
@@ -103,7 +96,7 @@ const JournalDetails = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       {/* Header */}
-      <Header journal={journal} user={user} />
+      <Header />
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-6 py-8">
@@ -127,7 +120,7 @@ const JournalDetails = () => {
               {journal.destination && (
                 <div className="flex items-center gap-2">
                   <MapPin size={16} />
-                  <span>Location</span>
+                  <span>{journal.destination?.location}</span>
                 </div>
               )}
 
@@ -206,9 +199,6 @@ const JournalDetails = () => {
                 <h2 className="text-xl font-bold text-gray-900">
                   Comments ({comments.length})
                 </h2>
-                <button className="text-gray-400 hover:text-gray-600 transition-colors duration-200">
-                  <MoreHorizontal size={20} />
-                </button>
               </div>
             </div>
 

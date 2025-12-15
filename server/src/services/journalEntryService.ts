@@ -178,7 +178,7 @@ export const getJournalEntries = async (
 ): Promise<PaginatedJournalEntries> => {
   const {
     page = 1,
-    limit = 10,
+    limit = 100,
     destination,
     author,
     public: isPublic,

@@ -77,6 +77,7 @@ export const updateProfile = async (req, res, next) => {
             "username",
             "profileImage",
             "profileVisibility",
+            "premium",
         ];
         const filteredData = {};
         allowedFields.forEach((field) => {

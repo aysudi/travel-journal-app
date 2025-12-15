@@ -1,8 +1,9 @@
-import * as destinationService from "../services/destinationService";
+import * as destinationService from "../services/destinationService.js";
 import { v2 as cloudinary } from "cloudinary";
 import multer from "multer";
-import { destinationCreateSchema, destinationUpdateSchema, destinationStatusSchema, objectIdSchema, } from "../validations/destination.validation";
-import formatMongoData from "../utils/formatMongoData";
+import { destinationCreateSchema, destinationUpdateSchema, destinationStatusSchema, objectIdSchema, } from "../validations/destination.validation.js";
+import formatMongoData from "../utils/formatMongoData.js";
+import * as premiumLimitService from "../services/premiumLimitService.js";
 const upload = multer({ storage: multer.memoryStorage() });
 // Create a new destination
 export const createDestination = [
@@ -22,6 +23,19 @@ export const createDestination = [
                     success: false,
                     message: "Validation error",
                     errors: error.details.map((detail) => detail.message),
+                });
+            }
+            // Check destination limit for this travel list
+            const limitCheck = await premiumLimitService.canAddDestination(value.travelListId, userId);
+            if (!limitCheck.canAdd) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Destination limit reached for this travel list",
+                    data: {
+                        currentCount: limitCheck.currentCount,
+                        limit: limitCheck.limit,
+                        needsPremium: true,
+                    },
                 });
             }
             const destinationData = { ...value };

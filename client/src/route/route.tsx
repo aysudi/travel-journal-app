@@ -21,6 +21,7 @@ import MyLists from "../pages/Client/MyLists";
 import JournalDetails from "../pages/Client/JournalDetails";
 import CreateList from "../pages/Client/CreateList";
 import PremiumSuccess from "../pages/Client/PremiumSuccess";
+import PremiumCheckout from "../pages/Client/PremiumCheckout";
 
 const ROUTES = [
   // Root redirect to login
@@ -68,6 +69,10 @@ const ROUTES = [
       {
         path: "/profile/success",
         element: <PremiumSuccess />,
+      },
+      {
+        path: "/premium/checkout",
+        element: <PremiumCheckout />,
       },
     ],
   },

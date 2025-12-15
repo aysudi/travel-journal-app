@@ -2,22 +2,32 @@ import {
   Camera,
   Heart,
   MessageSquare,
-  MoreVertical,
   Share2,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useState } from "react";
 import { useUserProfile } from "../../../hooks/useAuth";
 import { useToggleJournalEntryLike } from "../../../hooks/useEntries";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import type { JournalEntryCard } from "../../../services";
 import Loading from "../../Common/Loading";
 
-const JournalCard = ({ journal }: { journal: JournalEntryCard }) => {
+interface JournalCardProps {
+  journal: JournalEntryCard;
+  showPrivacyIndicator?: boolean;
+}
+
+const JournalCard = ({
+  journal,
+  showPrivacyIndicator = false,
+}: JournalCardProps) => {
   const { data: user, isLoading: isLoadingUser } = useUserProfile();
   const listId = journal.destination?.list?._id;
   const toggleLike = useToggleJournalEntryLike(listId);
   const [showFullContent, setShowFullContent] = useState(false);
   const hasLiked = user ? journal.likes.includes(user.id) : false;
+  const navigate = useNavigate();
 
   if (!listId) return null;
   if (isLoadingUser) {
@@ -75,9 +85,22 @@ const JournalCard = ({ journal }: { journal: JournalEntryCard }) => {
           </div>
         </div>
 
-        <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all duration-200">
-          <MoreVertical size={18} />
-        </button>
+        {/* Privacy Indicator - Only show in My Journals */}
+        {showPrivacyIndicator && (
+          <div className="flex items-center gap-2">
+            {journal.public ? (
+              <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                <Eye size={12} />
+                <span>Public</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
+                <EyeOff size={12} />
+                <span>Private</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Destination Info & Go to List Button */}
@@ -124,7 +147,7 @@ const JournalCard = ({ journal }: { journal: JournalEntryCard }) => {
           {listId && (
             <Link
               to={`/lists/${listId}`}
-              className="ml-auto inline-flex items-center gap-1 px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200 hover:bg-indigo-200 hover:text-indigo-900 transition-colors duration-200 text-xs font-semibold shadow-sm"
+              className="ml-auto inline-flex items-center gap-1 px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200 hover:bg-indigo-200 hover:text-indigo-900 transition-colors duration-200 text-xs font-semibold shadow-sm z-30"
               title="Go to List"
             >
               <svg
@@ -149,12 +172,14 @@ const JournalCard = ({ journal }: { journal: JournalEntryCard }) => {
 
       {/* Title and Content */}
       <div className="px-4 pb-3">
-        <Link
-          to={`/journals/${journal.id}`}
+        <div
           className="text-xl font-bold text-gray-900 mb-2 hover:text-indigo-600 transition-colors cursor-pointer"
+          onClick={() => {
+            navigate(`/journals/${journal.id}`);
+          }}
         >
           {journal.title}
-        </Link>
+        </div>
         <div className="text-gray-700 leading-relaxed">
           <p className={showFullContent ? "" : "line-clamp-3"}>
             {journal.content}

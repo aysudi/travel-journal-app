@@ -168,7 +168,11 @@ export interface JournalEntry {
   content: string;
   photos: string[];
   tags: string[];
-  destination?: string;
+  destination?: {
+    _id: string;
+    name: string;
+    location: string;
+  };
   travelList?: string;
   author: {
     _id: string;
@@ -207,7 +211,7 @@ export interface JournalEntryCard {
     username: string;
     profileImage: string;
   };
-  isPublic: boolean;
+  public: boolean;
   createdAt: string;
   updatedAt: string;
   likes: string[];

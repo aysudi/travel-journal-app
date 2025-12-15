@@ -1,5 +1,25 @@
 import DestinationModel from "../models/Destination.js";
-import TravelListModel from "../models/TravelList.js";
+import JournalEntryModel from "../models/JournalEntry.js";
+import TravelList from "../models/TravelList.js";
+import { v2 as cloudinary } from "cloudinary";
+
+// Helper function to delete journal images from Cloudinary
+const deleteJournalImages = async (photoUrls: string[]) => {
+  for (const photoUrl of photoUrls) {
+    try {
+      const parts = photoUrl.split("/");
+      const folder = parts[parts.length - 2];
+      const filename = parts[parts.length - 1].split(".")[0];
+      const publicId = `${folder}/${filename}`;
+      await cloudinary.uploader.destroy(publicId);
+    } catch (deleteError) {
+      console.error(
+        "Failed to delete journal image from Cloudinary:",
+        deleteError
+      );
+    }
+  }
+};
 
 export interface DestinationData {
   name: string;
@@ -34,7 +54,7 @@ export const createDestination = async (
   destinationData: DestinationData,
   userId: string
 ): Promise<any> => {
-  const travelList = await TravelListModel.findById(destinationData.list);
+  const travelList = await TravelList.findById(destinationData.list);
 
   if (!travelList) {
     throw new Error("Travel list not found");
@@ -143,6 +163,32 @@ export const deleteDestination = async (
     throw new Error("You don't have permission to delete this destination");
   }
 
+  // Check if this is the last destination in the travel list
+  const destinationsCount = await DestinationModel.countDocuments({
+    list: travelList._id,
+  });
+
+  if (destinationsCount <= 1) {
+    throw new Error(
+      "Cannot delete the last destination. A travel list must have at least one destination. Please delete the entire travel list if you want to remove this destination."
+    );
+  }
+
+  // Delete journal entries and their images for this destination
+  const journalEntries = await JournalEntryModel.find({
+    destination: destinationId,
+  });
+
+  for (const entry of journalEntries) {
+    if (entry.photos && entry.photos.length > 0) {
+      await deleteJournalImages(entry.photos);
+    }
+  }
+
+  // Delete journal entries from database
+  await JournalEntryModel.deleteMany({ destination: destinationId });
+
+  // Delete the destination
   await DestinationModel.findByIdAndDelete(destinationId);
 };
 
@@ -165,7 +211,7 @@ export const getDestinations = async (
   }
 
   if (userId && !list) {
-    const accessibleLists = await TravelListModel.find({
+    const accessibleLists = await TravelList.find({
       $or: [{ owner: userId }, { "customPermissions.user": userId }],
     }).select("_id");
 
@@ -195,7 +241,7 @@ export const getDestinationsByTravelList = async (
   userId?: string
 ): Promise<any[]> => {
   // Verify travel list exists
-  const travelList = await TravelListModel.findById(listId);
+  const travelList = await TravelList.findById(listId);
   if (!travelList) {
     throw new Error("Travel list not found");
   }
@@ -232,7 +278,7 @@ export const getDestinationsByStatus = async (
   status: "Wishlist" | "Planned" | "Visited",
   userId: string
 ): Promise<any[]> => {
-  const accessibleLists = await TravelListModel.find({
+  const accessibleLists = await TravelList.find({
     $or: [{ owner: userId }, { "customPermissions.user": userId }],
   }).select("_id");
 
@@ -250,7 +296,7 @@ export const getDestinationsByStatus = async (
 };
 
 export const getDestinationStats = async (userId: string): Promise<any> => {
-  const accessibleLists = await TravelListModel.find({
+  const accessibleLists = await TravelList.find({
     $or: [{ owner: userId }, { "customPermissions.user": userId }],
   }).select("_id");
 
@@ -322,7 +368,7 @@ export const getRecentDestinations = async (
   userId: string,
   limit: number = 5
 ): Promise<any[]> => {
-  const accessibleLists = await TravelListModel.find({
+  const accessibleLists = await TravelList.find({
     $or: [{ owner: userId }, { "customPermissions.user": userId }],
   }).select("_id");
 
@@ -349,7 +395,7 @@ export const searchDestinations = async (
     limit?: number;
   }
 ): Promise<any[]> => {
-  const accessibleLists = await TravelListModel.find({
+  const accessibleLists = await TravelList.find({
     $or: [{ owner: userId }, { "customPermissions.user": userId }],
   }).select("_id");
 

@@ -11,11 +11,13 @@ import type {
 } from "../../types/api";
 import { useCreateChat } from "../../hooks/useChats";
 import { useUserProfile } from "../../hooks/useAuth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AddDestination from "../../components/Client/CreateList/AddDestination";
 import ProgressBar from "../../components/Client/CreateList/ProgressBar";
 import ListDetails from "../../components/Client/CreateList/ListDetails";
 import CurrentDestinations from "../../components/Client/CreateList/CurrentDestinations";
+import { useLimitCheck } from "../../hooks/useLimits";
+import PremiumUpgradeModal from "../../components/Common/PremiumUpgradeModal";
 
 const CreateList = () => {
   const navigate = useNavigate();
@@ -24,8 +26,19 @@ const CreateList = () => {
   );
   const [destinations, setDestinations] = useState<DestinationFormData[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const createChat = useCreateChat();
   const { data: user } = useUserProfile();
+  const { checkTravelListLimit, getDestinationLimit } = useLimitCheck();
+  const listLimit = checkTravelListLimit();
+  const destinationLimit = getDestinationLimit();
+
+  // Check if user can create travel list on component mount
+  useEffect(() => {
+    if (!listLimit.canCreate) {
+      setShowUpgradeModal(true);
+    }
+  }, [listLimit.canCreate]);
 
   const createTravelListWithImage = async (
     listData: CreateTravelListData,
@@ -118,6 +131,30 @@ const CreateList = () => {
 
       try {
         setIsSubmitting(true);
+
+        // Check limits before creating
+        if (!listLimit.canCreate) {
+          setShowUpgradeModal(true);
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Check destination limit
+        if (
+          destinations.length > 0 &&
+          destinationLimit.limit !== -1 &&
+          destinations.length > destinationLimit.limit
+        ) {
+          enqueueSnackbar(
+            `You can only add up to ${destinationLimit.limit} destinations per list. Upgrade to Premium for unlimited destinations.`,
+            {
+              variant: "error",
+              autoHideDuration: 5000,
+            }
+          );
+          setIsSubmitting(false);
+          return;
+        }
 
         const travelListData = {
           title: values.title,
@@ -238,6 +275,18 @@ const CreateList = () => {
           )}
         </div>
       </div>
+
+      {/* Premium Upgrade Modal */}
+      <PremiumUpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => {
+          setShowUpgradeModal(false);
+          navigate("/my-lists");
+        }}
+        feature="lists"
+        currentUsage={listLimit.usage}
+        limit={listLimit.limit}
+      />
     </div>
   );
 };

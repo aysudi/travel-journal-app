@@ -112,6 +112,8 @@ const ActionButtons = ({ listId, journal, onDelete }: Props) => {
                     title: "Deleted!",
                     text: "Your journal entry has been deleted.",
                     icon: "success",
+                    timer: 1500,
+                    showConfirmButton: false,
                   });
                 }
               });

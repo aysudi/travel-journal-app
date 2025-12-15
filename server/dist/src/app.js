@@ -54,9 +54,7 @@ app.use("/api/payments", stripeRouter);
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
     apiVersion: "2025-07-30.basil",
 });
-app.post("/api/payments/webhook", 
-// IMPORTANT: raw body for signature verification:
-express.raw({ type: "application/json" }), (req, res) => {
+app.post("/api/payments/webhook", express.raw({ type: "application/json" }), (req, res) => {
     const sig = req.headers["stripe-signature"];
     let event;
     try {
@@ -70,18 +68,33 @@ express.raw({ type: "application/json" }), (req, res) => {
     switch (event.type) {
         case "payment_intent.succeeded": {
             const pi = event.data.object;
-            // TODO: mark order as paid in your DB using pi.id / metadata
+            console.log("Payment succeeded:", pi.id);
             break;
         }
         case "checkout.session.completed": {
             const session = event.data.object;
-            // Set user as premium after successful payment
+            // Set user as premium after successful checkout
             const userId = session.metadata?.userId;
+            const subscriptionType = session.metadata?.subscriptionType || "monthly";
             if (userId) {
                 (async () => {
                     try {
-                        await UserModel.findByIdAndUpdate(userId, { premium: true });
-                        console.log(`User ${userId} upgraded to premium.`);
+                        // Calculate expiry date based on subscription type
+                        const now = new Date();
+                        let expiryDate;
+                        if (subscriptionType === "yearly") {
+                            expiryDate = new Date(now.setFullYear(now.getFullYear() + 1));
+                        }
+                        else {
+                            expiryDate = new Date(now.setMonth(now.getMonth() + 1));
+                        }
+                        await UserModel.findByIdAndUpdate(userId, {
+                            premium: true,
+                            premiumExpiresAt: expiryDate,
+                            stripeCustomerId: session.customer,
+                            subscriptionId: session.subscription,
+                        });
+                        console.log(`User ${userId} upgraded to premium via checkout session ${session.id}. Expires: ${expiryDate}`);
                     }
                     catch (err) {
                         console.error("Failed to update user premium status:", err);
@@ -93,7 +106,64 @@ express.raw({ type: "application/json" }), (req, res) => {
             }
             break;
         }
-        // ...add invoice.paid, customer.subscription.* if you use subscriptions
+        case "customer.subscription.created": {
+            const subscription = event.data.object;
+            console.log("Subscription created:", subscription.id);
+            break;
+        }
+        case "customer.subscription.updated": {
+            const subscription = event.data.object;
+            if (subscription.status === "active") {
+                // Ensure user stays premium
+                const customerId = subscription.customer;
+                (async () => {
+                    try {
+                        await UserModel.findOneAndUpdate({ stripeCustomerId: customerId }, { premium: true });
+                        console.log(`Subscription ${subscription.id} activated for customer ${customerId}.`);
+                    }
+                    catch (err) {
+                        console.error("Failed to update user subscription status:", err);
+                    }
+                })();
+            }
+            break;
+        }
+        case "customer.subscription.deleted": {
+            const subscription = event.data.object;
+            // Remove premium status when subscription is cancelled
+            const customerId = subscription.customer;
+            (async () => {
+                try {
+                    await UserModel.findOneAndUpdate({ stripeCustomerId: customerId }, { premium: false, subscriptionId: null });
+                    console.log(`Subscription ${subscription.id} cancelled for customer ${customerId}.`);
+                }
+                catch (err) {
+                    console.error("Failed to update user subscription cancellation:", err);
+                }
+            })();
+            break;
+        }
+        case "invoice.payment_succeeded": {
+            const invoice = event.data.object;
+            // Recurring payment succeeded
+            const customerId = invoice.customer;
+            (async () => {
+                try {
+                    await UserModel.findOneAndUpdate({ stripeCustomerId: customerId }, { premium: true });
+                    console.log(`Invoice payment succeeded for customer ${customerId}.`);
+                }
+                catch (err) {
+                    console.error("Failed to update user payment status:", err);
+                }
+            })();
+            break;
+        }
+        case "invoice.payment_failed": {
+            const invoice = event.data.object;
+            console.log(`Invoice payment failed for customer ${invoice.customer}.`);
+            // Could optionally send notification to user about failed payment
+            break;
+        }
         default:
             // console.log(`Unhandled event: ${event.type}`);
             break;

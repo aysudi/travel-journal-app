@@ -1,5 +1,5 @@
-import { createChat, getUserChats, getAllChats, updateChat, deleteChat, getOrCreateChatByListId, } from "../services/chatService";
-import ChatModel from "../models/Chat";
+import { createChat, getUserChats, getAllChats, updateChat, deleteChat, getOrCreateChatByListId, } from "../services/chatService.js";
+import ChatModel from "../models/Chat.js";
 import { v2 as cloudinary } from "cloudinary";
 export const getAllChatsController = async (req, res, next) => {
     try {

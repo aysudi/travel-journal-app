@@ -15,6 +15,7 @@ import {
   duplicateTravelList,
   getFriendsLists,
   travelListUploadMiddleware,
+  getUserLimits,
 } from "../controllers/travelListController.js";
 import { authenticateToken } from "../middlewares/authMiddleware.js";
 
@@ -28,6 +29,7 @@ travelListRouter.get("/", getAllTravelLists);
 travelListRouter.get("/owned", getOwnedTravelLists);
 travelListRouter.get("/collaborating", getCollaboratingTravelLists);
 travelListRouter.get("/friends", getFriendsLists);
+travelListRouter.get("/limits", getUserLimits);
 travelListRouter.get("/:id", getTravelListById);
 
 travelListRouter.post(

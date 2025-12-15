@@ -1,6 +1,6 @@
 import express from "express";
-import { createJournalEntry, getJournalEntryById, updateJournalEntry, deleteJournalEntry, getJournalEntries, getJournalEntriesByDestination, getJournalEntriesByAuthor, getPublicJournalEntries, getJournalEntryStats, getRecentJournalEntries, getMyJournalEntries, toggleJournalEntryLike, } from "../controllers/journalEntryController";
-import { authenticateToken } from "../middlewares/authMiddleware";
+import { createJournalEntry, getJournalEntryById, updateJournalEntry, deleteJournalEntry, getJournalEntries, getJournalEntriesByDestination, getJournalEntriesByAuthor, getPublicJournalEntries, getJournalEntryStats, getRecentJournalEntries, getMyJournalEntries, toggleJournalEntryLike, } from "../controllers/journalEntryController.js";
+import { authenticateToken } from "../middlewares/authMiddleware.js";
 const journalEntryRouter = express.Router();
 journalEntryRouter.get("/public", getPublicJournalEntries);
 journalEntryRouter.get("/destination/:destinationId", getJournalEntriesByDestination);

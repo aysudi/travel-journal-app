@@ -116,7 +116,7 @@ export const unlikeJournalEntry = async (entryId, userId) => {
 };
 // Get journal entries with filtering, pagination, and search
 export const getJournalEntries = async (query) => {
-    const { page = 1, limit = 10, destination, author, public: isPublic, search, sort = "createdAt", order = "desc", } = query;
+    const { page = 1, limit = 100, destination, author, public: isPublic, search, sort = "createdAt", order = "desc", } = query;
     const skip = (page - 1) * limit;
     const filter = {};
     if (destination)

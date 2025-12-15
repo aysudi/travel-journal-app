@@ -1,4 +1,4 @@
-import { BookOpen, Calendar, Edit3, Heart, MapPin, Trash2 } from "lucide-react";
+import { Calendar, MapPin } from "lucide-react";
 import type { Destination } from "../../../services";
 
 type Props = {
@@ -44,18 +44,6 @@ const DestinationsGrid = ({
             {status}
           </span>
         </div>
-
-        {/* Action Buttons */}
-        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          <div className="flex gap-2">
-            <button className="bg-white/90 hover:bg-white text-gray-700 p-2 rounded-full shadow-lg transition-colors duration-200 cursor-pointer">
-              <Edit3 size={14} />
-            </button>
-            <button className="bg-white/90 hover:bg-white text-red-600 p-2 rounded-full shadow-lg transition-colors duration-200 cursor-pointer">
-              <Trash2 size={14} />
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* Destination Info */}
@@ -84,17 +72,6 @@ const DestinationsGrid = ({
             {destination.notes}
           </p>
         )}
-
-        {/* Action Buttons */}
-        <div className="flex items-center justify-between">
-          <button className="text-indigo-600 hover:text-indigo-700 text-sm font-medium flex items-center gap-1 transition-colors duration-200">
-            <BookOpen size={16} />
-            <span>Add Journal</span>
-          </button>
-          <button className="text-gray-500 hover:text-gray-700 transition-colors duration-200">
-            <Heart size={18} />
-          </button>
-        </div>
       </div>
     </div>
   );

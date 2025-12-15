@@ -67,37 +67,8 @@ const Profile = () => {
     );
   }
 
-  const handleGoPremium = async () => {
-    try {
-      const res = await fetch(
-        "http://localhost:5050/api/payments/create-checkout-session",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            lineItems: [
-              {
-                price: import.meta.env.VITE_STRIPE_PRODUCT_ID,
-                quantity: 1,
-              },
-            ],
-            successUrl: window.location.origin + "/profile/success",
-            cancelUrl: window.location.origin + "/profile",
-            metadata: { userId: user.id },
-          }),
-        }
-      );
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        alert("Could not start checkout. Please try again.");
-      }
-    } catch (err) {
-      alert("Failed to start premium checkout. Please try again.");
-    }
+  const handleGoPremium = () => {
+    window.location.href = "/premium/checkout";
   };
 
   return (

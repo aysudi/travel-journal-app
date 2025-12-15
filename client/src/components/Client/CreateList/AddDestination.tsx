@@ -1,7 +1,8 @@
-import { Plus, Calendar } from "lucide-react";
+import { Plus, Calendar, Crown } from "lucide-react";
 import { useState } from "react";
 import Images from "./Images";
 import type { DestinationFormData } from "../../../services";
+import { useLimitCheck } from "../../../hooks/useLimits";
 
 type Props = {
   destinations: DestinationFormData[];
@@ -9,6 +10,12 @@ type Props = {
 };
 
 const AddDestination = ({ destinations, setDestinations }: Props) => {
+  const { getDestinationLimit } = useLimitCheck();
+  const destinationLimit = getDestinationLimit();
+  const canAddMore =
+    destinationLimit.limit === -1 ||
+    destinations.length < destinationLimit.limit;
+
   const [currentDestination, setCurrentDestination] =
     useState<DestinationFormData>({
       name: "",
@@ -25,6 +32,10 @@ const AddDestination = ({ destinations, setDestinations }: Props) => {
   >([]);
 
   const addDestination = () => {
+    if (!canAddMore) {
+      return;
+    }
+
     if (currentDestination.name && currentDestination.location) {
       setDestinations([...destinations, currentDestination]);
       setCurrentDestination({
@@ -213,20 +224,49 @@ const AddDestination = ({ destinations, setDestinations }: Props) => {
         />
       </div>
 
+      {/* Destination Limit Info */}
+      {destinationLimit.limit !== -1 && (
+        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm text-blue-700">
+            <span className="font-medium">
+              {destinations.length}/{destinationLimit.limit}
+            </span>{" "}
+            destinations added
+            {!destinationLimit.isPremium &&
+              destinations.length >= destinationLimit.limit && (
+                <span className="ml-2 text-orange-600 font-medium">
+                  • Upgrade to Premium for unlimited destinations
+                </span>
+              )}
+          </p>
+        </div>
+      )}
+
       {/* Add Destination Button */}
       <div className="flex justify-end mt-6 pt-4 border-t border-gray-200">
-        <button
-          type="button"
-          onClick={addDestination}
-          disabled={
-            !currentDestination.name.trim() ||
-            !currentDestination.location.trim()
-          }
-          className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-        >
-          <Plus size={18} />
-          Add Destination
-        </button>
+        {canAddMore ? (
+          <button
+            type="button"
+            onClick={addDestination}
+            disabled={
+              !currentDestination.name.trim() ||
+              !currentDestination.location.trim()
+            }
+            className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+          >
+            <Plus size={18} />
+            Add Destination
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled
+            className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-lg font-medium opacity-75"
+          >
+            <Crown size={18} />
+            Upgrade for More Destinations
+          </button>
+        )}
       </div>
     </div>
   );

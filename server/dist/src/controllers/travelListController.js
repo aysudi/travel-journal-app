@@ -1,6 +1,7 @@
-import * as travelListService from "../services/travelListService";
-import { travelListUploadMiddleware, } from "../middlewares/uploadMiddleware";
-import formatMongoData from "../utils/formatMongoData";
+import * as travelListService from "../services/travelListService.js";
+import { travelListUploadMiddleware, } from "../middlewares/uploadMiddleware.js";
+import formatMongoData from "../utils/formatMongoData.js";
+import * as premiumLimitService from "../services/premiumLimitService.js";
 export const getAllTravelLists = async (req, res) => {
     try {
         const { page, limit, search, sort } = req.query;
@@ -135,6 +136,19 @@ export const createTravelList = async (req, res) => {
                 message: "User not authenticated",
             });
         }
+        // Check if user can create more travel lists
+        const limitCheck = await premiumLimitService.canCreateTravelList(userId);
+        if (!limitCheck.canCreate) {
+            return res.status(403).json({
+                success: false,
+                message: "Travel list limit reached",
+                data: {
+                    currentCount: limitCheck.currentCount,
+                    limit: limitCheck.limit,
+                    needsPremium: true,
+                },
+            });
+        }
         if (req.body.tags && typeof req.body.tags === "string") {
             try {
                 req.body.tags = JSON.parse(req.body.tags);
@@ -172,6 +186,30 @@ export const createTravelList = async (req, res) => {
             message: "Failed to create travel list",
             error: error.message,
             details: process.env.NODE_ENV === "development" ? error.stack : undefined,
+        });
+    }
+};
+export const getUserLimits = async (req, res) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: "User not authenticated",
+            });
+        }
+        const limits = await premiumLimitService.getUserLimits(userId);
+        res.status(200).json({
+            success: true,
+            message: "User limits retrieved successfully",
+            data: limits,
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Failed to retrieve user limits",
+            error: error.message,
         });
     }
 };

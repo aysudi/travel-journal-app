@@ -1,6 +1,6 @@
 import express from "express";
-import { createDestination, getDestinationById, updateDestination, deleteDestination, getDestinations, getDestinationsByTravelList, getDestinationsByStatus, getDestinationStats, updateDestinationStatus, getRecentDestinations, searchDestinations, } from "../controllers/destinationController";
-import { authenticateToken } from "../middlewares/authMiddleware";
+import { createDestination, getDestinationById, updateDestination, deleteDestination, getDestinations, getDestinationsByTravelList, getDestinationsByStatus, getDestinationStats, updateDestinationStatus, getRecentDestinations, searchDestinations, } from "../controllers/destinationController.js";
+import { authenticateToken } from "../middlewares/authMiddleware.js";
 const destinationRouter = express.Router();
 destinationRouter.get("/travel-list/:listId", getDestinationsByTravelList);
 destinationRouter.get("/:id", getDestinationById);
