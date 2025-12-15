@@ -1,5 +1,25 @@
 import TravelList from "../models/TravelList.js";
+import DestinationModel from "../models/Destination.js";
+import JournalEntryModel from "../models/JournalEntry.js";
 import { v2 as cloudinary } from "cloudinary";
+
+// Helper function to delete journal images from Cloudinary
+const deleteJournalImages = async (photoUrls: string[]) => {
+  for (const photoUrl of photoUrls) {
+    try {
+      const parts = photoUrl.split("/");
+      const folder = parts[parts.length - 2];
+      const filename = parts[parts.length - 1].split(".")[0];
+      const publicId = `${folder}/${filename}`;
+      await cloudinary.uploader.destroy(publicId);
+    } catch (deleteError) {
+      console.error(
+        "Failed to delete journal image from Cloudinary:",
+        deleteError
+      );
+    }
+  }
+};
 
 interface PaginationParams {
   page?: number;
@@ -143,12 +163,37 @@ export const post = async (payload: any, cloudinaryResult?: any) => {
 };
 
 export const deleteOne = async (id: string) => {
-  const existingList = await TravelList.findById(id);
+  const existingList = await TravelList.findById(id).populate("destinations");
 
   if (!existingList) {
     throw new Error("Travel list not found");
   }
 
+  // Get all destinations for this travel list
+  const destinations = await DestinationModel.find({ list: id });
+
+  // Delete all journal entries and their images for each destination
+  for (const destination of destinations) {
+    // Get all journal entries for this destination
+    const journalEntries = await JournalEntryModel.find({
+      destination: destination._id,
+    });
+
+    // Delete images from Cloudinary for each journal entry
+    for (const entry of journalEntries) {
+      if (entry.photos && entry.photos.length > 0) {
+        await deleteJournalImages(entry.photos);
+      }
+    }
+
+    // Delete journal entries from database
+    await JournalEntryModel.deleteMany({ destination: destination._id });
+  }
+
+  // Delete all destinations for this travel list
+  await DestinationModel.deleteMany({ list: id });
+
+  // Delete cover image from Cloudinary if exists
   if (existingList.public_id) {
     try {
       await cloudinary.uploader.destroy(existingList.public_id);
@@ -157,6 +202,7 @@ export const deleteOne = async (id: string) => {
     }
   }
 
+  // Finally delete the travel list
   return await TravelList.findByIdAndDelete(id);
 };
 

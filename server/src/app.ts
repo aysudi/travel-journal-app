@@ -46,18 +46,18 @@ app.use(
 );
 
 // Using routes
-app.use("/api/auth", googleRouter);
-app.use("/api/auth", githubRouter);
-app.use("/api/auth", userRouter);
-app.use("/api/travel-lists", travelListRouter);
-app.use("/api/destinations", destinationRouter);
-app.use("/api/journal-entries", journalEntryRouter);
-app.use("/api/messages", messageRouter);
-app.use("/api/comments", commentRouter);
-app.use("/api/list-invitations", listInvitationRouter);
+app.use("/auth", googleRouter);
+app.use("/auth", githubRouter);
+app.use("/auth", userRouter);
+app.use("/travel-lists", travelListRouter);
+app.use("/destinations", destinationRouter);
+app.use("/journal-entries", journalEntryRouter);
+app.use("/messages", messageRouter);
+app.use("/comments", commentRouter);
+app.use("/list-invitations", listInvitationRouter);
 app.use("/api", uploadRouter);
-app.use("/api/chats", chatRouter);
-app.use("/api/messages", messageRouter);
+app.use("/chats", chatRouter);
+app.use("/messages", messageRouter);
 app.use("/api/payments", stripeRouter);
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
@@ -86,18 +86,38 @@ app.post(
     switch (event.type) {
       case "payment_intent.succeeded": {
         const pi = event.data.object as Stripe.PaymentIntent;
-        // TODO: mark order as paid in your DB using pi.id / metadata
+        console.log("Payment succeeded:", pi.id);
         break;
       }
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        // Set user as premium after successful payment
+        // Set user as premium after successful checkout
         const userId = session.metadata?.userId;
+        const subscriptionType =
+          session.metadata?.subscriptionType || "monthly";
+
         if (userId) {
           (async () => {
             try {
-              await UserModel.findByIdAndUpdate(userId, { premium: true });
-              console.log(`User ${userId} upgraded to premium.`);
+              // Calculate expiry date based on subscription type
+              const now = new Date();
+              let expiryDate: Date;
+
+              if (subscriptionType === "yearly") {
+                expiryDate = new Date(now.setFullYear(now.getFullYear() + 1));
+              } else {
+                expiryDate = new Date(now.setMonth(now.getMonth() + 1));
+              }
+
+              await UserModel.findByIdAndUpdate(userId, {
+                premium: true,
+                premiumExpiresAt: expiryDate,
+                stripeCustomerId: session.customer as string,
+                subscriptionId: session.subscription as string,
+              });
+              console.log(
+                `User ${userId} upgraded to premium via checkout session ${session.id}. Expires: ${expiryDate}`
+              );
             } catch (err) {
               console.error("Failed to update user premium status:", err);
             }
@@ -107,7 +127,79 @@ app.post(
         }
         break;
       }
-      // ...add invoice.paid, customer.subscription.* if you use subscriptions
+      case "customer.subscription.created": {
+        const subscription = event.data.object as Stripe.Subscription;
+        console.log("Subscription created:", subscription.id);
+        break;
+      }
+      case "customer.subscription.updated": {
+        const subscription = event.data.object as Stripe.Subscription;
+        if (subscription.status === "active") {
+          // Ensure user stays premium
+          const customerId = subscription.customer as string;
+          (async () => {
+            try {
+              await UserModel.findOneAndUpdate(
+                { stripeCustomerId: customerId },
+                { premium: true }
+              );
+              console.log(
+                `Subscription ${subscription.id} activated for customer ${customerId}.`
+              );
+            } catch (err) {
+              console.error("Failed to update user subscription status:", err);
+            }
+          })();
+        }
+        break;
+      }
+      case "customer.subscription.deleted": {
+        const subscription = event.data.object as Stripe.Subscription;
+        // Remove premium status when subscription is cancelled
+        const customerId = subscription.customer as string;
+        (async () => {
+          try {
+            await UserModel.findOneAndUpdate(
+              { stripeCustomerId: customerId },
+              { premium: false, subscriptionId: null }
+            );
+            console.log(
+              `Subscription ${subscription.id} cancelled for customer ${customerId}.`
+            );
+          } catch (err) {
+            console.error(
+              "Failed to update user subscription cancellation:",
+              err
+            );
+          }
+        })();
+        break;
+      }
+      case "invoice.payment_succeeded": {
+        const invoice = event.data.object as Stripe.Invoice;
+        // Recurring payment succeeded
+        const customerId = invoice.customer as string;
+        (async () => {
+          try {
+            await UserModel.findOneAndUpdate(
+              { stripeCustomerId: customerId },
+              { premium: true }
+            );
+            console.log(
+              `Invoice payment succeeded for customer ${customerId}.`
+            );
+          } catch (err) {
+            console.error("Failed to update user payment status:", err);
+          }
+        })();
+        break;
+      }
+      case "invoice.payment_failed": {
+        const invoice = event.data.object as Stripe.Invoice;
+        console.log(`Invoice payment failed for customer ${invoice.customer}.`);
+        // Could optionally send notification to user about failed payment
+        break;
+      }
       default:
         // console.log(`Unhandled event: ${event.type}`);
         break;

@@ -52,6 +52,9 @@ const userSchema = new mongoose.Schema({
     loginAttempts: { type: Number, default: 0 },
     lockUntil: { type: Date, default: null },
     premium: { type: Boolean, default: false },
+    premiumExpiresAt: { type: Date, default: null },
+    stripeCustomerId: { type: String, default: null },
+    subscriptionId: { type: String, default: null },
     ownedLists: {
         type: [{ type: mongoose.Schema.Types.ObjectId, ref: "TravelList" }],
         default: [],

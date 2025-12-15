@@ -114,6 +114,7 @@ export const updateProfile = async (
       "username",
       "profileImage",
       "profileVisibility",
+      "premium",
     ];
     const filteredData: any = {};
 

@@ -1,7 +1,7 @@
 import { Types } from "mongoose";
-import ChatModel from "../models/Chat";
-import MessageModel from "../models/Message";
-import formatMongoData from "../utils/formatMongoData";
+import ChatModel from "../models/Chat.js";
+import MessageModel from "../models/Message.js";
+import formatMongoData from "../utils/formatMongoData.js";
 export const getAllMessages = async () => {
     try {
         const messages = await MessageModel.find({})

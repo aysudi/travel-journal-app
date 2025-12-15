@@ -7,62 +7,149 @@ import {
   objectIdSchema,
 } from "../validations/journalEntry.validation.js";
 import formatMongoData from "../utils/formatMongoData.js";
+import { v2 as cloudinary } from "cloudinary";
+import multer from "multer";
+import * as premiumLimitService from "../services/premiumLimitService.js";
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Create a new journal entry
-export const createJournalEntry = async (req: Request, res: Response) => {
-  try {
-    const userId = (req.user as any)?.id;
+export const createJournalEntry = [
+  upload.array("photos", 5),
+  async (req: Request, res: Response) => {
+    try {
+      const userId = (req.user as any)?.id;
 
-    if (!userId) {
-      return res.status(401).json({
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: "Authentication required",
+        });
+      }
+
+      // Transform FormData string values to proper types
+      const transformedBody = {
+        ...req.body,
+        public:
+          req.body.public === "true"
+            ? true
+            : req.body.public === "false"
+            ? false
+            : req.body.public,
+        author: req.body.author || userId,
+      };
+
+      // Check journal entry limit
+      const journalLimitCheck = await premiumLimitService.canCreateJournalEntry(
+        userId
+      );
+      if (!journalLimitCheck.canCreate) {
+        return res.status(403).json({
+          success: false,
+          message: "Journal entry limit reached",
+          data: {
+            currentCount: journalLimitCheck.currentCount,
+            limit: journalLimitCheck.limit,
+            needsPremium: true,
+          },
+        });
+      }
+
+      // Check image limit
+      const imageCount = req.files
+        ? (req.files as Express.Multer.File[]).length
+        : 0;
+      const imageLimitCheck = await premiumLimitService.canAddImageToJournal(
+        userId,
+        imageCount
+      );
+      if (!imageLimitCheck.canAdd && imageCount > 0) {
+        return res.status(403).json({
+          success: false,
+          message: `You can only add ${imageLimitCheck.limit} image(s) per journal entry`,
+          data: {
+            currentCount: imageCount,
+            limit: imageLimitCheck.limit,
+            needsPremium: true,
+          },
+        });
+      }
+
+      const { error, value } =
+        journalEntryCreateSchema.validate(transformedBody);
+      if (error) {
+        console.log("Validation error details:", error.details);
+        return res.status(400).json({
+          success: false,
+          message: "Validation error",
+          errors: error.details.map((detail) => detail.message),
+        });
+      }
+
+      // Handle image uploads to Cloudinary
+      let photoUrls: string[] = [];
+      if (req.files && Array.isArray(req.files)) {
+        for (const file of req.files as Express.Multer.File[]) {
+          try {
+            await new Promise((resolve, reject) => {
+              const stream = cloudinary.uploader.upload_stream(
+                { folder: "journal-entries" },
+                (error, result) => {
+                  if (error) reject(error);
+                  else {
+                    if (result?.secure_url) photoUrls.push(result.secure_url);
+                    resolve(result);
+                  }
+                }
+              );
+              stream.end(file.buffer);
+            });
+          } catch (uploadError) {
+            console.error("Image upload failed:", uploadError);
+          }
+        }
+      }
+
+      const journalEntryData = {
+        ...value,
+        photos: photoUrls,
+      };
+
+      const journalEntry = await journalEntryService.createJournalEntry(
+        journalEntryData,
+        userId
+      );
+
+      res.status(201).json({
+        success: true,
+        message: "Journal entry created successfully",
+        data: formatMongoData(journalEntry),
+      });
+    } catch (error: any) {
+      console.error("Create journal entry error:", error);
+
+      if (error.message.includes("Destination not found")) {
+        return res.status(404).json({
+          success: false,
+          message: error.message,
+        });
+      }
+
+      if (error.message.includes("permission")) {
+        return res.status(403).json({
+          success: false,
+          message: error.message,
+        });
+      }
+
+      res.status(500).json({
         success: false,
-        message: "Authentication required",
+        message: "Failed to create journal entry",
+        error: error.message,
       });
     }
-
-    const { error, value } = journalEntryCreateSchema.validate(req.body);
-    if (error) {
-      return res.status(400).json({
-        success: false,
-        message: "Validation error",
-        errors: error.details.map((detail) => detail.message),
-      });
-    }
-
-    const journalEntry = await journalEntryService.createJournalEntry(
-      value,
-      userId
-    );
-
-    res.status(201).json({
-      success: true,
-      message: "Journal entry created successfully",
-      data: formatMongoData(journalEntry),
-    });
-  } catch (error: any) {
-    console.error("Create journal entry error:", error);
-
-    if (error.message.includes("Destination not found")) {
-      return res.status(404).json({
-        success: false,
-        message: error.message,
-      });
-    }
-
-    if (error.message.includes("permission")) {
-      return res.status(403).json({
-        success: false,
-        message: error.message,
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to create journal entry",
-      error: error.message,
-    });
-  }
-};
+  },
+];
 
 // Get journal entry by ID
 export const getJournalEntryById = async (req: Request, res: Response) => {
@@ -103,70 +190,133 @@ export const getJournalEntryById = async (req: Request, res: Response) => {
 };
 
 // Update journal entry
-export const updateJournalEntry = async (req: Request, res: Response) => {
-  try {
-    const userId = (req.user as any)?.id;
-    const { id } = req.params;
+export const updateJournalEntry = [
+  upload.array("photos", 5),
+  async (req: Request, res: Response) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const { id } = req.params;
 
-    if (!userId) {
-      return res.status(401).json({
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: "Authentication required",
+        });
+      }
+
+      const { error: idError } = objectIdSchema.validate(id);
+      if (idError) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid journal entry ID",
+        });
+      }
+
+      const { error, value } = journalEntryUpdateSchema.validate(req.body);
+      if (error) {
+        return res.status(400).json({
+          success: false,
+          message: "Validation error",
+          errors: error.details.map((detail) => detail.message),
+        });
+      }
+
+      // Get existing entry to handle old images
+      const existingEntry = await JournalEntryModel.findById(id);
+      if (!existingEntry) {
+        return res.status(404).json({
+          success: false,
+          message: "Journal entry not found",
+        });
+      }
+
+      // Handle image updates
+      let photoUrls: string[] = [];
+
+      // If new images are uploaded, delete old ones and upload new ones
+      if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+        // Delete old images from Cloudinary
+        if (existingEntry.photos && existingEntry.photos.length > 0) {
+          for (const photoUrl of existingEntry.photos) {
+            try {
+              const parts = photoUrl.split("/");
+              const folder = parts[parts.length - 2];
+              const filename = parts[parts.length - 1].split(".")[0];
+              const publicId = `${folder}/${filename}`;
+              await cloudinary.uploader.destroy(publicId);
+            } catch (deleteError) {
+              console.error("Failed to delete old image:", deleteError);
+            }
+          }
+        }
+
+        // Upload new images
+        for (const file of req.files as Express.Multer.File[]) {
+          try {
+            await new Promise((resolve, reject) => {
+              const stream = cloudinary.uploader.upload_stream(
+                { folder: "journal-entries" },
+                (error, result) => {
+                  if (error) reject(error);
+                  else {
+                    if (result?.secure_url) photoUrls.push(result.secure_url);
+                    resolve(result);
+                  }
+                }
+              );
+              stream.end(file.buffer);
+            });
+          } catch (uploadError) {
+            console.error("Image upload failed:", uploadError);
+          }
+        }
+      } else {
+        // Keep existing images if no new images uploaded
+        photoUrls = existingEntry.photos || [];
+      }
+
+      // Add photos to update data
+      const updateData = {
+        ...value,
+        photos: photoUrls,
+      };
+
+      const updatedEntry = await journalEntryService.updateJournalEntry(
+        id,
+        updateData,
+        userId
+      );
+
+      res.status(200).json({
+        success: true,
+        message: "Journal entry updated successfully",
+        data: formatMongoData(updatedEntry),
+      });
+    } catch (error: any) {
+      console.error("Update journal entry error:", error);
+
+      if (error.message.includes("not found")) {
+        return res.status(404).json({
+          success: false,
+          message: error.message,
+        });
+      }
+
+      if (error.message.includes("permission")) {
+        return res.status(403).json({
+          success: false,
+          message: error.message,
+        });
+      }
+
+      res.status(500).json({
         success: false,
-        message: "Authentication required",
+        message: "Failed to update journal entry",
+        error: error.message,
       });
     }
-
-    const { error: idError } = objectIdSchema.validate(id);
-    if (idError) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid journal entry ID",
-      });
-    }
-
-    const { error, value } = journalEntryUpdateSchema.validate(req.body);
-    if (error) {
-      return res.status(400).json({
-        success: false,
-        message: "Validation error",
-        errors: error.details.map((detail) => detail.message),
-      });
-    }
-
-    const updatedEntry = await journalEntryService.updateJournalEntry(
-      id,
-      value,
-      userId
-    );
-
-    res.status(200).json({
-      success: true,
-      message: "Journal entry updated successfully",
-      data: formatMongoData(updatedEntry),
-    });
-  } catch (error: any) {
-    console.error("Update journal entry error:", error);
-
-    if (error.message.includes("not found")) {
-      return res.status(404).json({
-        success: false,
-        message: error.message,
-      });
-    }
-
-    if (error.message.includes("permission")) {
-      return res.status(403).json({
-        success: false,
-        message: error.message,
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to update journal entry",
-      error: error.message,
-    });
-  }
-};
+  },
+];
 
 // Delete journal entry
 export const deleteJournalEntry = async (req: Request, res: Response) => {
@@ -188,6 +338,22 @@ export const deleteJournalEntry = async (req: Request, res: Response) => {
       return res
         .status(403)
         .json({ error: "You can only delete your own journal entries" });
+    }
+
+    // Delete images from Cloudinary
+    if (existingEntry.photos && existingEntry.photos.length > 0) {
+      for (const photoUrl of existingEntry.photos) {
+        try {
+          const parts = photoUrl.split("/");
+          const folder = parts[parts.length - 2]; // journal-entries
+          const filename = parts[parts.length - 1].split(".")[0];
+          const publicId = `${folder}/${filename}`;
+          await cloudinary.uploader.destroy(publicId);
+        } catch (deleteError) {
+          console.error("Failed to delete image from Cloudinary:", deleteError);
+          // Continue with journal deletion even if image deletion fails
+        }
+      }
     }
 
     const deletedEntry = await journalEntryService.deleteJournalEntry(

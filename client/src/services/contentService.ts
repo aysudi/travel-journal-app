@@ -146,11 +146,13 @@ export class JournalEntryService {
   }
 
   async createJournalEntry(
-    data: CreateJournalEntryData
+    data: CreateJournalEntryData | FormData
   ): Promise<JournalEntry> {
+    const isFormData = data instanceof FormData;
     return apiConfig.request<JournalEntry>(this.endpoint, {
       method: "POST",
-      body: JSON.stringify(data),
+      body: isFormData ? data : JSON.stringify(data),
+      headers: isFormData ? undefined : { "Content-Type": "application/json" },
     });
   }
 
@@ -331,10 +333,12 @@ export class CommentService {
   }
 
   // Create a new comment
-  async createComment(data: CreateCommentData): Promise<Comment> {
+  async createComment(data: CreateCommentData | FormData): Promise<Comment> {
+    const isFormData = data instanceof FormData;
     return apiConfig.request<Comment>(this.endpoint, {
       method: "POST",
-      body: JSON.stringify(data),
+      body: isFormData ? data : JSON.stringify(data),
+      headers: isFormData ? undefined : { "Content-Type": "application/json" },
     });
   }
 

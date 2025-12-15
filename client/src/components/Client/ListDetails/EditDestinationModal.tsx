@@ -7,13 +7,24 @@ type Props = {
 };
 
 const EditDestinationModal = ({ onClose, onSubmit, destination }: Props) => {
+  // Helper function to format date for input[type="date"]
+  const formatDateForInput = (dateString: string | null) => {
+    if (!dateString) return "";
+    try {
+      const date = new Date(dateString);
+      return date.toISOString().split("T")[0]; // Returns YYYY-MM-DD format
+    } catch {
+      return "";
+    }
+  };
+
   const [editedDestination, setEditedDestination] = useState<any>({
     id: destination.id,
     name: destination.name,
     location: destination.location,
     status: destination.status,
-    dateVisited: destination.dateVisited,
-    datePlanned: destination.datePlanned,
+    dateVisited: formatDateForInput(destination.dateVisited),
+    datePlanned: formatDateForInput(destination.datePlanned),
     notes: destination.notes,
     images: destination.images || [],
     imagePreviews: Array.isArray(destination.images)
@@ -99,6 +110,7 @@ const EditDestinationModal = ({ onClose, onSubmit, destination }: Props) => {
       imagePreviews: [],
     });
   };
+  console.log("edit destination: ", editedDestination);
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

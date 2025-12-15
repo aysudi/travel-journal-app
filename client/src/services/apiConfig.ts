@@ -93,6 +93,7 @@ export class ApiConfig {
         return data.data as T;
       }
 
+      console.log("data: ", data);
       return data as T;
     } catch (error) {
       throw new Error("Failed to parse response");

@@ -1,6 +1,6 @@
 import express from "express";
-import { getAllComments, postComment, getCommentsByJournalEntry, removeComment, toggleCommentLike, } from "../controllers/commentController";
-import { authenticateToken } from "../middlewares/authMiddleware";
+import { getAllComments, postComment, getCommentsByJournalEntry, removeComment, toggleCommentLike, } from "../controllers/commentController.js";
+import { authenticateToken } from "../middlewares/authMiddleware.js";
 const commentRouter = express.Router();
 commentRouter.get("/journal/:journalEntryId", getCommentsByJournalEntry);
 commentRouter.get("/", getAllComments);

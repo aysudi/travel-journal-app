@@ -247,6 +247,8 @@ const ListDetails = () => {
                   title: "Destination created successfully!",
                   icon: "success",
                   draggable: true,
+                  showConfirmButton: false,
+                  timer: 1500,
                 });
               },
             });
@@ -273,6 +275,8 @@ const ListDetails = () => {
                     title: "Destination updated successfully!",
                     icon: "success",
                     draggable: true,
+                    showConfirmButton: false,
+                    timer: 1500,
                   });
                 },
               }

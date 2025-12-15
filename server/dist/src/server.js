@@ -4,6 +4,7 @@ import connectToDB from "./config/db.js";
 import app from "./app.js";
 import { initializeSocket } from "./socket/socketServer.js";
 import config from "./config/config.js";
+import { startHourlyExpiryCheck } from "./services/cronService.js";
 dotenv.config();
 console.log("🚀 Starting server...");
 const httpServer = createServer(app);
@@ -14,6 +15,8 @@ console.log("🗄️ Connecting to database...");
 const startServer = async () => {
     try {
         await connectToDB();
+        // Start subscription expiry monitoring
+        startHourlyExpiryCheck();
         httpServer.listen(config.PORT, () => {
             console.log(`✅ Server running on http://localhost:${config.PORT}`);
         });

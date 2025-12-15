@@ -1,6 +1,6 @@
 import express from "express";
-import { createNewChat, deleteChatById, getAllChatsController, getCurrentUserChats, updateChatDetails, getOrCreateChatByListIdController, } from "../controllers/chatController";
-import { chatUploadMiddleware } from "../middlewares/uploadMiddleware";
+import { createNewChat, deleteChatById, getAllChatsController, getCurrentUserChats, updateChatDetails, getOrCreateChatByListIdController, } from "../controllers/chatController.js";
+import { chatUploadMiddleware } from "../middlewares/uploadMiddleware.js";
 const chatRouter = express.Router();
 chatRouter.get("/all", getAllChatsController);
 chatRouter.get("/", getCurrentUserChats);

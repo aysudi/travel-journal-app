@@ -9,6 +9,7 @@ import {
   objectIdSchema,
 } from "../validations/destination.validation.js";
 import formatMongoData from "../utils/formatMongoData.js";
+import * as premiumLimitService from "../services/premiumLimitService.js";
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -31,7 +32,24 @@ export const createDestination = [
         return res.status(400).json({
           success: false,
           message: "Validation error",
-          errors: error.details.map((detail) => detail.message),
+          errors: error.details.map((detail: any) => detail.message),
+        });
+      }
+
+      // Check destination limit for this travel list
+      const limitCheck = await premiumLimitService.canAddDestination(
+        value.travelListId,
+        userId
+      );
+      if (!limitCheck.canAdd) {
+        return res.status(403).json({
+          success: false,
+          message: "Destination limit reached for this travel list",
+          data: {
+            currentCount: limitCheck.currentCount,
+            limit: limitCheck.limit,
+            needsPremium: true,
+          },
         });
       }
 

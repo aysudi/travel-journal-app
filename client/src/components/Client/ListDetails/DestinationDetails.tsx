@@ -44,6 +44,8 @@ const DestinationDetails = ({
           title: "Deleted!",
           text: "Your destination has been deleted.",
           icon: "success",
+          showConfirmButton: false,
+          timer: 1500,
         });
         onClose();
       } catch (error) {
@@ -101,6 +103,15 @@ const DestinationDetails = ({
             </div>
 
             {/* Date Info */}
+            {destination.datePlanned && (
+              <div className="flex items-center gap-2 text-gray-600 mb-4">
+                <Calendar size={18} />
+                <span>
+                  Planned for{" "}
+                  {new Date(destination.datePlanned).toLocaleDateString()}
+                </span>
+              </div>
+            )}
             {destination.dateVisited && (
               <div className="flex items-center gap-2 text-gray-600 mb-4">
                 <Calendar size={18} />

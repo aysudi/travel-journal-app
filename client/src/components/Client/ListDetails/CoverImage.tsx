@@ -2,9 +2,9 @@ import {
   Camera,
   Globe,
   Lock,
-  MoreVertical,
   UserCheck,
   MessageCircle,
+  Trash2,
 } from "lucide-react";
 import React, { useRef, useState, useEffect } from "react";
 import ChatCard from "../Chat/ChatCard";
@@ -42,11 +42,6 @@ const CoverImage = ({ travelList, isOwner }: Props) => {
   }: any = useGetOrCreateChatByListId(travelList._id, user?.id);
 
   const chat: string = data;
-
-  const handleMenuClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setMenuOpen((prev) => !prev);
-  };
 
   const handleCoverImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>
@@ -101,6 +96,8 @@ const CoverImage = ({ travelList, isOwner }: Props) => {
           title: "Deleted!",
           text: "Your travel list has been deleted.",
           icon: "success",
+          showConfirmButton: false,
+          timer: 1500,
         });
         navigate("/explore");
       }
@@ -147,6 +144,13 @@ const CoverImage = ({ travelList, isOwner }: Props) => {
         {isOwner && (
           <>
             <button
+              className="bg-white/20 backdrop-blur-sm text-white p-3 rounded-full hover:bg-white/30 transition-all duration-200 cursor-pointer"
+              onClick={handleDelete}
+              type="button"
+            >
+              <Trash2 size={20} />
+            </button>
+            <button
               onClick={handleImageChange}
               className="bg-white/20 backdrop-blur-sm text-white p-3 rounded-full hover:bg-white/30 transition-all duration-200 cursor-pointer"
             >
@@ -160,13 +164,6 @@ const CoverImage = ({ travelList, isOwner }: Props) => {
               style={{ display: "none" }}
               onChange={handleCoverImageUpload}
             />
-            <button
-              className="bg-white/20 backdrop-blur-sm text-white p-3 rounded-full hover:bg-white/30 transition-all duration-200 cursor-pointer"
-              onClick={handleMenuClick}
-              type="button"
-            >
-              <MoreVertical size={20} />
-            </button>
           </>
         )}
         <button
@@ -175,19 +172,6 @@ const CoverImage = ({ travelList, isOwner }: Props) => {
         >
           <MessageCircle size={20} />
         </button>
-        {menuOpen && isOwner && (
-          <div className="absolute right-0 mt-2 w-36 bg-white rounded-lg shadow-lg py-2 z-30">
-            <button
-              className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-150 cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDelete();
-              }}
-            >
-              Delete List
-            </button>
-          </div>
-        )}
       </div>
 
       {/* ChatCard Modal Overlay */}

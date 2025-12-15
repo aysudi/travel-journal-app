@@ -1,6 +1,17 @@
-import { useState, useRef, useEffect, useMemo } from "react";
-import { Search, BookOpen, Globe, Sparkles, TrendingUp } from "lucide-react";
-import { usePublicJournalEntries } from "../../hooks/useEntries";
+import { useState, useRef, useMemo } from "react";
+import {
+  Search,
+  BookOpen,
+  Globe,
+  Sparkles,
+  TrendingUp,
+  User,
+} from "lucide-react";
+import {
+  usePublicJournalEntries,
+  useJournalEntriesByAuthor,
+} from "../../hooks/useEntries";
+import { useUserProfile } from "../../hooks/useAuth";
 import Loading from "../../components/Common/Loading";
 import type { JournalEntry, JournalEntryCard } from "../../types/api";
 import JournalCard from "../../components/Client/Journals/JournalCard";
@@ -11,53 +22,74 @@ const Journals = () => {
   const [selectedFilter, setSelectedFilter] = useState<
     "all" | "trending" | "recent"
   >("all");
+  const [journalType, setJournalType] = useState<"all" | "my">("all");
   const [page] = useState(1);
   const [cachedJournals, setCachedJournals] = useState<JournalEntry[]>([]);
+  const [cachedMyJournals, setCachedMyJournals] = useState<JournalEntry[]>([]);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  const { data: user } = useUserProfile();
 
   const {
     data: journals,
-    isLoading,
-    error,
-    refetch,
-    isSuccess,
+    isLoading: isLoadingPublic,
+    error: errorPublic,
+    refetch: refetchPublic,
   } = usePublicJournalEntries({
     page: 1,
     limit: 50,
   });
 
+  const {
+    data: myJournals,
+    isLoading: isLoadingMy,
+    error: errorMy,
+    refetch: refetchMy,
+  } = useJournalEntriesByAuthor(user?.id || "");
+
   const journalsArray = useMemo(() => {
-    if (!journals) {
+    if (journalType === "my") {
+      if (!myJournals) {
+        return cachedMyJournals;
+      }
+
+      if (
+        myJournals.data &&
+        Array.isArray(myJournals.data) &&
+        myJournals.data.length > 0
+      ) {
+        setCachedMyJournals(myJournals.data);
+        return myJournals.data;
+      }
+
+      if (Array.isArray(myJournals) && myJournals.length > 0) {
+        setCachedMyJournals(myJournals);
+        return myJournals;
+      }
+
+      return cachedMyJournals;
+    } else {
+      if (!journals) {
+        return cachedJournals;
+      }
+
+      if (
+        journals.data &&
+        Array.isArray(journals.data) &&
+        journals.data.length > 0
+      ) {
+        setCachedJournals(journals.data);
+        return journals.data;
+      }
+
+      if (Array.isArray(journals) && journals.length > 0) {
+        setCachedJournals(journals);
+        return journals;
+      }
+
       return cachedJournals;
     }
-
-    if (
-      journals.data &&
-      Array.isArray(journals.data) &&
-      journals.data.length > 0
-    ) {
-      setCachedJournals(journals.data);
-      return journals.data;
-    }
-
-    if (Array.isArray(journals) && journals.length > 0) {
-      setCachedJournals(journals);
-      return journals;
-    }
-
-    return cachedJournals;
-  }, [journals, cachedJournals]);
-
-  useEffect(() => {
-    if (
-      isSuccess &&
-      journals?.data &&
-      Array.isArray(journals.data) &&
-      journals.data.length > 0
-    ) {
-      setCachedJournals(journals.data);
-    }
-  }, [isSuccess, journals]);
+  }, [journals, myJournals, cachedJournals, cachedMyJournals, journalType]);
 
   const filteredJournals = journalsArray.filter((journal: JournalEntry) => {
     const matchesSearch =
@@ -89,11 +121,14 @@ const Journals = () => {
     }
   );
 
-  const publicJournals = sortedJournals.filter(
-    (journal: any) => journal.public === true
-  );
+  const displayJournals =
+    journalType === "my"
+      ? sortedJournals
+      : sortedJournals.filter((journal: any) => journal.public === true);
 
-  console.log(publicJournals);
+  const isLoading = journalType === "all" ? isLoadingPublic : isLoadingMy;
+  const error = journalType === "all" ? errorPublic : errorMy;
+  const refetch = journalType === "all" ? refetchPublic : refetchMy;
 
   if (isLoading && page === 1) {
     return <Loading variant="page" />;
@@ -134,6 +169,34 @@ const Journals = () => {
                 Discover amazing travel stories from around the world
               </p>
             </div>
+
+            {/* Journal Type Tabs */}
+            {user && (
+              <div className="flex items-center bg-gray-100 rounded-lg p-1 mt-8">
+                <button
+                  onClick={() => setJournalType("all")}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                    journalType === "all"
+                      ? "bg-white text-indigo-600 shadow-sm"
+                      : "text-gray-600 hover:text-gray-800"
+                  }`}
+                >
+                  <Globe size={16} />
+                  All Journals
+                </button>
+                <button
+                  onClick={() => setJournalType("my")}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                    journalType === "my"
+                      ? "bg-white text-indigo-600 shadow-sm"
+                      : "text-gray-600 hover:text-gray-800"
+                  }`}
+                >
+                  <User size={16} />
+                  My Journals
+                </button>
+              </div>
+            )}
 
             {/* Quick Stats */}
             <div className="flex items-center gap-6">
@@ -193,7 +256,7 @@ const Journals = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setSelectedFilter("all")}
-                  className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
+                  className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-200 cursor-pointer ${
                     selectedFilter === "all"
                       ? "bg-indigo-600 text-white shadow-lg"
                       : "bg-white/70 text-gray-600 hover:bg-white hover:shadow-md"
@@ -204,7 +267,7 @@ const Journals = () => {
                 </button>
                 <button
                   onClick={() => setSelectedFilter("trending")}
-                  className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
+                  className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-200 cursor-pointer ${
                     selectedFilter === "trending"
                       ? "bg-indigo-600 text-white shadow-lg"
                       : "bg-white/70 text-gray-600 hover:bg-white hover:shadow-md"
@@ -215,7 +278,7 @@ const Journals = () => {
                 </button>
                 <button
                   onClick={() => setSelectedFilter("recent")}
-                  className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
+                  className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-200 cursor-pointer ${
                     selectedFilter === "recent"
                       ? "bg-indigo-600 text-white shadow-lg"
                       : "bg-white/70 text-gray-600 hover:bg-white hover:shadow-md"
@@ -233,7 +296,7 @@ const Journals = () => {
                 <p className="text-sm text-gray-600">
                   Found{" "}
                   <span className="font-semibold text-indigo-600">
-                    {publicJournals.length}
+                    {displayJournals.length}
                   </span>{" "}
                   stories
                   {searchQuery && (
@@ -250,11 +313,15 @@ const Journals = () => {
         </div>
 
         {/* Journals Feed */}
-        {publicJournals.length > 0 ? (
+        {displayJournals.length > 0 ? (
           <>
             <div className="max-w-2xl mx-auto space-y-6">
-              {publicJournals.map((journal: JournalEntryCard, idx: number) => (
-                <JournalCard key={idx} journal={journal} />
+              {displayJournals.map((journal: JournalEntryCard, idx: number) => (
+                <JournalCard
+                  key={idx}
+                  journal={journal}
+                  showPrivacyIndicator={journalType === "my"}
+                />
               ))}
             </div>
 
@@ -272,7 +339,10 @@ const Journals = () => {
             </div>
           </>
         ) : (
-          <EmptyState searchQuery={searchQuery} />
+          <EmptyState
+            searchQuery={searchQuery}
+            isMyJournals={journalType === "my"}
+          />
         )}
       </div>
     </div>

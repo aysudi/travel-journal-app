@@ -1,5 +1,5 @@
 import express from "express";
-import { editMessage, getAllMessagesController, getMessages, markAsRead, removeMessage, sendMessage, } from "../controllers/messageController";
+import { editMessage, getAllMessagesController, getMessages, markAsRead, removeMessage, sendMessage, } from "../controllers/messageController.js";
 const messageRouter = express.Router();
 messageRouter.get("/all", getAllMessagesController);
 messageRouter.post("/", sendMessage);

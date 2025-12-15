@@ -1,5 +1,12 @@
 import { useState, useMemo } from "react";
-import { Filter, Plus, MapPin, Grid3X3, List as ListIcon } from "lucide-react";
+import {
+  Filter,
+  Plus,
+  MapPin,
+  Grid3X3,
+  List as ListIcon,
+  Crown,
+} from "lucide-react";
 import { useOwnedTravelLists } from "../../hooks/useTravelList";
 import TravelListCard from "../../components/Client/Lists/TravelListCard";
 import SearchLists from "../../components/Client/Lists/SearchLists";
@@ -10,6 +17,9 @@ import EmptyLists from "../../components/Client/Lists/EmptyLists";
 import type { SortOption, SortOrder } from "../../types/sortType";
 import { Link } from "react-router";
 import TravelListRow from "../../components/Client/Lists/TravelListRow";
+import { useLimitCheck } from "../../hooks/useLimits";
+import LimitProgressBar from "../../components/Common/LimitProgressBar";
+import PremiumUpgradeModal from "../../components/Common/PremiumUpgradeModal";
 
 type ViewMode = "grid" | "list";
 
@@ -22,6 +32,10 @@ const MyLists = () => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [showFilters, setShowFilters] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+  const { checkTravelListLimit } = useLimitCheck();
+  const listLimit = checkTravelListLimit();
 
   const filteredAndSortedLists = useMemo(() => {
     if (!lists) return [];
@@ -123,14 +137,38 @@ const MyLists = () => {
               Create, organize, and plan your adventures
             </p>
           </div>
-          <Link
-            to={`/create-list`}
-            className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5 mt-4 lg:mt-0 cursor-pointer"
-          >
-            <Plus size={20} />
-            Create New List
-          </Link>
+          {listLimit.canCreate ? (
+            <Link
+              to={`/create-list`}
+              className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5 mt-4 lg:mt-0 cursor-pointer"
+            >
+              <Plus size={20} />
+              Create New List
+            </Link>
+          ) : (
+            <button
+              onClick={() => setShowUpgradeModal(true)}
+              className="flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5 mt-4 lg:mt-0 cursor-pointer"
+            >
+              <Crown size={20} />
+              Upgrade for More Lists
+            </button>
+          )}
         </div>
+
+        {/* Limit Progress Bar */}
+        {!listLimit.isPremium && (
+          <div className="mb-6">
+            <LimitProgressBar
+              current={listLimit.usage}
+              limit={listLimit.limit}
+              label="Travel Lists"
+              isPremium={listLimit.isPremium}
+              showUpgradeHint={true}
+              onUpgradeClick={() => setShowUpgradeModal(true)}
+            />
+          </div>
+        )}
 
         {/* Search and Filters Bar */}
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200/50 p-6 mb-8">
@@ -244,6 +282,15 @@ const MyLists = () => {
             })}
           </div>
         )}
+
+        {/* Premium Upgrade Modal */}
+        <PremiumUpgradeModal
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          feature="lists"
+          currentUsage={listLimit.usage}
+          limit={listLimit.limit}
+        />
       </div>
     </div>
   );

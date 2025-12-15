@@ -86,7 +86,7 @@ const userUpdateSchema = Joi.object({
   provider: Joi.forbidden(),
   providerId: Joi.forbidden(),
   isVerified: Joi.forbidden(),
-  premium: Joi.forbidden(),
+  premium: Joi.boolean().optional(),
   lists: Joi.forbidden(),
 });
 

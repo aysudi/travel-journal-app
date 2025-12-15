@@ -48,6 +48,8 @@ const CommentItem = ({
         Swal.fire({
           title: "Deleted!",
           text: "Your comment has been deleted.",
+          showConfirmButton: false,
+          timer: 1500,
           icon: "success",
         });
       }

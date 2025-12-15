@@ -1,4 +1,4 @@
-import { createMessage, getChatMessages, getAllMessages, updateMessage, deleteMessage, markMessageAsRead, } from "../services/messageService";
+import { createMessage, getChatMessages, getAllMessages, updateMessage, deleteMessage, markMessageAsRead, } from "../services/messageService.js";
 export const getAllMessagesController = async (req, res, next) => {
     try {
         const response = await getAllMessages();

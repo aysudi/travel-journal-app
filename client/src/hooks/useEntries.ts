@@ -45,7 +45,9 @@ export const useToggleJournalEntryLike = (travelListId?: string) => {
       }
       if (updatedEntry.destination) {
         queryClient.invalidateQueries({
-          queryKey: journalEntryKeys.byDestination(updatedEntry.destination),
+          queryKey: journalEntryKeys.byDestination(
+            updatedEntry?.destination._id
+          ),
         });
       }
       queryClient.invalidateQueries({
@@ -192,7 +194,7 @@ export const useCreateJournalEntry = () => {
 
       if (newEntry.destination) {
         queryClient.invalidateQueries({
-          queryKey: journalEntryKeys.byDestination(newEntry.destination),
+          queryKey: journalEntryKeys.byDestination(newEntry.destination._id),
         });
       }
 
@@ -245,7 +247,9 @@ export const useUpdateJournalEntry = () => {
 
       if (updatedEntry.destination) {
         queryClient.invalidateQueries({
-          queryKey: journalEntryKeys.byDestination(updatedEntry.destination),
+          queryKey: journalEntryKeys.byDestination(
+            updatedEntry.destination._id
+          ),
         });
       }
 
@@ -296,7 +300,9 @@ export const useDeleteJournalEntry = () => {
 
         if (cachedEntry.destination) {
           queryClient.invalidateQueries({
-            queryKey: journalEntryKeys.byDestination(cachedEntry.destination),
+            queryKey: journalEntryKeys.byDestination(
+              cachedEntry.destination._id
+            ),
           });
         }
 
@@ -347,7 +353,9 @@ export const useUploadJournalImages = () => {
 
         if (cachedEntry.destination) {
           queryClient.invalidateQueries({
-            queryKey: journalEntryKeys.byDestination(cachedEntry.destination),
+            queryKey: journalEntryKeys.byDestination(
+              cachedEntry.destination._id
+            ),
           });
         }
 
@@ -386,7 +394,9 @@ export const useToggleJournalEntryVisibility = () => {
 
       if (updatedEntry.destination) {
         queryClient.invalidateQueries({
-          queryKey: journalEntryKeys.byDestination(updatedEntry.destination),
+          queryKey: journalEntryKeys.byDestination(
+            updatedEntry.destination._id
+          ),
         });
       }
 
