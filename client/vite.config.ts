@@ -5,9 +5,23 @@ import tailwindcss from "@tailwindcss/vite";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom", "react-router-dom"],
+          ui: ["@tanstack/react-query", "notistack"],
+        },
+      },
+    },
+  },
   server: {
     proxy: {
-      "/api": "http://localhost:5050",
+      "/api": {
+        target: "http://localhost:5050",
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 });

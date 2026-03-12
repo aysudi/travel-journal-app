@@ -6,8 +6,8 @@ export default {
   DB_USERNAME: process.env.DB_USERNAME,
   DB_PASSWORD: process.env.DB_PASSWORD,
   DB_URL: process.env.DB_URL,
-  GMAIL_USER: process.env.GMAIL_USER,
-  GMAIL_PASS: process.env.GMAIL_PASS,
+  SENDGRID_API_KEY: process.env.SENDGRID_API_KEY!,
+  FROM_EMAIL: process.env.FROM_EMAIL!,
   JWT_REFRESH_SECRET_KEY: process.env.JWT_REFRESH_SECRET_KEY,
   JWT_ACCESS_SECRET_KEY: process.env.JWT_ACCESS_SECRET_KEY,
   SERVER_URL: process.env.SERVER_URL || "http://localhost:3000",
@@ -16,4 +16,5 @@ export default {
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
   GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
   GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
+  BREVO_API_KEY: process.env.BREVO_API_KEY,
 };

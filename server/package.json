@@ -21,7 +21,6 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
     "@types/node": "^24.1.0",
-    "@types/nodemailer": "^6.4.17",
     "@types/passport": "^1.0.17",
     "@types/passport-github2": "^1.2.9",
     "@types/passport-google-oauth20": "^2.0.16",
@@ -33,6 +32,8 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "@getbrevo/brevo": "^4.0.1",
+    "@sendgrid/mail": "^8.1.6",
     "@types/node-cron": "^3.0.11",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.7.0",
@@ -47,11 +48,11 @@
     "mongoose": "^8.17.0",
     "multer": "^2.0.2",
     "node-cron": "^4.2.1",
-    "nodemailer": "^7.0.5",
     "passport": "^0.7.0",
     "passport-github2": "^0.1.12",
     "passport-google-oauth20": "^2.0.0",
     "passport-oauth2": "^1.8.0",
+    "resend": "^6.9.3",
     "serverless-http": "^3.2.0",
     "socket.io": "^4.8.1",
     "stripe": "^18.4.0"

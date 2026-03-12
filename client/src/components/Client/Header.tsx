@@ -3,7 +3,6 @@ import { Link, useLocation } from "react-router";
 import { useLogout, useUserProfile } from "../../hooks/useAuth";
 
 const Header = () => {
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const location = useLocation();
   const { data: user } = useUserProfile();
@@ -11,32 +10,6 @@ const Header = () => {
   const notificationRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const logOut = useLogout();
-
-  const notifications = [
-    {
-      id: 1,
-      type: "trip",
-      message: "Your trip to Tokyo is starting in 3 days!",
-      time: "2 hours ago",
-      unread: true,
-    },
-    {
-      id: 2,
-      type: "social",
-      message: 'Alex liked your journal entry "Mountain Adventure"',
-      time: "1 day ago",
-      unread: true,
-    },
-    {
-      id: 3,
-      type: "system",
-      message: 'Your travel list "European Cities" was updated',
-      time: "2 days ago",
-      unread: false,
-    },
-  ];
-
-  const unreadCount = notifications.filter((n) => n.unread).length;
 
   const navItems = [
     { name: "Dashboard", path: "/dashboard" },
@@ -51,7 +24,6 @@ const Header = () => {
         notificationRef.current &&
         !notificationRef.current.contains(event.target as Node)
       ) {
-        setIsNotificationOpen(false);
       }
       if (
         profileRef.current &&
@@ -67,19 +39,6 @@ const Header = () => {
 
   const isActiveLink = (path: string) => {
     return location.pathname === path;
-  };
-
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case "trip":
-        return "✈️";
-      case "social":
-        return "❤️";
-      case "system":
-        return "⚙️";
-      default:
-        return "📢";
-    }
   };
 
   const handleLogout = async () => {
@@ -122,81 +81,6 @@ const Header = () => {
 
           {/* Right side icons */}
           <div className="flex items-center space-x-4">
-            {/* Notifications */}
-            <div className="relative" ref={notificationRef}>
-              <button
-                onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                className="relative p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200 group cursor-pointer"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                  />
-                </svg>
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
-
-              {/* Notifications Dropdown */}
-              {isNotificationOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-200/50 overflow-hidden z-50">
-                  <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-slate-200/50">
-                    <h3 className="font-semibold text-slate-800">
-                      Notifications
-                    </h3>
-                    <p className="text-sm text-slate-600">
-                      {unreadCount} new notifications
-                    </p>
-                  </div>
-
-                  <div className="max-h-96 overflow-y-auto">
-                    {notifications.map((notification) => (
-                      <div
-                        key={notification.id}
-                        className={`p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors ${
-                          notification.unread ? "bg-blue-50/50" : ""
-                        }`}
-                      >
-                        <div className="flex items-start space-x-3">
-                          <span className="text-xl">
-                            {getNotificationIcon(notification.type)}
-                          </span>
-                          <div className="flex-1">
-                            <p className="text-sm text-slate-800">
-                              {notification.message}
-                            </p>
-                            <p className="text-xs text-slate-500 mt-1">
-                              {notification.time}
-                            </p>
-                          </div>
-                          {notification.unread && (
-                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="p-4 bg-slate-50">
-                    <button className="w-full text-center text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors cursor-pointer">
-                      View All Notifications
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
             {/* User Profile */}
             <div className="relative" ref={profileRef}>
               <button

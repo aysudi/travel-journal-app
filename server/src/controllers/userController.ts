@@ -225,7 +225,20 @@ export const registerUser = async (
     );
 
     const verificationLink = `${config.SERVER_URL}/auth/verify-email?token=${token}`;
-    sendVerificationEmail(req.body.email, req.body.fullName, verificationLink);
+
+    // Send verification email (async but don't block response)
+    sendVerificationEmail(req.body.email, req.body.fullName, verificationLink)
+      .then((result) => {
+        if (result.success) {
+          console.log(`Verification email sent to ${req.body.email}`);
+        } else {
+          console.error(`Failed to send verification email: ${result.error}`);
+        }
+      })
+      .catch((error) => {
+        console.error("Error in verification email promise:", error);
+      });
+
     console.log("email", req.body.email);
     console.log("fullName", req.body.fullName);
     console.log("verificationLink", verificationLink);
@@ -337,12 +350,24 @@ export const resendVerificationEmail = async (
     });
     const verificationLink = `${config.SERVER_URL}/auth/verify-email?token=${token}`;
 
-    await sendVerificationEmail(user.email, user.fullName, verificationLink);
+    const emailResult = await sendVerificationEmail(
+      user.email,
+      user.fullName,
+      verificationLink
+    );
 
-    res.status(200).json({
-      message: "Verification email sent successfully",
-      data: null,
-    });
+    if (emailResult.success) {
+      res.status(200).json({
+        message: "Verification email sent successfully",
+        data: null,
+      });
+    } else {
+      res.status(500).json({
+        message: "Failed to send verification email. Please try again.",
+        data: null,
+        error: emailResult.error,
+      });
+    }
   } catch (error) {
     next(error);
   }

@@ -173,12 +173,26 @@ export const login = async (credentials: {
       );
 
       const unlockAccountLink = `${config.SERVER_URL}/auth/unlock-account?token=${token}`;
+
+      // Send unlock account email (async but don't block response)
       sendUnlockAccountEmail(
         user.email,
         user.fullName,
-        user.lockUntil,
+        user.lockUntil?.toISOString() || "",
         unlockAccountLink
-      );
+      )
+        .then((result) => {
+          if (result.success) {
+            console.log(`Unlock account email sent to ${user.email}`);
+          } else {
+            console.error(
+              `Failed to send unlock account email: ${result.error}`
+            );
+          }
+        })
+        .catch((error) => {
+          console.error("Error in unlock account email promise:", error);
+        });
 
       throw new Error(
         "Too many login attempts. Account locked for 10 minutes. Check your email"
@@ -285,7 +299,19 @@ export const forgotPassword = async (email: string) => {
       "30m"
     );
     const resetPasswordLink = `${config.CLIENT_URL}/auth/reset-password/${token}`;
-    sendForgotPasswordEmail(email, user.fullName, resetPasswordLink);
+
+    // Send reset password email (async but don't block response)
+    sendForgotPasswordEmail(email, user.fullName, resetPasswordLink)
+      .then((result) => {
+        if (result.success) {
+          console.log(`Password reset email sent to ${email}`);
+        } else {
+          console.error(`Failed to send password reset email: ${result.error}`);
+        }
+      })
+      .catch((error) => {
+        console.error("Error in password reset email promise:", error);
+      });
   }
 };
 

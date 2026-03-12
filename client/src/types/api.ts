@@ -77,8 +77,10 @@ export interface TravelList {
   updatedAt: string;
 }
 
-export interface PopulatedTravelList
-  extends Omit<TravelList, "owner" | "destinations"> {
+export interface PopulatedTravelList extends Omit<
+  TravelList,
+  "owner" | "destinations"
+> {
   owner: UserProfile;
   customPermissions: {
     user: UserProfile;
@@ -184,7 +186,7 @@ export interface JournalEntry {
   createdAt: string;
   updatedAt: string;
   likes: [
-    { _id: string; fullName: string; username: string; profileImage: string }
+    { _id: string; fullName: string; username: string; profileImage: string },
   ];
   comments: Comment[];
 }
@@ -219,7 +221,7 @@ export interface JournalEntryCard {
 }
 
 export interface CreateJournalEntryData {
-  author: string;
+  author: string | undefined;
   title: string;
   content: string;
   images?: string[];
