@@ -35,14 +35,11 @@ app.use(express.json());
 app.use(
   cors({
     origin: [
-      config.CLIENT_URL || "http://localhost:5176",
+      config.CLIENT_URL || "https://travel-journal-app-78it.vercel.app",
       "http://localhost:5173",
-      "http://localhost:5174",
-      "http://localhost:5175",
-      "http://localhost:5176",
     ],
     credentials: true,
-  })
+  }),
 );
 
 // Using routes
@@ -75,7 +72,7 @@ app.post(
       event = stripe.webhooks.constructEvent(
         req.body,
         sig,
-        process.env.STRIPE_WEBHOOK_SECRET as string
+        process.env.STRIPE_WEBHOOK_SECRET as string,
       );
     } catch (err: any) {
       console.error("Webhook signature verification failed.", err.message);
@@ -86,7 +83,6 @@ app.post(
     switch (event.type) {
       case "payment_intent.succeeded": {
         const pi = event.data.object as Stripe.PaymentIntent;
-        console.log("Payment succeeded:", pi.id);
         break;
       }
       case "checkout.session.completed": {
@@ -115,9 +111,6 @@ app.post(
                 stripeCustomerId: session.customer as string,
                 subscriptionId: session.subscription as string,
               });
-              console.log(
-                `User ${userId} upgraded to premium via checkout session ${session.id}. Expires: ${expiryDate}`
-              );
             } catch (err) {
               console.error("Failed to update user premium status:", err);
             }
@@ -129,7 +122,6 @@ app.post(
       }
       case "customer.subscription.created": {
         const subscription = event.data.object as Stripe.Subscription;
-        console.log("Subscription created:", subscription.id);
         break;
       }
       case "customer.subscription.updated": {
@@ -141,10 +133,7 @@ app.post(
             try {
               await UserModel.findOneAndUpdate(
                 { stripeCustomerId: customerId },
-                { premium: true }
-              );
-              console.log(
-                `Subscription ${subscription.id} activated for customer ${customerId}.`
+                { premium: true },
               );
             } catch (err) {
               console.error("Failed to update user subscription status:", err);
@@ -161,15 +150,12 @@ app.post(
           try {
             await UserModel.findOneAndUpdate(
               { stripeCustomerId: customerId },
-              { premium: false, subscriptionId: null }
-            );
-            console.log(
-              `Subscription ${subscription.id} cancelled for customer ${customerId}.`
+              { premium: false, subscriptionId: null },
             );
           } catch (err) {
             console.error(
               "Failed to update user subscription cancellation:",
-              err
+              err,
             );
           }
         })();
@@ -183,10 +169,7 @@ app.post(
           try {
             await UserModel.findOneAndUpdate(
               { stripeCustomerId: customerId },
-              { premium: true }
-            );
-            console.log(
-              `Invoice payment succeeded for customer ${customerId}.`
+              { premium: true },
             );
           } catch (err) {
             console.error("Failed to update user payment status:", err);
@@ -196,16 +179,13 @@ app.post(
       }
       case "invoice.payment_failed": {
         const invoice = event.data.object as Stripe.Invoice;
-        console.log(`Invoice payment failed for customer ${invoice.customer}.`);
-        // Could optionally send notification to user about failed payment
         break;
       }
       default:
-        // console.log(`Unhandled event: ${event.type}`);
         break;
     }
     res.json({ received: true });
-  }
+  },
 );
 
 app.get("/", (_, res) => {
