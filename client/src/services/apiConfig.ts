@@ -48,7 +48,7 @@ export class ApiConfig {
 
   public getHeaders(
     includeAuth: boolean = true,
-    skipContentType: boolean = false
+    skipContentType: boolean = false,
   ): HeadersInit {
     const headers: HeadersInit = {};
 
@@ -103,7 +103,7 @@ export class ApiConfig {
   public async request<T>(
     endpoint: string,
     options: RequestInit = {},
-    includeAuth: boolean = true
+    includeAuth: boolean = true,
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
 

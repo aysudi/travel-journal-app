@@ -19,12 +19,15 @@ interface UserLimits {
 
 const fetchUserLimits = async (): Promise<UserLimits> => {
   const token = localStorage.getItem("token");
-  const response = await fetch("http://localhost:5050/travel-lists/limits", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
+  const response = await fetch(
+    `${import.meta.env.VITE_SERVER_URL}/travel-lists/limits`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
     },
-  });
+  );
 
   if (!response.ok) {
     throw new Error("Failed to fetch user limits");

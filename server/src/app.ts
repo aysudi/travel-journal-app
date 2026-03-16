@@ -37,6 +37,7 @@ app.use(
     origin: [
       config.CLIENT_URL || "https://travel-journal-app-78it.vercel.app",
       "http://localhost:5173",
+      "http://localhost:4173",
     ],
     credentials: true,
   }),

@@ -18,7 +18,7 @@ export class AuthService {
         method: "POST",
         body: JSON.stringify(credentials),
       },
-      false
+      false,
     );
 
     if (response.statusCode == 500) throw new Error(response.message);
@@ -33,7 +33,7 @@ export class AuthService {
         method: "POST",
         body: JSON.stringify(userData),
       },
-      false
+      false,
     );
 
     return response;
@@ -58,7 +58,7 @@ export class AuthService {
         method: "POST",
         body: JSON.stringify(values),
       },
-      false
+      false,
     );
   }
 
@@ -75,7 +75,7 @@ export class AuthService {
         method: "POST",
         body: JSON.stringify({ email, newPassword }),
       },
-      false
+      false,
     );
   }
 
@@ -86,13 +86,13 @@ export class AuthService {
         method: "POST",
         body: JSON.stringify({ token }),
       },
-      false
+      false,
     );
   }
 
   async verifyEmailToken(token: string | null): Promise<{ message: string }> {
     return apiConfig.request<{ message: string }>(
-      `${this.endpoint}/verify-email?token=${token}`
+      `${this.endpoint}/verify-email?token=${token}`,
     );
   }
 
@@ -103,7 +103,7 @@ export class AuthService {
         method: "POST",
         body: JSON.stringify({ email }),
       },
-      false
+      false,
     );
   }
 
@@ -124,7 +124,7 @@ export class UserService {
   }
 
   async updateProfile(
-    data: UpdateProfileData | FormData
+    data: UpdateProfileData | FormData,
   ): Promise<UserProfile> {
     const isFormData = data instanceof FormData;
 
@@ -140,7 +140,7 @@ export class UserService {
       {
         method: "PUT",
         body: JSON.stringify(data),
-      }
+      },
     );
   }
 
@@ -156,7 +156,7 @@ export class UserService {
         headers: {
           Authorization: `Bearer ${apiConfig.getToken()}`,
         },
-      }
+      },
     );
   }
 
@@ -172,7 +172,7 @@ export class UserService {
 
   async searchUsers(query: string): Promise<UserProfile[]> {
     return apiConfig.request<UserProfile[]>(
-      `${this.endpoint}/search?q=${encodeURIComponent(query)}`
+      `${this.endpoint}/search?q=${encodeURIComponent(query)}`,
     );
   }
 }
