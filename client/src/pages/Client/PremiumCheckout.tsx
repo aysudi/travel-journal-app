@@ -16,7 +16,7 @@ const PremiumCheckout = () => {
   const { data: user } = useUserProfile();
   const [isLoading, setIsLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"monthly" | "yearly">(
-    "monthly"
+    "monthly",
   );
 
   const handleSubscribe = async () => {
@@ -25,7 +25,7 @@ const PremiumCheckout = () => {
     setIsLoading(true);
     try {
       const res = await fetch(
-        "http://localhost:5050/api/payments/create-checkout-session",
+        `${import.meta.env.VITE_SERVER_URL}/api/payments/create-checkout-session`,
         {
           method: "POST",
           headers: {
@@ -58,7 +58,7 @@ const PremiumCheckout = () => {
               } Subscription`,
             },
           }),
-        }
+        },
       );
       const data = await res.json();
       if (data.url) {
